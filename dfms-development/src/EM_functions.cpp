@@ -143,6 +143,53 @@ float gUpdate(arma::mat & S00,
   return(arma::sum(arma::trace(S10)) / arma::sum(arma::trace(S00)));
 }
 
+// NOTE: without missing data Omega_one_t = Omega_t
+
+/**
+* @description Omega_one_t definition (A.3)
+*
+* all vector and matrices are taken only in the non missing rows
+* @param yt (matrix): (q x 1) matrix (i.e. vector) of observed vector at time t, NA allowed
+* (a sorting is assumed, example by spatial locations)
+* @param zt (matrix): (s x 1) matrix (i.e. vector) of smoothed state vector at time t
+* @param alpha (num): scaling factor of the state vector on the observed vector
+* in the HDGM model this is the upsilon parameter
+* @param Xbetat (matrix) (q x p) matrix of fixed effects covariates at time t
+* @param beta (matrix) (p x 1) matrix (i.e. a vector) of fixed effects coef,
+* does NOT change with time
+* @param inv_mXbeta_sum (matrix) (p x p) inverse of the sum of fixed effect model
+* matrices cross product relative with only not NA observed vector rows:
+* solve(sum(for (t in 1:T){t(Xbeta[lnmi[[t]],,]) %*% Xbeta[lnmi[[t]],,]})).
+* this can be computed only once
+* @param Xzt (matrix) (s x s) unscaled transfer matrix at time t
+* @param Pt (matrix): (s x s) matrix of smoothed state variance at time t,
+*
+* @return (matrix): (vnmi x vnmi) matrix
+*/
+arma::mat Omega_one_t(arma::vec yt,
+                        Xbetat = NULL,
+                        beta,
+                        zt,
+                        Xzt,
+                        vnmi,
+                        alpha,
+                        Pt){
+
+  res <- yt - alpha * Xzt %*% as.matrix(zt)
+
+  if(!is.null(Xbetat)){
+    res <- res - Xbetat %*% beta
+  }
+
+  prod_matrix <- alpha * Xzt %*% zt
+
+  add_matrix <- alpha^2 * Xzt %*% Pt %*% t(Xzt)
+
+    return (res %*% t(res) +
+            add_matrix)
+
+}
+
 
 
 
