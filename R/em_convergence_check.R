@@ -72,7 +72,8 @@ em_res_other_start <- EMHDGM(y = t(y.matr),
                              sigma20 = SIGMA^2 + epsilon,
                              theta0 = THETA + epsilon,
                              z0 = as.matrix(rep(0, 2)),
-                             max_iter = 20)
+                             max_iter = 100,
+                             verbose = FALSE)
 
 em_res_other_start$iter_history
 
@@ -104,7 +105,8 @@ em_res_fixed <- EMHDGM(y = t(y.matr.fixed),
                        sigma20 = SIGMA^2,
                        theta0 = THETA,
                        z0 = as.matrix(rep(0, 2)),
-                       max_iter = 10)
+                       max_iter = 10,
+                       verbose = FALSE)
 
 em_res_fixed$iter_history
 em_res_fixed$beta

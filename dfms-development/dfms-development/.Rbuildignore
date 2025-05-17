@@ -1,0 +1,16 @@
+^dfms\.Rproj$
+^\.Rproj\.user$
+misc
+.RData
+LICENSE
+^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^codemeta\.json$
+^codecov\.yml$
+_cache$
+.log$
+.gz$
+.tex$
+vignettes/dynamic_factor_models*

@@ -7,6 +7,7 @@
 # and the Appendix
 
 require(MARSS)
+require(dfms)
 
 
 # covariance specification ----------------------------
@@ -148,9 +149,6 @@ BetaUpdate <- function(Xbeta, y,
       (y[lnmi[[t]],t] - alpha * (Xz[lnmi[[t]],] %*% z[, t]))
   }
   
-  print("[DEBUG](inside beta update function)")
-  print("right_term vector:")
-  print(right_term)
   
   return(inv_mXbeta_sum %*% right_term)
 }
@@ -484,6 +482,7 @@ ThetaUpdate <- function(dist_matrix,
 #' @param sigma2_upper (num): maximum value of sigma2 value in the optimization procedure
 #' @param sigma2_do_plot_objective (bool): if TRUE plot the objective function used to optimize
 #' the value of sigma2 at each iteration, along with the optimized value
+#' @param verbose (bool): if True print all the steps
 EMHDGM <- function(y,
                    dist_matrix,
                    alpha0, 
@@ -496,7 +495,8 @@ EMHDGM <- function(y,
                    P0 = NULL,
                    max_iter = 10,
                    sigma2_upper = 10,
-                   sigma2_do_plot_objective = TRUE){
+                   sigma2_do_plot_objective = TRUE,
+                   verbose = TRUE){
   
   # first implementation
   is_fixed_effect = !is.null(Xbeta)
@@ -513,9 +513,6 @@ EMHDGM <- function(y,
   theta_temp <- theta0
   g_temp <- g0
   sigma2_temp <- sigma20
-  
-  z_temp <- z0
-  P_temp <- P0
   
   # DEBUG
   # track all parameters
@@ -542,16 +539,17 @@ EMHDGM <- function(y,
   
   p <- NROW(beta0)
   
+  # unscaled
   # Xz = transfer matrix
   # Tz = transition matrix
   Xz <- Tz <- diag(1, q)
   
   if(is.null(z0)){
-    z_temp <- as.matrix(rep(0, q))
+    z0 <- as.matrix(rep(0, q))
   }
   
   if(is.null(P0)){
-    P_temp <- diag(1, q)
+    P0 <- diag(1, q)
   }
   
   # get list of not NA rows
@@ -574,12 +572,7 @@ EMHDGM <- function(y,
         Xbeta[not_na_indexes_list[[t]],,t]
     }
     
-    print("[DEBUG]: mXbeta_sum")
-    print(mXbeta_sum)
-    
     m_inv_mXbeta_sum = solve(mXbeta_sum)
-    print("[DEBUG]: m_inv_mXbeta_sum")
-    print(m_inv_mXbeta_sum)
   }
   
   
@@ -593,7 +586,7 @@ EMHDGM <- function(y,
     # KalmanSmoother using updated parameters // ----------
     #//////////////////////////////////////////
     
-    print("preprocess phase")
+    if(verbose){print("preprocess phase")}
     
     y_res <- y
     
@@ -616,61 +609,70 @@ EMHDGM <- function(y,
     Q_temp <- ExpCor(mdist = dist_matrix,
                      theta = theta_temp)
     
-    # using MARSS to fit the model and then run KFAS
-    # smoother on that to get the lag - one smoothed states covariance
-    # needed for EM
-    # NOTE: MARSS will try to do EM itself
-    # but since we give it all the parameters as numeric
-    # it will just return a MARSSmodel object
-    # to which the smoother will be run
-    
     # first KS pass
-    print("MARSS model definition")
+    if(verbose){print("MARSS model definition")}
     
-    marss.fit <- MARSS(y_res, # transposition is memory inefficient, to change
-                       model = list(B = diag(g_temp, p), # state transition matrix
-                                    Z = alpha_temp * Xz, # transfer matrix, assuming p = q
-                                    A = "zero", # y time varying intercept 
-                                    Q = Q_temp, # state error variance
-                                    R = diag(sigma2_temp, q), # observation variance
-                                    U = "zero", # fixed effects intercept
-                                    x0 = z_temp, # initial state
-                                    V0 = P_temp)) # initial state variance
+    # marss.fit <- MARSS(y_res, # transposition is memory inefficient, to change
+    #                    model = list(B = diag(g_temp, p), # state transition matrix
+    #                                 Z = alpha_temp * Xz, # transfer matrix, assuming p = q
+    #                                 A = "zero", # y time varying intercept 
+    #                                 Q = Q_temp, # state error variance
+    #                                 R = diag(sigma2_temp, q), # observation variance
+    #                                 U = "zero", # fixed effects intercept
+    #                                 x0 = z0, # initial state
+    #                                 V0 = P0)) # initial state variance
+    # 
+    # print("Kalman smoother pass start")
+    # marss.kfas.res <- MARSSkfas(marss.fit,
+    #                             return.lag.one = TRUE,
+    #                             return.kfas.model = FALSE)
     
-    print("Kalman smoother pass start")
-    marss.kfas.res <- MARSSkfas(marss.fit,
-                                return.lag.one = TRUE,
-                                return.kfas.model = FALSE)
-    print("Kalman smoother pass finish")
+  
     
-    z_smooth_temp <- marss.kfas.res$xtT
-    z_smooth_var_temp <- marss.kfas.res$VtT
+    ksm.res <- SKFS(X = t(y_res),
+                         A = diag(g_temp, p), # state transition matrix
+                         C = alpha_temp * Xz, # transfer matrix, assuming p = 
+                         Q = Q_temp, # state error variance
+                         R = diag(sigma2_temp, q), # observation variance
+                         F_0 = as.matrix(z0),
+                         P_0 = P0)
+    
+    if(verbose){print("Kalman smoother pass finish")}
+    
+    
+    # only for debug, delete later
+    z_smooth_temp <- t(ksm.res$F_smooth)
+    z_smooth_var_temp <- ksm.res$P_smooth
+    z0_smooth <- t(ksm.res$F_smooth_0)
+    P0_smooth <- ksm.res$P_smooth_0
+    lagone_cov_smooth <- ksm.res$PPm_smooth
+    
     
     
     # get smoother output
     S00_temp <- ComputeS00(smoothed_states = z_smooth_temp,
                            smoothed_vars = z_smooth_var_temp,
-                           z0 = marss.kfas.res$x0T,
-                           P0 = marss.kfas.res$V0T)
+                           z0 = z0_smooth,
+                           P0 = P0_smooth)
     
     S11_temp <- ComputeS11(smoothed_states = z_smooth_temp,
                            smoothed_vars = z_smooth_var_temp,
                            S00 = S00_temp,
-                           z0 = marss.kfas.res$x0T,
-                           P0 = marss.kfas.res$V0T)
+                           z0 = z0_smooth,
+                           P0 = P0_smooth)
     
     S10_temp <- ComputeS10(smoothed_states = z_smooth_temp,
-                           lagone_smoothed_covars = marss.kfas.res$Vtt1T,
-                           z0 = marss.kfas.res$x0T)
+                           lagone_smoothed_covars = lagone_cov_smooth,
+                           z0 = z0_smooth)
     
     #////////////////////////////////////////
     # EM update //////////////////////////// ------------------
     #//////////////////////////////////////
     
-    print("EM starting")
+    if(verbose){print("EM starting")}
     
     
-    print("Omega build")
+    if(verbose){print("Omega build")}
     
     for(t in 1:NCOL(y)){
       
@@ -696,12 +698,12 @@ EMHDGM <- function(y,
     }
     
     
-    print("Sigma2Update")
+    if(verbose){print("Sigma2Update")}
     sigma2_temp <- Sigma2Update(lOmega = lOmega,
                                 nlen_y = q)
     
     
-    print("AlphaUpdate")
+    if(verbose){print("AlphaUpdate")}
     alpha_temp <- AlphaUpdate(y = y,
                               z = z_smooth_temp,
                               Xbeta = Xbeta,
@@ -712,7 +714,7 @@ EMHDGM <- function(y,
     
     
     if(is_fixed_effect){
-      print("BetaUpdate")
+      if(verbose){print("BetaUpdate")}
       beta_temp <- BetaUpdate(inv_mXbeta_sum =  m_inv_mXbeta_sum,
                             Xbeta = Xbeta,
                             Xz = Xz,
@@ -722,8 +724,7 @@ EMHDGM <- function(y,
                             lnmi = not_na_indexes_list)
     
       beta_iter_history[iter + 1,] <- beta_temp
-      print("[DEBUG]: beta_temp")
-      print(beta_temp)
+      
     
     }
     
@@ -731,7 +732,7 @@ EMHDGM <- function(y,
     # in order to satisfy the constraints
     # here the specific exponential spatial correlation is assumed
     # the function can be made more general
-    print("ThetaUpdate")
+    if(verbose){print("ThetaUpdate")}
     theta_temp <- ThetaUpdate(dist_matrix = dist_matrix,
                               g = g_temp,
                               S00 = S00_temp,
@@ -742,7 +743,7 @@ EMHDGM <- function(y,
                               upper = sigma2_upper,
                               do_plot_objective = sigma2_do_plot_objective)
     
-    print("gUpdate")
+    if(verbose){print("gUpdate")}
     g_temp <- gUpdate(S00 = S00_temp,
                       S10 = S10_temp)
     
@@ -753,9 +754,6 @@ EMHDGM <- function(y,
     param_history_matrix[iter + 1,2] <- theta_temp
     param_history_matrix[iter + 1,3] <- g_temp
     param_history_matrix[iter + 1,4] <- sigma2_temp
-    
-    # debug
-    print(param_history_matrix[iter + 1,])
     
   }
   

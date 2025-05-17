@@ -1,0 +1,102 @@
+url: https://sebkrantz.github.io/dfms/
+destination: docs
+
+home:
+  title: Dynamic Factor Models for R
+
+template:
+  bootstrap: 5
+  bootswatch: sandstone # Also good: flatly, yeti, simplex, superhero, zephyr
+  theme: ayu-dark # Or: ayu-mirage
+  math-rendering: katex
+  bslib:
+    primary: "#1e2124" # "#202224" # "#242424" # "#003254"
+    code-color: "#004573" # "#9c0027" # "#004d80" # b3002d
+    gray-dark: "#3f464d"
+
+development:
+  mode: auto
+
+navbar:
+  title: dfms
+  structure:
+    left:
+    - reference
+    - articles
+    - news
+    - blog
+    right:
+    - search
+    - github
+  components:
+    reference:
+      text: Documentation
+      href: reference/index.html
+    articles:
+      text: Vignettes
+      href: articles/index.html
+    news:
+      text: News
+      href: news/index.html
+    blog:
+      text: Blog
+      href: https://sebkrantz.github.io/Rblog/
+    github:
+      icon: fa-github
+      href: https://github.com/SebKrantz/dfms
+      aria-label: GitHub
+
+
+reference:
+- contents:
+  - dfms-package
+- title: "Information Criteria"
+  desc: "Choose the number of factors and the lag-order of the factor VAR."
+- contents:
+  - ICr
+- title: "Fit a Dynamic Factor Model"
+  desc: "DFM estimation via the EM algorithm and PCA, and various methods inspect the model and extract results."
+- contents:
+  - DFM
+  - print.dfm
+  - summary.dfm
+  - plot.dfm
+  - as.data.frame.dfm
+  - residuals.dfm
+- title: "Forecasting"
+  desc: "Forecast both the factors and the data, and methods to visualize forecasts and extract results."
+- contents:
+  - predict.dfm
+- title: "Fast Stationary Kalman Filtering and Smoothing"
+  desc: "Optimized Armadillo C++ implementations of the stationary Kalman Filter and Smoother."
+- contents:
+  - SKF
+  - FIS
+  - SKFS
+- title: "Helper Functions"
+  desc: "Fast VAR, matrix inverses, imputation/removal of missing values in multivariate time series, and convergence check for EM algorithm."
+- contents:
+  - .VAR
+  - tsnarmimp
+  - ainv
+  - em_converged
+- title: "Data"
+  desc: "Euro area macroeconomic data from Banbura and Modugno (2014), and 3 DFM specifications considered in their paper."
+- contents:
+  - BM14_Models
+
+external-articles:
+  - name: dynamic_factor_models
+    title: Dynamic Factor Models - A Very Short Introduction
+    description: " "
+    href: https://raw.githubusercontent.com/SebKrantz/dfms/main/vignettes/dynamic_factor_models_paper.pdf
+
+articles:
+  - title: Introduction to dfms
+    desc: Introduces the package, including a walk-through of all main features.
+    contents:
+    - introduction
+  - title: Dynamic Factor Models - A Very Short Introduction
+    desc: Provides a short overview of dynamics factor models as used in the economics literature.
+    contents:
+    - dynamic_factor_models
