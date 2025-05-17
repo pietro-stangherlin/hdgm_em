@@ -27,6 +27,7 @@ Rcpp::List SKF(arma::mat X, arma::mat A, arma::mat C, arma::mat Q,
   const int rp = A.n_rows;
   int n_c;
 
+
   // In internal code factors are Z (instead of F) and factor covariance V (instead of P),
   // to avoid confusion between the matrices and their predicted (p) and filtered (f) states.
   // Additionally the results matrices for all time periods have a T in the name.
@@ -49,7 +50,9 @@ Rcpp::List SKF(arma::mat X, arma::mat A, arma::mat C, arma::mat Q,
   uvec nmiss, arow = find_finite(A.row(0));
   if(arow.n_elem == 0) Rcpp::stop("Missing first row of transition matrix");
 
+
   for (int i = 0; i < T; ++i) {
+
 
     // Run a prediction
     Zp = A * Zf;
@@ -72,9 +75,11 @@ Rcpp::List SKF(arma::mat X, arma::mat A, arma::mat C, arma::mat Q,
         xt = xt.elem(nmiss);
       }
 
+
       // Intermediate results
       VCt = Vp * Ci.t();
       S = inv(Ci * VCt + Ri); // .i();
+
 
       // Prediction error
       et = xt - Ci * Zp;
@@ -98,13 +103,15 @@ Rcpp::List SKF(arma::mat X, arma::mat A, arma::mat C, arma::mat Q,
       Vf = Vp;
     }
 
+
     // Store predicted and filtered data needed for smoothing
-    ZTp.col(i) = Zp.t();
+    ZTp.col(i) = Zp;
     VTp.slice(i) = Vp;
-    ZTf.col(i) = Zf.t();
+    ZTf.col(i) = Zf;
     VTf.slice(i) = Vf;
 
   }
+
 
   if(retLL) loglik *= 0.5;
 
@@ -195,7 +202,7 @@ Rcpp::List FIS(arma::mat A,
 // P_0 Initial state covariance (rp x rp)
 // retLL 0-no likelihood, 1-standard Kalman Filter, 2-BM14
 // [[Rcpp::export]]
-Rcpp::List SKFS(arma::mat X, arma::mat A, arma::mat C, arma::mat Q,
+Rcpp::List SKFS(arma::mat &X, arma::mat A, arma::mat C, arma::mat Q,
                 arma::mat R, arma::colvec F_0, arma::mat P_0, bool retLL = false) {
 
   const int n = X.n_rows;      // variables
