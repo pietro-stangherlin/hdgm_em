@@ -1,11 +1,25 @@
 #include <RcppArmadillo.h>
 #include <stdio.h>
+#include <functional>
+#include <cmath>
+#include <limits>
+#include <iostream>
+#include <vector>
 
 using namespace Rcpp;
 using namespace std;
 
 // Temp file
 
+
+// covariance specification ----------------------------
+// where d is a distance matrix
+// theta > 0
+// [[Rcpp::export]]
+arma::mat ExpCor(arma::mat &mdist,
+                 double theta){
+  return(exp(-mdist/theta));
+}
 
 // assuming no missing observations and no matrix permutations
 
@@ -27,15 +41,15 @@ using namespace std;
  */
 
 // [[Rcpp::export]]
-float AlphaUpdate(arma::mat & mY_fixed_res,
+double AlphaUpdate(arma::mat & mY_fixed_res,
                   arma::mat & mZ,
                   arma::mat & mXz,
                   arma::cube & cPsm){
 
   int T = mY_fixed_res.n_cols;
 
-  float num = 0.0;
-  float den = 0.0;
+  double num = 0.0;
+  double den = 0.0;
 
   for(int t = 0; t < T; t++){
     // NOTE: (mXz * mZ.col(t)) can be computed once and used also
@@ -45,6 +59,7 @@ float AlphaUpdate(arma::mat & mY_fixed_res,
       (mZ.col(t) * mZ.col(t).t() + cPsm.slice(t)) * mXz.t());
   };
 
+  // TO DO: add error message if den == 0
   return num / den;
 
 }
@@ -58,7 +73,7 @@ float AlphaUpdate(arma::mat & mY_fixed_res,
 * of the nondiffuse part of the initial state vector.
 * @return (matrix) m x m
 */
-
+// [[Rcpp::export]]
 arma::mat ComputeS00(arma::mat & smoothed_states,
                      arma::cube & smoothed_vars,
                      arma::vec & z0,
@@ -86,6 +101,7 @@ arma::mat ComputeS00(arma::mat & smoothed_states,
 * of the nondiffuse part of the initial state vector.
 * @return (matrix) m x m
 */
+// [[Rcpp::export]]
 arma::mat ComputeS11(arma::mat & smoothed_states,
                      arma::cube & smoothed_vars,
                      arma::mat & S00,
@@ -106,6 +122,7 @@ arma::mat ComputeS11(arma::mat & smoothed_states,
 * @param z0 (matrix) z0: starting value m x 1 matrix (i.e. vector) containing the expected values of the initial states
 * @return (matrix) m x m
 */
+// [[Rcpp::export]]
 arma::mat ComputeS10(arma::mat & smoothed_states,
                      arma::cube & lagone_smoothed_covars,
                      arma::vec & z0){
@@ -138,12 +155,16 @@ arma::mat ComputeS10(arma::mat & smoothed_states,
 *
 * @return (num)
 */
-float gUpdate(arma::mat & S00,
+// [[Rcpp::export]]
+double gUpdate(arma::mat & S00,
               arma::mat & S10){
   return(arma::sum(arma::trace(S10)) / arma::sum(arma::trace(S00)));
 }
 
 // NOTE: without missing data Omega_one_t = Omega_t
+
+// NOTE: as in alpha Update, for each iteration
+// mXzt * zZt can be computed once
 
 /**
 * @description Omega_one_t definition (A.3)
@@ -154,50 +175,180 @@ float gUpdate(arma::mat & S00,
 * @param zt (matrix): (s x 1) matrix (i.e. vector) of smoothed state vector at time t
 * @param alpha (num): scaling factor of the state vector on the observed vector
 * in the HDGM model this is the upsilon parameter
-* @param Xbetat (matrix) (q x p) matrix of fixed effects covariates at time t
-* @param beta (matrix) (p x 1) matrix (i.e. a vector) of fixed effects coef,
-* does NOT change with time
-* @param inv_mXbeta_sum (matrix) (p x p) inverse of the sum of fixed effect model
-* matrices cross product relative with only not NA observed vector rows:
-* solve(sum(for (t in 1:T){t(Xbeta[lnmi[[t]],,]) %*% Xbeta[lnmi[[t]],,]})).
-* this can be computed only once
 * @param Xzt (matrix) (s x s) unscaled transfer matrix at time t
-* @param Pt (matrix): (s x s) matrix of smoothed state variance at time t,
-*
-* @return (matrix): (vnmi x vnmi) matrix
+* @param Pt (matrix): (s x s) matrix of smoothed state variance at time t
 */
-arma::mat Omega_one_t(arma::vec yt,
-                        Xbetat = NULL,
-                        beta,
-                        zt,
-                        Xzt,
-                        vnmi,
-                        alpha,
-                        Pt){
+// [[Rcpp::export]]
+arma::mat Omega_one_t(arma::mat & mY_fixed_res,
+                      arma::vec & vZt,
+                      arma::mat & mXz,
+                      arma::mat & mPsmt,
+                      double alpha){
 
-  res <- yt - alpha * Xzt %*% as.matrix(zt)
+  arma::vec res = mY_fixed_res - alpha * mXz * vZt;
 
-  if(!is.null(Xbetat)){
-    res <- res - Xbetat %*% beta
-  }
-
-  prod_matrix <- alpha * Xzt %*% zt
-
-  add_matrix <- alpha^2 * Xzt %*% Pt %*% t(Xzt)
-
-    return (res %*% t(res) +
-            add_matrix)
+    return (res * res.t() +
+            alpha * alpha * mXz * mPsmt * mXz.t());
 
 }
 
+// TO DO: Omega_t function in case there are some missing observations
+// Along with Permutation matrix D definition
+
+/**
+ * @brief Computes an exponential spatial correlation matrix
+ *        given a distance matrix and a spatial decay parameter theta.
+ *
+ * @param mdist Matrix of pairwise distances between spatial locations (p x p)
+ * @param theta Spatial decay parameter (positive scalar)
+ * @return arma::mat Spatial correlation matrix (p x p)
+ */
+// [[Rcpp::export]]
+arma::mat ExpCor(const arma::mat& mdist, double theta) {
+  return arma::exp(-mdist / theta);
+}
+
+/**
+ * @brief Computes the negative expected complete-data log-likelihood
+ *        (up to a constant) for the HDGM model, to be minimized over theta.
+ *
+ * @param theta Spatial decay parameter to evaluate
+ * @param dist_matrix Distance matrix between spatial locations (p x p)
+ * @param S00 Smoothed second moment of z_{t-1} (p x p)
+ * @param S10 Smoothed cross-moment between z_t and z_{t-1} (p x p)
+ * @param S11 Smoothed second moment of z_t (p x p)
+ * @param g Autoregressive coefficient (scalar)
+ * @param N Number of time observations (T)
+ * @return double The value of the negative objective function at given theta
+ */
+// [[Rcpp::export]]
+double negative_to_optim(double theta,
+                         const arma::mat& dist_matrix,
+                         const arma::mat& S00,
+                         const arma::mat& S10,
+                         const arma::mat& S11,
+                         double g,
+                         int N) {
+  arma::mat Sigma_eta = ExpCor(dist_matrix, theta);
+
+  double logdet_val = 0.0;
+  double sign = 0.0;
 
 
+  // NOTE: for small Sigma_eta one can keep the function like this
+  // for big Sigma_eta it's convenient to compute a (ex. Cholesky) decomposition
+  // of Sigma_eta once and use it to compute both the log determinant and the inverse
+  arma::log_det(logdet_val, sign, Sigma_eta);
 
+  arma::mat Sigma_eta_inv = arma::inv(Sigma_eta);
+  arma::mat expr = S11 - g * S10 - g * S10.t() + g * g * S00;
 
+  double trace_val = arma::trace(Sigma_eta_inv * expr);
 
+  return N * logdet_val + trace_val;
+}
 
+/**
+ * @brief Simple 1D scalar optimization using Brent's method.
+ *
+ * @param f Objective function to minimize
+ * @param lower Lower bound for theta
+ * @param upper Upper bound for theta
+ * @param tol Tolerance for convergence
+ * @param max_iter Maximum number of iterations
+ * @return double The value of theta that minimizes the objective function
+ */
+// [[Rcpp::export]]
+double brent_optimize(const std::function<double(double)>& f,
+                      double lower,
+                      double upper,
+                      double tol = 1e-5,
+                      int max_iter = 100) {
+  const double golden_ratio = 0.618033988749895;
+  double a = lower, b = upper;
+  double c = b - golden_ratio * (b - a);
+  double d = a + golden_ratio * (b - a);
 
+  while (std::abs(c - d) > tol && --max_iter > 0) {
+    if (f(c) < f(d)) {
+      b = d;
+    } else {
+      a = c;
+    }
+    c = b - golden_ratio * (b - a);
+    d = a + golden_ratio * (b - a);
+  }
 
+  return (b + a) / 2.0;
+}
 
+/**
+ * @brief Performs the EM update of the spatial decay parameter theta
+ *        in the Hierarchical Dynamic Gaussian Model (HDGM).
+ *
+ * @param dist_matrix p x p distance matrix between spatial locations
+ * @param g Autoregressive coefficient of the hidden state process
+ * @param S00 Smoothed second moment of z_{t-1} over time (p x p)
+ * @param S10 Smoothed cross-moment of z_t and z_{t-1} over time (p x p)
+ * @param S11 Smoothed second moment of z_t over time (p x p)
+ * @param theta0 Initial guess for theta (not used in optimization directly)
+ * @param N Number of time points
+ * @param upper Upper bound for theta in optimization
+ * @return double Optimized value of theta that minimizes the objective
+ */
+// [[Rcpp::export]]
+double ThetaUpdate(const arma::mat& dist_matrix,
+                   double g,
+                   const arma::mat& S00,
+                   const arma::mat& S10,
+                   const arma::mat& S11,
+                   double theta0,
+                   int N,
+                   double upper = 10.0) {
 
+  auto obj_fun = [&](double theta) {
+    return negative_to_optim(theta, dist_matrix, S00, S10, S11, g, N);
+  };
 
+  double result = brent_optimize(obj_fun, 0.001, upper); // avoid theta = 0
+  return result;
+}
+
+/**
+ * @brief EM update for fixed-effect coefficients (Equation 5 in HDGM model), no missing values version.
+ *
+ * Estimates the fixed effects `beta` given full observation matrix `y`, smoothed state vectors `z`,
+ * and covariate matrices `Xbeta`, assuming no missing data.
+ *
+ * @param Xbeta Array of shape (T elements of q x p), covariate matrices for each time point
+ * @param y Matrix of observed vectors (q x T), no missing values assumed
+ * @param z Matrix of smoothed hidden states (s x T)
+ * @param alpha Scalar coefficient (upsilon parameter in HDGM)
+ * @param Xz Transfer matrix from state to observation space (q x s)
+ * @param inv_mXbeta_sum Precomputed inverse of ∑ₜ Xbetaᵗ Xbeta (p x p)
+ *
+ * @return arma::vec Estimated fixed-effect coefficients (p x 1)
+ */
+// [[Rcpp::export]]
+arma::vec BetaUpdate(const std::vector<arma::mat>& Xbeta,  // T elements of (q x p)
+                     const arma::mat& y,                    // (q x T)
+                     const arma::mat& z,                    // (s x T)
+                     double alpha,
+                     const arma::mat& Xz,                   // (q x s)
+                     const arma::mat& inv_mXbeta_sum)       // (p x p)
+{
+  int p = inv_mXbeta_sum.n_rows;
+  arma::vec right_term = arma::zeros(p);
+
+  int T = y.n_cols;
+
+  for (int t = 0; t < T; ++t) {
+    const arma::mat& Xbeta_t = Xbeta[t];        // (q x p)
+    arma::vec y_t = y.col(t);                   // (q)
+    arma::vec state_proj = alpha * Xz * z.col(t); // (q)
+
+    right_term += Xbeta_t.t() * (y_t - state_proj); // (p)
+  }
+
+  return inv_mXbeta_sum * right_term;
+}

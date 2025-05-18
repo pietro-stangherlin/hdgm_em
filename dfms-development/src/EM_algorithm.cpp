@@ -1,100 +1,139 @@
 #include <RcppArmadillo.h>
 #include <stdio.h>
 
-using namespace Rcpp;
 using namespace std;
 
 
 // assuming no missing observations and no matrix permutations
 
-/**
-* @description EM update for scale parameter of influence of state variables
-* one observation vector (eq. 4)
-* (common to each state)
-*
-* @param mY (matrix): (T x n) matrix of observed vector
-* with fixed effects predictions subtracted, NA allowed (NOT allowed temporarely)
-* (a sorting is assumed, example by spatial locations)
-* @param mZ (matrix): (T x s) matrix of smoothed state vectors
-* @param cXbeta (array) (q x p x T) array of fixed effects covariates matrices,
-*  each of those is accessed by Xbeta[,t]
-* @param vbeta (vector) (p x 1) matrix (i.e. a vector) of fixed effects coef,
-* does NOT change with time
-* @param mXz (array) (s x s) non scaled transfer matrix (assumed constant in time
-* (the complete transfer matrix is scaled by alpha)
-* @param cPsm (array): (s x s x T) array of smoothed state variance matrices,
-*  each of those is accessed by cPsm[,t]
-*/
-
 // [[Rcpp::export]]
-float AlphaUpdate(arma::mat & mY_fixed_res,
-                  arma::mat & mZ,
-                  arma::mat & mXz,
-                  arma::vec & vbeta,
-                  arma::cube & cPsm){
+Rcpp::List EMHDGM(const arma::mat& y,
+                  const arma::mat& dist_matrix,
+                  double alpha0,
+                  const arma::vec& beta0,
+                  double theta0,
+                  double g0,
+                  double sigma20,
+                  Nullable<arma::cube> Xbeta = R_NilValue,
+                  Nullable<arma::vec> z0_in = R_NilValue,
+                  Nullable<arma::mat> P0_in = R_NilValue,
+                  int max_iter = 10,
+                  double sigma2_upper = 10.0,
+                  bool sigma2_do_plot_objective = false,
+                  bool verbose = true) {
 
-  int T = mY_fixed_res.n_cols;
+  // Setup
+  bool is_fixed_effect = Xbeta.isNotNull();
+  int q = y.n_rows;
+  int T = y.n_cols;
+  int p = beta0.n_elem;
 
-  float num = 0.0;
-  float den = 0.0;
+  arma::vec beta_temp = beta0;
+  double alpha_temp = alpha0;
+  double theta_temp = theta0;
+  double g_temp = g0;
+  double sigma2_temp = sigma20;
 
-  for(int t = 0; t < T; t++){
-    num += arma::trace(mY_fixed_res.col(t) * (mXz * mZ.col(t)).t());
-    den += arma::trace(mXz *
-      (mZ.col(t) * mZ.col(t).t() + cPsm.slice(t)) * mXz.t());
-  };
+  arma::mat param_history(max_iter + 1, 4, arma::fill::zeros);
+  param_history.row(0) = arma::rowvec({alpha_temp, theta_temp, g_temp, sigma2_temp});
 
-  return num / den;
+  arma::mat beta_iter_history;
+  if (is_fixed_effect)
+    beta_iter_history.set_size(max_iter + 1, p);
+  if (is_fixed_effect)
+    beta_iter_history.row(0) = beta_temp.t();
 
+  arma::vec z0 = z0_in.isNotNull() ? as<arma::vec>(z0_in) : arma::vec(q, arma::fill::zeros);
+  arma::mat P0 = P0_in.isNotNull() ? as<arma::mat>(P0_in) : arma::eye(q, q);
+  arma::mat Xz = arma::eye(q, q);  // Transfer matrix
+
+  arma::mat mXbeta_sum;
+  arma::mat m_inv_mXbeta_sum;
+
+  // Precompute fixed-effects sum
+  if (is_fixed_effect) {
+    arma::cube Xb = as<arma::cube>(Xbeta);
+    mXbeta_sum.zeros(p, p);
+    for (int t = 0; t < T; ++t) {
+      arma::mat Xt = Xb.slice(t);
+      mXbeta_sum += Xt.t() * Xt;
+    }
+    m_inv_mXbeta_sum = arma::inv_sympd(mXbeta_sum);
+  }
+
+  // EM iterations
+  for (int iter = 0; iter < max_iter; ++iter) {
+
+    if (verbose)
+      Rcout << "Iteration " << iter << std::endl;
+
+    // Subtract fixed effects
+    arma::mat y_res = y;
+    if (is_fixed_effect) {
+      arma::cube Xb = as<arma::cube>(Xbeta);
+      for (int t = 0; t < T; ++t) {
+        y_res.col(t) -= Xb.slice(t) * beta_temp;
+      }
+    }
+
+    // Update Q
+    arma::mat Q_temp = exp(-theta_temp * dist_matrix);
+
+    // Kalman Smoother pass
+    List ksm_res = SKFS(y_res.t(),             // X
+                        g_temp * arma::eye(q, q), // A
+                        alpha_temp * Xz,       // C
+                        Q_temp,                // Q
+                        sigma2_temp * arma::eye(q, q), // R
+                        z0,                    // F_0
+                        P0);                   // P_0
+
+    arma::mat z_smooth = as<arma::mat>(ksm_res["F_smooth"]).t();
+    arma::cube z_smooth_var = as<arma::cube>(ksm_res["P_smooth"]);
+    arma::mat z0_smooth = as<arma::mat>(ksm_res["F_smooth_0"]).t();
+    arma::mat P0_smooth = as<arma::mat>(ksm_res["P_smooth_0"]);
+    arma::cube lag1_cov = as<arma::cube>(ksm_res["PPm_smooth"]);
+
+    // S matrices
+    arma::mat S00 = ComputeS00(z_smooth, z_smooth_var, z0_smooth, P0_smooth);
+    arma::mat S11 = ComputeS11(z_smooth, z_smooth_var, S00, z0_smooth, P0_smooth);
+    arma::mat S10 = ComputeS10(z_smooth, lag1_cov, z0_smooth);
+
+    // Sigma2 update
+    sigma2_temp = Sigma2Update(y, z_smooth, alpha_temp, Xz);
+
+    // Alpha update
+    alpha_temp = AlphaUpdate(y, z_smooth, Xbeta, beta_temp, Xz, z_smooth_var);
+
+    // Beta update
+    if (is_fixed_effect) {
+      beta_temp = BetaUpdate(as<arma::cube>(Xbeta), y, z_smooth, alpha_temp, Xz, m_inv_mXbeta_sum);
+      beta_iter_history.row(iter + 1) = beta_temp.t();
+    }
+
+    // Theta update (optimization)
+    theta_temp = ThetaUpdate(dist_matrix, g_temp, S00, S10, S11, theta_temp,
+                             T, sigma2_upper, sigma2_do_plot_objective);
+
+    // g update
+    g_temp = gUpdate(S00, S10);
+
+    // Track parameters
+    param_history.row(iter + 1) = arma::rowvec({alpha_temp, theta_temp, g_temp, sigma2_temp});
+  }
+
+  // Assemble return
+  List out = List::create(
+    Named("alpha") = alpha_temp,
+    Named("beta") = beta_temp,
+    Named("theta") = theta_temp,
+    Named("g") = g_temp,
+    Named("sigma2") = sigma2_temp,
+    Named("iter_history") = param_history
+  );
+
+  if (is_fixed_effect)
+    out["beta_iter_history"] = beta_iter_history;
+
+  return out;
 }
-
-
-
-// [[Rcpp::export]]
-// Rcpp::List Estep(arma::mat & X, arma::mat A, arma::mat C, arma::mat Q,
-//                  arma::mat R, arma::colvec F_0, arma::mat P_0) {
-//
-//   const unsigned int T = X.n_rows;
-//   const unsigned int n = X.n_cols;
-//   const unsigned int rp = A.n_rows;
-//
-//   // Run Kalman filter and Smoother
-//   List ks = SKFS(X, A, C, Q, R, F_0, P_0, true);
-//   double loglik = as<double>(ks["loglik"]);
-//   mat Fs = as<mat>(ks["F_smooth"]);
-//   cube Psmooth = array2cube(as<NumericVector>(ks["P_smooth"]));
-//   cube Wsmooth = array2cube(as<NumericVector>(ks["PPm_smooth"]));
-//
-//   // Run computations and return all estimates
-//   mat delta(n, rp); delta.zeros();
-//   mat gamma(rp, rp); gamma.zeros();
-//   mat beta(rp, rp); beta.zeros();
-//
-//   // For E-step purposes it is sufficient to set missing observations
-//   // to being 0.
-//   X(find_nonfinite(X)).zeros();
-//
-//   for (unsigned int t=0; t<T; ++t) {
-//     delta += X.row(t).t() * Fs.row(t);
-//     gamma += Fs.row(t).t() * Fs.row(t) + Psmooth.slice(t);
-//     if (t > 0) {
-//       beta += Fs.row(t).t() * Fs.row(t-1) + Wsmooth.slice(t);
-//     }
-//   }
-//
-//   mat gamma1 = gamma - Fs.row(T-1).t() * Fs.row(T-1) - Psmooth.slice(T-1);
-//   mat gamma2 = gamma - Fs.row(0).t() * Fs.row(0) - Psmooth.slice(0);
-//   colvec F1 = Fs.row(0).t();
-//   mat P1 = Psmooth.slice(0);
-//
-//   return Rcpp::List::create(Rcpp::Named("beta") = beta,
-//                             Rcpp::Named("gamma") = gamma,
-//                             Rcpp::Named("delta") = delta,
-//                             Rcpp::Named("gamma1") = gamma1,
-//                             Rcpp::Named("gamma2") = gamma2,
-//                             Rcpp::Named("F_0") = F1,
-//                             Rcpp::Named("P_0") = P1,
-//                             Rcpp::Named("loglik") = loglik);
-//                             // Rcpp::Named("Fs") = ks["Fs"]);
-// }
-

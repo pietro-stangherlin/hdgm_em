@@ -196,8 +196,6 @@ Omega_one_t <- function(yt,
     res <- res - Xbetat %*% beta
   }
   
-  prod_matrix <- alpha * Xzt %*% zt
-  
   add_matrix <- alpha^2 * Xzt %*% Pt %*% t(Xzt)
   
   return (res %*% t(res) +
