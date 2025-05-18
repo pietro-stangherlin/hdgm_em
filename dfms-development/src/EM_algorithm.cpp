@@ -1,6 +1,7 @@
 #include <RcppArmadillo.h>
 #include <stdio.h>
-#include<"EM_functions.cpp">
+#include<"EM_functions.h">
+#include<"KalmanFiltering.h">
 
 using namespace std;
 

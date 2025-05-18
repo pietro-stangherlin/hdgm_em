@@ -6,7 +6,6 @@
 #include <iostream>
 #include <vector>
 
-using namespace Rcpp;
 using namespace std;
 
 // Temp file
@@ -22,7 +21,8 @@ using namespace std;
  * @return arma::mat Spatial correlation matrix (p x p)
  */
 // [[Rcpp::export]]
-arma::mat ExpCor(const arma::mat& mdist, double theta) {
+arma::mat ExpCor(const arma::mat& mdist,
+                 double theta) {
   return arma::exp(-mdist / theta);
 }
 
@@ -46,10 +46,10 @@ arma::mat ExpCor(const arma::mat& mdist, double theta) {
  */
 
 // [[Rcpp::export]]
-double AlphaUpdate(arma::mat & mY_fixed_res,
-                  arma::mat & mZ,
-                  arma::mat & mXz,
-                  arma::cube & cPsm){
+double AlphaUpdate(const arma::mat & mY_fixed_res,
+                   const arma::mat & mZ,
+                   const arma::mat & mXz,
+                   const arma::cube & cPsm){
 
   int T = mY_fixed_res.n_cols;
 
@@ -79,10 +79,10 @@ double AlphaUpdate(arma::mat & mY_fixed_res,
 * @return (matrix) m x m
 */
 // [[Rcpp::export]]
-arma::mat ComputeS00(arma::mat & smoothed_states,
-                     arma::cube & smoothed_vars,
-                     arma::vec & z0,
-                     arma::mat & P0){
+arma::mat ComputeS00(const arma::mat & smoothed_states,
+                     const arma::cube & smoothed_vars,
+                     const arma::vec & z0,
+                     const arma::mat & P0){
 
   int T = z0.n_cols;
 
@@ -107,11 +107,11 @@ arma::mat ComputeS00(arma::mat & smoothed_states,
 * @return (matrix) m x m
 */
 // [[Rcpp::export]]
-arma::mat ComputeS11(arma::mat & smoothed_states,
-                     arma::cube & smoothed_vars,
-                     arma::mat & S00,
-                     arma::vec & z0,
-                     arma::mat & P0){
+arma::mat ComputeS11(const arma::mat & smoothed_states,
+                     const arma::cube & smoothed_vars,
+                     const arma::mat & S00,
+                     const arma::vec & z0,
+                     const arma::mat & P0){
 
   int T = z0.n_cols;
 
@@ -128,9 +128,9 @@ arma::mat ComputeS11(arma::mat & smoothed_states,
 * @return (matrix) m x m
 */
 // [[Rcpp::export]]
-arma::mat ComputeS10(arma::mat & smoothed_states,
-                     arma::cube & lagone_smoothed_covars,
-                     arma::vec & z0){
+arma::mat ComputeS10(const arma::mat & smoothed_states,
+                     const arma::cube & lagone_smoothed_covars,
+                     const arma::vec & z0){
 
   int T = z0.n_cols;
 
@@ -161,8 +161,8 @@ arma::mat ComputeS10(arma::mat & smoothed_states,
 * @return (num)
 */
 // [[Rcpp::export]]
-double gUpdate(arma::mat & S00,
-              arma::mat & S10){
+double gUpdate(const arma::mat & S00,
+               const arma::mat & S10){
   return(arma::sum(arma::trace(S10)) / arma::sum(arma::trace(S00)));
 }
 
@@ -184,10 +184,10 @@ double gUpdate(arma::mat & S00,
 * @param Pt (matrix): (s x s) matrix of smoothed state variance at time t
 */
 // [[Rcpp::export]]
-arma::mat Omega_one_t(arma::mat & mY_fixed_res,
-                      arma::vec & vZt,
-                      arma::mat & mXz,
-                      arma::mat & mPsmt,
+arma::mat Omega_one_t(const arma::mat & mY_fixed_res,
+                      const arma::vec & vZt,
+                      const arma::mat & mXz,
+                      const arma::mat & mPsmt,
                       double alpha){
 
   arma::vec res = mY_fixed_res - alpha * mXz * vZt;
@@ -323,7 +323,7 @@ double ThetaUpdate(const arma::mat& dist_matrix,
  * @return arma::vec Estimated fixed-effect coefficients (p x 1)
  */
 // [[Rcpp::export]]
-arma::vec BetaUpdate(const std::vector<arma::mat>& Xbeta,  // T elements of (q x p)
+arma::vec BetaUpdate(const arma::cube& Xbeta,  // T elements of (q x p)
                      const arma::mat& y,                    // (q x T)
                      const arma::mat& z,                    // (s x T)
                      double alpha,
@@ -336,7 +336,7 @@ arma::vec BetaUpdate(const std::vector<arma::mat>& Xbeta,  // T elements of (q x
   int T = y.n_cols;
 
   for (int t = 0; t < T; ++t) {
-    const arma::mat& Xbeta_t = Xbeta[t];        // (q x p)
+    const arma::mat& Xbeta_t = Xbeta.slice(t);        // (q x p)
     arma::vec y_t = y.col(t);                   // (q)
     arma::vec state_proj = alpha * Xz * z.col(t); // (q)
 
