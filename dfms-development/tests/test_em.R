@@ -4,6 +4,8 @@ library(Rcpp)
 library(RcppArmadillo)
 
 Rcpp::sourceCpp("src/EM_functions.cpp")
+Rcpp::sourceCpp("src/EM_functions.cpp")
+Rcpp::sourceCpp("src/EM_algorithm.cpp")
 
 
 # Constants -------------------------------

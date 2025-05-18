@@ -336,11 +336,7 @@ arma::vec BetaUpdate(const arma::cube& Xbeta,  // T elements of (q x p)
   int T = y.n_cols;
 
   for (int t = 0; t < T; ++t) {
-    const arma::mat& Xbeta_t = Xbeta.slice(t);        // (q x p)
-    arma::vec y_t = y.col(t);                   // (q)
-    arma::vec state_proj = alpha * Xz * z.col(t); // (q)
-
-    right_term += Xbeta_t.t() * (y_t - state_proj); // (p)
+    right_term += Xbeta.slice(t).t() * (y.col(t) - alpha * Xz * z.col(t)); // (p)
   }
 
   return inv_mXbeta_sum * right_term;

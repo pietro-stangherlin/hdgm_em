@@ -20,8 +20,8 @@ Rcpp::List EMHDGM(const arma::mat& y,
                   Nullable<arma::vec> z0_in = R_NilValue,
                   Nullable<arma::mat> P0_in = R_NilValue,
                   int max_iter = 10,
+                  double sigma2_lower = 0.00001,
                   double sigma2_upper = 10.0,
-                  bool sigma2_do_plot_objective = false,
                   bool verbose = true) {
 
   // Setup
@@ -49,16 +49,15 @@ Rcpp::List EMHDGM(const arma::mat& y,
   arma::mat P0 = P0_in.isNotNull() ? as<arma::mat>(P0_in) : arma::eye(q, q);
   arma::mat Xz = arma::eye(q, q);  // Transfer matrix
 
-  arma::mat mXbeta_sum;
-  arma::mat m_inv_mXbeta_sum;
-
   // Precompute fixed-effects sum
   if (is_fixed_effect) {
-    arma::cube Xb = as<arma::cube>(Xbeta);
+
+    arma::mat mXbeta_sum;
+    arma::mat m_inv_mXbeta_sum;
+
     mXbeta_sum.zeros(p, p);
     for (int t = 0; t < T; ++t) {
-      arma::mat Xt = Xb.slice(t);
-      mXbeta_sum += Xt.t() * Xt;
+      mXbeta_sum += Xbeta.slice(t).t() * Xbeta.slice(t);
     }
     m_inv_mXbeta_sum = arma::inv_sympd(mXbeta_sum);
   }
@@ -72,9 +71,8 @@ Rcpp::List EMHDGM(const arma::mat& y,
     // Subtract fixed effects
     arma::mat y_res = y;
     if (is_fixed_effect) {
-      arma::cube Xb = as<arma::cube>(Xbeta);
       for (int t = 0; t < T; ++t) {
-        y_res.col(t) -= Xb.slice(t) * beta_temp;
+        y_res.col(t) -= Xbeta.slice(t) * beta_temp;
       }
     }
 
@@ -90,6 +88,8 @@ Rcpp::List EMHDGM(const arma::mat& y,
                         z0,                    // F_0
                         P0);                   // P_0
 
+    // TO DO: check if this is overhead
+    // maybe the SKFS output ha to be redefined...
     arma::mat z_smooth = as<arma::mat>(ksm_res["F_smooth"]).t();
     arma::cube z_smooth_var = as<arma::cube>(ksm_res["P_smooth"]);
     arma::mat z0_smooth = as<arma::mat>(ksm_res["F_smooth_0"]).t();
@@ -97,7 +97,7 @@ Rcpp::List EMHDGM(const arma::mat& y,
     arma::cube lag1_cov = as<arma::cube>(ksm_res["PPm_smooth"]);
 
     // S matrices
-    arma::mat S00 = ComputeS00(z_smooth, z_smooth_var, z0_smooth, P0_smooth);
+    arma::mat S00 = ComputeS00(z_smooth , z_smooth_var, z0_smooth, P0_smooth);
     arma::mat S11 = ComputeS11(z_smooth, z_smooth_var, S00, z0_smooth, P0_smooth);
     arma::mat S10 = ComputeS10(z_smooth, lag1_cov, z0_smooth);
 
