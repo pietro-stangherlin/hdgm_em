@@ -1,5 +1,6 @@
 #include <RcppArmadillo.h>
 #include <stdio.h>
+#include<"EM_functions.cpp">
 
 using namespace std;
 

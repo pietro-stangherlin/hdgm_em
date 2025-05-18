@@ -13,12 +13,17 @@ using namespace std;
 
 
 // covariance specification ----------------------------
-// where d is a distance matrix
-// theta > 0
+/**
+ * @brief Computes an exponential spatial correlation matrix
+ *        given a distance matrix and a spatial decay parameter theta.
+ *
+ * @param mdist Matrix of pairwise distances between spatial locations (p x p)
+ * @param theta Spatial decay parameter (positive scalar)
+ * @return arma::mat Spatial correlation matrix (p x p)
+ */
 // [[Rcpp::export]]
-arma::mat ExpCor(arma::mat &mdist,
-                 double theta){
-  return(exp(-mdist/theta));
+arma::mat ExpCor(const arma::mat& mdist, double theta) {
+  return arma::exp(-mdist / theta);
 }
 
 // assuming no missing observations and no matrix permutations
@@ -196,19 +201,6 @@ arma::mat Omega_one_t(arma::mat & mY_fixed_res,
 // Along with Permutation matrix D definition
 
 /**
- * @brief Computes an exponential spatial correlation matrix
- *        given a distance matrix and a spatial decay parameter theta.
- *
- * @param mdist Matrix of pairwise distances between spatial locations (p x p)
- * @param theta Spatial decay parameter (positive scalar)
- * @return arma::mat Spatial correlation matrix (p x p)
- */
-// [[Rcpp::export]]
-arma::mat ExpCor(const arma::mat& mdist, double theta) {
-  return arma::exp(-mdist / theta);
-}
-
-/**
  * @brief Computes the negative expected complete-data log-likelihood
  *        (up to a constant) for the HDGM model, to be minimized over theta.
  *
@@ -262,8 +254,8 @@ double negative_to_optim(double theta,
 double brent_optimize(const std::function<double(double)>& f,
                       double lower,
                       double upper,
-                      double tol = 1e-5,
-                      int max_iter = 100) {
+                      double tol,
+                      int max_iter) {
   const double golden_ratio = 0.618033988749895;
   double a = lower, b = upper;
   double c = b - golden_ratio * (b - a);
@@ -304,13 +296,14 @@ double ThetaUpdate(const arma::mat& dist_matrix,
                    const arma::mat& S11,
                    double theta0,
                    int N,
-                   double upper = 10.0) {
+                   double lower,
+                   double upper) {
 
   auto obj_fun = [&](double theta) {
     return negative_to_optim(theta, dist_matrix, S00, S10, S11, g, N);
   };
 
-  double result = brent_optimize(obj_fun, 0.001, upper); // avoid theta = 0
+  double result = brent_optimize(obj_fun, lower, upper); // avoid theta = 0
   return result;
 }
 
