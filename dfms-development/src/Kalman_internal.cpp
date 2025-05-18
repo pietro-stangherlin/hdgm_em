@@ -1,8 +1,10 @@
 #include <armadillo>
-#include "helper.h"
 #include <optional>
+#include"Kalman_internal.h"
 
+#include <RcppArmadillo.h>
 // [[Rcpp::depends(RcppArmadillo)]]
+
 
 // Change from github code: swap data matrix columns and rows definition
 // so each observation is read by column (much more efficient in Armadillo)
@@ -11,17 +13,6 @@
 // Adding c++ classes to store c++ reading ready output
 // for each cpp version define also the corresponding Rcpp version
 // which ports the result to a Rcpp::list
-
-
-struct KalmanFilterResult {
-  arma::mat F;         // Filtered state means
-  arma::cube P;        // Filtered state covariances
-  arma::mat F_pred;    // Predicted state means
-  arma::cube P_pred;   // Predicted state covariances
-  arma::mat K_last; // Kalman gain value for the last iteration (used in the smoother first step)
-  arma::mat C_last; // Observation matrix submatrix for non-missing (used in the smoother first step)
-  double loglik;  // Default to NA
-};
 
 
 // Implementation of Kalman filter
@@ -40,7 +31,7 @@ KalmanFilterResult SKF_cpp(arma::mat X,
                            arma::mat R,
                            arma::colvec F_0,
                            arma::mat P_0,
-                           bool retLL = false) {
+                           bool retLL) {
 
   const int n = X.n_rows;
   const int T = X.n_cols;
@@ -147,40 +138,6 @@ KalmanFilterResult SKF_cpp(arma::mat X,
 }
 
 
-// R version
-// [[Rcpp::export]]
-Rcpp::List SKF(const arma::mat& X,
-               const arma::mat& A,
-               const arma::mat& C,
-               const arma::mat& Q,
-               const arma::mat& R,
-               const arma::colvec& F_0,
-               const arma::mat& P_0,
-               bool retLL) {
-
-  KalmanFilterResult res = SKF_cpp(X, A, C, Q, R, F_0, P_0, retLL);
-
-  return Rcpp::List::create(
-    Rcpp::Named("F") = res.F,
-    Rcpp::Named("P") = res.P,
-    Rcpp::Named("F_pred") = res.F_pred,
-    Rcpp::Named("P_pred") = res.P_pred,
-    Rcpp::Named("loglik") = res.loglik
-  );
-}
-
-
-
-struct KalmanSmootherResult {
-  arma::mat F_smooth;       // Smoothed state means
-  arma::cube P_smooth;      // Smoothed state covariances
-  arma::cube Lag_one_cov_smooth; // Lag one smoothed covariances
-  arma::colvec F_smooth_0;  // smoothed initial state mean
-  arma::mat P_smooth_0;     // smoothed initial state covariance
-  bool has_initial_state;  // Flag to indicate if those were set
-};
-
-
 // Runs a Kalman smoother
 // A Transition matrix (rp x rp)
 // ZTf State estimates
@@ -257,26 +214,6 @@ KalmanSmootherResult FIS_cpp(const arma::mat& A,
   };
 }
 
-
-struct KalmanFilterSmootherResult {
-  arma::mat F;             // Filtered means
-  arma::cube P;            // Filtered covariances
-
-  arma::mat F_pred;        // Predicted means
-  arma::cube P_pred;       // Predicted covariances
-
-  arma::mat F_smooth;      // Smoothed means
-  arma::cube P_smooth;     // Smoothed covariances
-
-  arma::colvec F_smooth_0;  // Smoothed initial state
-  arma::mat P_smooth_0;
-
-  arma::cube Lag_one_cov_smooth;   // Lag one state covariances
-  std::optional<double> loglik;  // Optional log-likelihood
-};
-
-
-
 // Kalman Filter and Smoother
 // X Data matrix (n x T)
 // A Transition matrix (rp x rp)
@@ -322,33 +259,4 @@ KalmanFilterSmootherResult SKFS_cpp(const arma::mat& X,
 
   return result;
 }
-
-
-// R version
-// [[Rcpp::export]]
-Rcpp::List SKFS(const arma::mat& X,
-               const arma::mat& A,
-               const arma::mat& C,
-               const arma::mat& Q,
-               const arma::mat& R,
-               const arma::colvec& F_0,
-               const arma::mat& P_0,
-               bool retLL) {
-  KalmanFilterSmootherResult res = SKFS_cpp(X,A,C,Q,R,F_0,P_0,retLL);
-
-  return Rcpp::List::create(
-    Rcpp::Named("F") = res.F,
-    Rcpp::Named("P") = res.P,
-    Rcpp::Named("F_pred") = res.F_pred,
-    Rcpp::Named("P_pred") = res.P_pred,
-    Rcpp::Named("F_smooth") = res.F_smooth,
-    Rcpp::Named("P_smooth") = res.P_smooth,
-    Rcpp::Named("Lag_one_cov_smooth") = res.Lag_one_cov_smooth,
-    Rcpp::Named("loglik") = res.loglik
-  );
-}
-
-
-
-
 

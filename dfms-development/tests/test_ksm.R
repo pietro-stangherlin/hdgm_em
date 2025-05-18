@@ -4,7 +4,7 @@ library(RcppArmadillo)
 library(mvtnorm)
 
 Rcpp::sourceCpp("src/helper.cpp")
-Rcpp::sourceCpp("src/KalmanFiltering.cpp")
+Rcpp::sourceCpp("src/Kalman_wrapper.cpp")
 
 
 # generate some data -------------------
