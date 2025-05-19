@@ -38,5 +38,5 @@ struct KalmanFilterSmootherResult {
   arma::mat P_smooth_0;
 
   arma::cube Lag_one_cov_smooth;   // Lag one state covariances
-  std::optional<double> loglik;  // Optional log-likelihood
+  double loglik = std::numeric_limits<double>::quiet_NaN();  // Optional log-likelihood
 };

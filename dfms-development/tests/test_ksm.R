@@ -9,7 +9,7 @@ Rcpp::sourceCpp("src/Kalman_wrapper.cpp")
 
 # generate some data -------------------
 N <- 1000 # times: t = 1,..,N
-n <- rp <- 10 # y_t dimension
+n <- rp <- 2 # y_t dimension
 # in this case state dimension = rp = n
 
 X <- matrix(NA, nrow = n, ncol = N) # data matrix
@@ -48,7 +48,7 @@ X.t <- t(X)
 # Filter -----------------------------------------
 
 custom.skf.res <- SKF(X = X, A = A, C = C, Q = Q, R = R,
-                F_0 = F_0, P_0 = P_0)
+                F_0 = F_0, P_0 = P_0, retLL = FALSE)
 
 # original library
 original.skf.res <- dfms::SKF(X = t(X), A = A, C = C, Q = Q, R = R,

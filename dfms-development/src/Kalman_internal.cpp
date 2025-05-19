@@ -119,7 +119,8 @@ KalmanFilterResult SKF_cpp(arma::mat X,
       // Compute likelihood. Skip this part if S is not positive definite.
       if(retLL) {
         detS = det(S);
-        if(detS > 0) loglik += log(detS) - arma::conv_to<double>::from(et.t() * S * et) - dn;
+        if(detS > 0) loglik += log(detS) - arma::as_scalar(et.t() * S * et) - dn;
+
       }
 
     } else { // If all missing: just prediction.
