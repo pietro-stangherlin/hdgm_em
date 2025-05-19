@@ -1,7 +1,9 @@
 #include <optional>
-#include"Kalman_internal.h"
-
 #include <armadillo>
+#include <iostream>
+#include <cstdlib> // For atoi
+
+#include"Kalman_internal.h"
 
 
 #ifndef M_PI
@@ -22,30 +24,14 @@
 // so each observation is read by column (much more efficient in Armadillo)
 // instead of by row
 
-// Adding c++ classes to store c++ reading ready output
 
+// Kalman Filter
+// for parameters description see Kalman_types.h
+KalmanFilterResult SKF_cpp(KalmanFilterInput inp) {
 
-// Implementation of Kalman filter
-// X Data matrix (n x T)
-// A Transition matrix (rp x rp)
-// C Observation matrix (n x rp)
-// Q State covariance (rp x rp)
-// R Observation covariance (n x n)
-// F_0 Initial state vector (rp x 1)
-// P_0 Initial state covariance (rp x rp)
-// retLL Return log-likelihood.
-KalmanFilterResult SKF_cpp(arma::mat X,
-                           arma::mat A,
-                           arma::mat C,
-                           arma::mat Q,
-                           arma::mat R,
-                           arma::colvec F_0,
-                           arma::mat P_0,
-                           bool retLL) {
-
-  const int n = X.n_rows;
-  const int T = X.n_cols;
-  const int rp = A.n_rows;
+  const int n = inp.X.n_rows;
+  const int T = inp.X.n_cols;
+  const int rp = inp.A.n_rows;
   int n_c;
 
 
@@ -53,11 +39,11 @@ KalmanFilterResult SKF_cpp(arma::mat X,
   // to avoid confusion between the matrices and their predicted (p) and filtered (f) states.
   // Additionally the results matrices for all time periods have a T in the name.
 
-  double loglik = retLL ? 0.0 : std::nan(""), dn = 0, detS;
-  if (retLL) dn = n * std::log(2.0 * M_PI);
+  double loglik = inp.retLL ? 0.0 : std::nan(""), dn = 0, detS;
+  if (inp.retLL) dn = n * std::log(2.0 * M_PI);
 
-  arma::colvec Zp, Zf = F_0, et, xt;
-  arma::mat K, Vp, Vf = P_0, S, VCt;
+  arma::colvec Zp, Zf = inp.F_0, et, xt;
+  arma::mat K, Vp, Vf = inp.P_0, S, VCt;
 
   // Predicted state mean and covariance
   arma::mat ZTp(rp, T, arma::fill::zeros);
@@ -69,7 +55,7 @@ KalmanFilterResult SKF_cpp(arma::mat X,
 
   // Handling missing values in the filter
   arma::mat Ci, Ri;
-  arma::uvec nmiss, arow = arma::find_finite(A.row(0));
+  arma::uvec nmiss, arow = arma::find_finite(inp.A.row(0));
   if (arow.n_elem == 0) {
     throw std::runtime_error("Missing first row of transition matrix");
   }
@@ -78,23 +64,23 @@ KalmanFilterResult SKF_cpp(arma::mat X,
 
 
     // Run a prediction
-    Zp = A * Zf;
-    Vp = A * Vf * A.t() + Q;
+    Zp = inp.A * Zf;
+    Vp = inp.A * Vf * inp.A.t() + inp.Q;
     Vp += Vp.t(); // Ensure symmetry
     Vp *= 0.5;
 
     // If missing observations are present at some timepoints, exclude the
     // appropriate matrix slices from the filtering procedure.
-    xt = X.col(i);
+    xt = inp.X.col(i);
     nmiss = find_finite(xt);
     n_c = nmiss.n_elem;
     if(n_c > 0) {
       if(n_c == n) {
-        Ci = C;
-        Ri = R;
+        Ci = inp.C;
+        Ri = inp.R;
       } else {
-        Ci = C.submat(nmiss, arow);
-        Ri = R.submat(nmiss, nmiss);
+        Ci = inp.C.submat(nmiss, arow);
+        Ri = inp.R.submat(nmiss, nmiss);
         xt = xt.elem(nmiss);
       }
 
@@ -116,7 +102,7 @@ KalmanFilterResult SKF_cpp(arma::mat X,
       Vf *= 0.5;
 
       // Compute likelihood. Skip this part if S is not positive definite.
-      if(retLL) {
+      if(inp.retLL) {
         detS = det(S);
         if(detS > 0) loglik += log(detS) - arma::as_scalar(et.t() * S * et) - dn;
 
@@ -137,7 +123,7 @@ KalmanFilterResult SKF_cpp(arma::mat X,
   }
 
 
-  if(retLL) loglik *= 0.5;
+  if(inp.retLL) loglik *= 0.5;
 
   return KalmanFilterResult{
     .F = ZTf, // filtered states
@@ -146,35 +132,19 @@ KalmanFilterResult SKF_cpp(arma::mat X,
     .P_pred = VTp, // predicted states variances
     .K_last = K, // Kalman gain last observation
     .C_last = Ci, // Observation matrix submatrix for non-missing (used in the smoother first step)
+    .nc_last = n_c,
     .loglik = loglik
   };
 }
 
+// Kalman Smoother
+// for parameters description see Kalman_types.h
+KalmanSmootherResult FIS_cpp(KalmanSmootherInput inp) {
+  const int T = inp.ZTf.n_cols;
+  const int rp = inp.A.n_rows;
 
-// Runs a Kalman smoother
-// A Transition matrix (rp x rp)
-// ZTf State estimates
-// ZTp State predicted estimates
-// VTf_v Variance estimates
-// VTp_v Predicted variance estimates
-// K Kalman gain last observation
-// Observation matrix submatrix for non-missing (used in the smoother first step)
-// F_0 Initial state vector (rp x 1)
-// P_0 Initial state covariance (rp x rp)
-KalmanSmootherResult FIS_cpp(const arma::mat& A,
-                             const arma::mat& ZTf,
-                             const arma::mat& ZTp,
-                             const arma::cube& VTf,
-                             const arma::cube& VTp,
-                             const arma::mat& K_last,
-                             const arma::mat& C_last,
-                             const arma::colvec& F_0,
-                             const arma::mat& P_0) {
-  const int T = ZTf.n_cols;
-  const int rp = A.n_rows;
-
-  arma::mat Vf = VTf.slice(T-1);
-  arma::mat Vp = VTp.slice(T-1);
+  arma::mat Vf = inp.VTf.slice(T-1);
+  arma::mat Vp = inp.VTp.slice(T-1);
   arma::mat K; // Kalman gain last observation
 
   // Kalman smoothing
@@ -182,40 +152,47 @@ KalmanSmootherResult FIS_cpp(const arma::mat& A,
   arma::cube VsT(rp, rp, T, arma::fill::zeros);
   arma::cube VVsT(rp, rp, T, arma::fill::zeros);
 
-  ZsT.col(T-1) = ZTf.col(T-1);
-  VsT.slice(T-1) = VTf.slice(T-1);
+
+  // populate last smoothed values
+  ZsT.col(T-1) = inp.ZTf.col(T-1); // last smoothed state = filtered state
+  VsT.slice(T-1) = inp.VTf.slice(T-1); // last smoothed state cov = filtered state cov
+
 
   arma::mat Ji, Jimt;
-  arma::mat At = A.t();
+  arma::mat At = inp.A.t();
+
+  K = (inp.nc_last == 0) ? arma::mat(rp, rp, arma::fill::zeros) : inp.K_last * inp.C_last;
+
+  VVsT.slice(T-1) = (arma::eye(rp,rp) - K) * inp.A * inp.VTf.slice(T-2);
 
   // Smoothed state variable and covariance
   for (int t = T - 2; t >= 0; --t) {
-    arma::mat Vf = VTf.slice(t);
-    arma::mat Vp = VTp.slice(t+1);
+    arma::mat Vf = inp.VTf.slice(t);
+    arma::mat Vp = inp.VTp.slice(t+1);
     Ji = Vf * At * inv_sympd(Vp);
 
     arma::mat Jimt = Ji.t();
 
-    ZsT.col(t) = ZTf.col(t) + Ji * (ZsT.col(t+1) - ZTp.col(t+1));
+    ZsT.col(t) = inp.ZTf.col(t) + Ji * (ZsT.col(t+1) - inp.ZTp.col(t+1));
     VsT.slice(t) = Vf + Ji * (VsT.slice(t+1) - Vp) * Jimt;
 
     // Cov(Z_t, Z_t-1): Needed for EM
     if (t > 0) {
-      Jimt = VTf.slice(t-1) * At * inv_sympd(VTp.slice(t));
-      VVsT.slice(t) = VTf.slice(t) * Jimt +
-        Ji * (VVsT.slice(t+1) - A * VTf.slice(t)) * Jimt;
+      Jimt = inp.VTf.slice(t-1) * At * inv_sympd(inp.VTp.slice(t));
+      VVsT.slice(t) = inp.VTf.slice(t) * Jimt +
+        Ji * (VVsT.slice(t+1) - inp.A * inp.VTf.slice(t)) * Jimt;
     }
   }
 
   // Smoothing t = 0
-  Vp = VTp.slice(0);
-  Jimt = P_0 * At * inv_sympd(Vp);
-  VVsT.slice(0) = VTf.slice(0) * Jimt.t() +
-    Ji * (VVsT.slice(1) - A * VTf.slice(0)) * Jimt.t();
+  Vp = inp.VTp.slice(0);
+  Jimt = inp.P_0 * At * inv_sympd(Vp);
+  VVsT.slice(0) = inp.VTf.slice(0) * Jimt.t() +
+    Ji * (VVsT.slice(1) - inp.A * inp.VTf.slice(0)) * Jimt.t();
 
   // Initial smoothed values
-  arma::colvec F_smooth_0 = F_0 + Jimt * (ZsT.col(0) - ZTp.col(0));
-  arma::mat P_smooth_0 = P_0 + Jimt * (VsT.slice(0) - Vp) * Jimt.t();
+  arma::colvec F_smooth_0 = inp.F_0 + Jimt * (ZsT.col(0) - inp.ZTp.col(0));
+  arma::mat P_smooth_0 = inp.P_0 + Jimt * (VsT.slice(0) - Vp) * Jimt.t();
 
 
   return KalmanSmootherResult{
@@ -228,89 +205,91 @@ KalmanSmootherResult FIS_cpp(const arma::mat& A,
 }
 
 // Kalman Filter and Smoother
-// X Data matrix (n x T)
-// A Transition matrix (rp x rp)
-// C Observation matrix (n x rp)
-// Q State covariance (rp x rp)
-// R Observation covariance (n x n)
-// F_0 Initial state vector (rp x 1)
-// P_0 Initial state covariance (rp x rp)
-// retLL 0-no likelihood, 1-standard Kalman Filter, 2-BM14
-KalmanFilterSmootherResult SKFS_cpp(const arma::mat& X,
-                                    const arma::mat& A,
-                                    const arma::mat& C,
-                                    const arma::mat& Q,
-                                    const arma::mat& R,
-                                    const arma::colvec& F_0,
-                                    const arma::mat& P_0,
-                                    bool retLL) {
+// Only Kalman Smoother ouptput is returned
+// for parameters description see Kalman_types.h
+KalmanSmootherResult SKFS_cpp(KalmanFilterInput inp) {
 
-  KalmanFilterResult kf = SKF_cpp(X,A,C,Q,R,F_0,P_0,retLL);
+  KalmanFilterResult kf = SKF_cpp(inp);
 
-  std::cout << "Kalman Filter finished";
+  KalmanSmootherInput ksmin = {
+  .A = inp.A,
+  .ZTf = kf.F,
+  .ZTp = kf.F_pred,
+  .VTf = kf.P,
+  .VTp = kf.P_pred,
+  .K_last = kf.K_last,
+  .C_last = kf.C_last,
+  .F_0 = inp.F_0,
+  .P_0 = inp.P_0,
+  .nc_last = kf.nc_last,
+  };
 
-  KalmanSmootherResult ks = FIS_cpp(A,kf.F,kf.F_pred,kf.P,kf.P_pred,
-                                    kf.K_last,kf.C_last,
-                                    F_0,P_0);
+  std::cout << "Kalman Filter finished\n";
 
-  std::cout << "Kalman Smoother finished";
+  KalmanSmootherResult ks = FIS_cpp(ksmin);
 
+  std::cout << "Kalman Smoother finished\n";
 
-
-  KalmanFilterSmootherResult result;
-  result.F = kf.F;
-  result.P = kf.P;
-
-  result.F_pred = kf.F_pred;
-  result.P_pred = kf.P_pred;
-
-  result.F_smooth = ks.F_smooth;
-  result.P_smooth = ks.P_smooth;
-
-  result.F_smooth_0 = ks.F_smooth_0;
-  result.P_smooth_0 = ks.P_smooth_0;
-
-  result.Lag_one_cov_smooth = ks.Lag_one_cov_smooth;
-  if (retLL)
-    result.loglik = kf.loglik;
-
-  return result;
+  return ks;
 }
 
 
 // Add testing
-int main() {
-  // Example dimensions
-  int T = 10;
-  int n = 2;
+
+
+int main(int argc, char* argv[]) {
+  // Default values
+  int T = 100;
+  int n = 5;
   int m = 2;
 
+  // If arguments are provided, override the defaults
+  if (argc > 1) T = std::atoi(argv[1]);
+  if (argc > 2) n = std::atoi(argv[2]);
+  if (argc > 3) m = std::atoi(argv[3]);
+
+  std::cout << "T = " << T << ", n = " << n << ", m = " << m << std::endl;
   // Simulate small input matrices for testing
-  arma::mat Y = arma::randn(n, T); // observations matrix
-  arma::mat A = arma::randn(m, m); // Transition matrix
-  arma::mat C = arma::eye(n, m); // observation matrix
-  arma::mat R = arma::eye(m, m); // observation error matrix
-  arma::mat H = arma::eye(n, n) * 0.1;
-  arma::vec a1 = arma::zeros(m); // first state
-  arma::mat P1 = arma::eye(m, m); // first state covariance
+  KalmanFilterInput test_kfin{
+  .X = arma::randn(n, T), // observations matrix
+  .A = arma::randn(m, m), // Transition matrix
+  .C = arma::eye(n, m), // observation matrix
+  .Q = arma::eye(m, m) * 0.1, // state covariance error matrix
+  .R = arma::eye(n, n), // observation error covariance matrix
+  .F_0 = arma::zeros(m), // first state
+  .P_0 = arma::eye(m, m), // first state covariance
+  .retLL = true};
 
   bool compute_llik = true;
 
   std::cout << "Kalman Filter: \n";
-  KalmanFilterResult resf = SKF_cpp(Y, A, C, R, H, a1, P1, compute_llik);
+  KalmanFilterResult resf = SKF_cpp(test_kfin);
   std::cout << "Test passed. Log-likelihood: " << resf.loglik;
 
   std::cout << "\n";
 
+  KalmanSmootherInput test_ksmin = {
+    .A = test_kfin.A,
+    .ZTf = resf.F,
+    .ZTp = resf.F_pred,
+    .VTf = resf.P,
+    .VTp = resf.P_pred,
+    .K_last = resf.K_last,
+    .C_last = resf.C_last,
+    .F_0 = test_kfin.F_0,
+    .P_0 = test_kfin.P_0,
+    .nc_last = resf.nc_last,
+  };
+
+  std::cout << "Kalman Smoother: \n";
+  KalmanSmootherResult ressm = FIS_cpp(test_ksmin);
+  std::cout << "Test passed\n";
+
   std::cout << "Kalman Filter and Smoother: \n";
-  KalmanSmootherResult ressm = FIS_cpp(A,
-                                       resf.F, resf.F_pred,
-                                       resf.P, resf.P_pred,
-                                       resf.K_last, resf.C_last,
-                                       a1, P1);
+  KalmanSmootherResult reskfsm = SKFS_cpp(test_kfin);
+  std::cout << "Test passed\n";
 
 
-  std::cout << "Test passed";
   return 0;
 }
 
