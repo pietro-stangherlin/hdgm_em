@@ -18,7 +18,6 @@
 // g++ Kalman_internal.cpp -o Kalman_internal.exe -O2 -std=c++17 -larmadillo -llapack -lblas -lgfortran -lquadmath -static-libgcc -static-libstdc++
 
 
-
 // Change from github code: swap data matrix columns and rows definition
 // so each observation is read by column (much more efficient in Armadillo)
 // instead of by row
@@ -190,7 +189,7 @@ KalmanSmootherResult FIS_cpp(const arma::mat& A,
   arma::mat At = A.t();
 
   // Smoothed state variable and covariance
-  for (int t = T - 1; t >= 0; --t) {
+  for (int t = T - 2; t >= 0; --t) {
     arma::mat Vf = VTf.slice(t);
     arma::mat Vp = VTp.slice(t+1);
     Ji = Vf * At * inv_sympd(Vp);
@@ -248,9 +247,13 @@ KalmanFilterSmootherResult SKFS_cpp(const arma::mat& X,
 
   KalmanFilterResult kf = SKF_cpp(X,A,C,Q,R,F_0,P_0,retLL);
 
+  std::cout << "Kalman Filter finished";
+
   KalmanSmootherResult ks = FIS_cpp(A,kf.F,kf.F_pred,kf.P,kf.P_pred,
                                     kf.K_last,kf.C_last,
                                     F_0,P_0);
+
+  std::cout << "Kalman Smoother finished";
 
 
 
@@ -277,7 +280,37 @@ KalmanFilterSmootherResult SKFS_cpp(const arma::mat& X,
 
 // Add testing
 int main() {
-  std::cout << "hello";
+  // Example dimensions
+  int T = 10;
+  int n = 2;
+  int m = 2;
+
+  // Simulate small input matrices for testing
+  arma::mat Y = arma::randn(n, T); // observations matrix
+  arma::mat A = arma::randn(m, m); // Transition matrix
+  arma::mat C = arma::eye(n, m); // observation matrix
+  arma::mat R = arma::eye(m, m); // observation error matrix
+  arma::mat H = arma::eye(n, n) * 0.1;
+  arma::vec a1 = arma::zeros(m); // first state
+  arma::mat P1 = arma::eye(m, m); // first state covariance
+
+  bool compute_llik = true;
+
+  std::cout << "Kalman Filter: \n";
+  KalmanFilterResult resf = SKF_cpp(Y, A, C, R, H, a1, P1, compute_llik);
+  std::cout << "Test passed. Log-likelihood: " << resf.loglik;
+
+  std::cout << "\n";
+
+  std::cout << "Kalman Filter and Smoother: \n";
+  KalmanSmootherResult ressm = FIS_cpp(A,
+                                       resf.F, resf.F_pred,
+                                       resf.P, resf.P_pred,
+                                       resf.K_last, resf.C_last,
+                                       a1, P1);
+
+
+  std::cout << "Test passed";
   return 0;
 }
 

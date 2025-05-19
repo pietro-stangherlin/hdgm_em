@@ -20,7 +20,6 @@ struct KalmanSmootherResult {
   arma::cube Lag_one_cov_smooth; // Lag one smoothed covariances
   arma::colvec F_smooth_0;  // smoothed initial state mean
   arma::mat P_smooth_0;     // smoothed initial state covariance
-  bool has_initial_state;  // Flag to indicate if those were set
 };
 
 
