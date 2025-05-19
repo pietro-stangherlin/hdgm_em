@@ -1,9 +1,22 @@
-#include <armadillo>
 #include <optional>
 #include"Kalman_internal.h"
 
-#include <RcppArmadillo.h>
-// [[Rcpp::depends(RcppArmadillo)]]
+#include <armadillo>
+
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+
+// Compile with: (delete the //)
+//g++ Kalman_internal.cpp -o Kalman_internal.exe -O2 -std=c++17 \
+//-larmadillo -llapack -lblas -lgfortran -lquadmath             \
+// -static-libgcc -static-libstdc++
+
+// one liner compile
+// g++ Kalman_internal.cpp -o Kalman_internal.exe -O2 -std=c++17 -larmadillo -llapack -lblas -lgfortran -lquadmath -static-libgcc -static-libstdc++
+
 
 
 // Change from github code: swap data matrix columns and rows definition
@@ -11,8 +24,6 @@
 // instead of by row
 
 // Adding c++ classes to store c++ reading ready output
-// for each cpp version define also the corresponding Rcpp version
-// which ports the result to a Rcpp::list
 
 
 // Implementation of Kalman filter
@@ -43,8 +54,9 @@ KalmanFilterResult SKF_cpp(arma::mat X,
   // to avoid confusion between the matrices and their predicted (p) and filtered (f) states.
   // Additionally the results matrices for all time periods have a T in the name.
 
-  double loglik = retLL ? 0 : NA_REAL, dn = 0, detS;
-  if(retLL) dn = n * log(2.0 * arma::datum::pi);
+  double loglik = retLL ? 0.0 : std::nan(""), dn = 0, detS;
+  if (retLL) dn = n * std::log(2.0 * M_PI);
+
   arma::colvec Zp, Zf = F_0, et, xt;
   arma::mat K, Vp, Vf = P_0, S, VCt;
 
@@ -58,9 +70,10 @@ KalmanFilterResult SKF_cpp(arma::mat X,
 
   // Handling missing values in the filter
   arma::mat Ci, Ri;
-  arma::uvec nmiss, arow = find_finite(A.row(0));
-  if(arow.n_elem == 0) Rcpp::stop("Missing first row of transition matrix");
-
+  arma::uvec nmiss, arow = arma::find_finite(A.row(0));
+  if (arow.n_elem == 0) {
+    throw std::runtime_error("Missing first row of transition matrix");
+  }
 
   for (int i = 0; i < T; ++i) {
 
@@ -259,4 +272,12 @@ KalmanFilterSmootherResult SKFS_cpp(const arma::mat& X,
 
   return result;
 }
+
+
+// Add testing
+int main() {
+  std::cout << "hello";
+  return 0;
+}
+
 

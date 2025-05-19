@@ -1,6 +1,5 @@
 #pragma once
 
-#include<armadillo>
 #include"Kalman_types.h"
 
 

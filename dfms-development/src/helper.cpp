@@ -1,6 +1,5 @@
 #include <RcppArmadillo.h>
 #include "helper.h"
-#include <Rcpp.h>
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
