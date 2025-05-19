@@ -4,7 +4,6 @@ library(RcppArmadillo)
 library(mvtnorm)
 
 Rcpp::sourceCpp("src/helper.cpp")
-Rcpp::sourceCpp("src/Kalman_wrapper.cpp")
 
 
 # generate some data -------------------
@@ -20,7 +19,7 @@ Q <- diag(1, rp) # state covariance
 R <- diag(0.1, n) # Observation covariance (n x n)
 
 
-F_0 <- rep(0, rp) # Initial state vector (rp x 1)
+F_0 <- as.vector(c(0, 0))  # Initial state vector (rp x 1)
 P_0 <- diag(0.5, rp) # Initial state covariance (rp x rp)
 
 set.seed(123)
@@ -48,8 +47,10 @@ X.t <- t(X)
 # Filter -----------------------------------------
 
 # original library
-original.skf.res <- dfms::SKF(X = t(X), A = A, C = C, Q = Q, R = R,
+original.skf.res <- dfms::SKF(X = X.t, A = A, C = C, Q = Q, R = R,
                               F_0 = F_0, P_0 = P_0)
+
+Rcpp::sourceCpp("src/Kalman_wrapper.cpp")
 
 custom.skf.res <- SKF(X = X, A = A, C = C, Q = Q, R = R,
                 F_0 = F_0, P_0 = P_0, retLL = FALSE)

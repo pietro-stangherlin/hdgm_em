@@ -2,8 +2,8 @@
 
 #include"Kalman_types.h"
 
-KalmanFilterResult SKF_cpp(KalmanFilterInput inp);
+KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp);
 
-KalmanSmootherResult FIS_cpp(KalmanSmootherInput inp);
+KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp);
 
-KalmanSmootherResult SKFS_cpp(KalmanFilterInput inp);
+KalmanSmootherResult SKFS_cpp(const KalmanFilterInput& kfsm_inp);
