@@ -1,4 +1,4 @@
-
+#include <armadillo>
 
 arma::mat ExpCor(const arma::mat& mdist,
                  double theta);
@@ -47,6 +47,9 @@ double ThetaUpdate(const arma::mat& dist_matrix,
                    int N,
                    double lower = 0.00001,
                    double upper = 10.0);
+
+double Sigma2Update(const arma::cube& Omega,
+                    const int n);
 
 arma::vec BetaUpdate(const arma::cube& Xbeta,
                      const arma::mat& y,

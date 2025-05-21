@@ -18,7 +18,6 @@ int EMHDGM(EMInput em_in) {
 
   int q = em_in.beta0.n_elem;
 
-
   double alpha_temp = em_in.alpha0;
   double theta_temp = em_in.theta0;
   double g_temp = em_in.g0;
@@ -47,7 +46,7 @@ int EMHDGM(EMInput em_in) {
 
     mXbeta_sum.zeros(p, p);
     for (int t = 0; t < T; ++t) {
-      mXbeta_sum += em_in.Xbeta.slice(t).t() * em_in.Xbeta.slice(t);
+      mXbeta_sum += (*em_in.Xbeta).slice(t).t() * (*em_in.Xbeta).slice(t);
     }
     m_inv_mXbeta_sum = arma::inv_sympd(mXbeta_sum);
   }
@@ -62,7 +61,7 @@ int EMHDGM(EMInput em_in) {
     arma::mat y_res = em_in.y;
     if (is_fixed_effect) {
       for (int t = 0; t < T; ++t) {
-        y_res.col(t) -= em_in.Xbeta.slice(t) * beta_temp;
+        y_res.col(t) -= (*em_in.Xbeta).slice(t) * beta_temp;
       }
     }
 

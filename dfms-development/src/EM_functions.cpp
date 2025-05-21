@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 
-#include <'EM_functions.h'>
+#include "EM_functions.h"
 
 // Temp file
 
@@ -196,8 +196,18 @@ arma::mat Omega_one_t(const arma::mat & mY_fixed_res,
 
 }
 
+
 // TO DO: Omega_t function in case there are some missing observations
 // Along with Permutation matrix D definition
+
+double Sigma2Update(const arma::cube& Omega,
+                    const int n){ // dimension of observation vector
+  int T = Omega.n_slices;
+
+  // TO DO: take sum of traces instead of trace of sums
+  arma::mat summed = arma::sum(Omega, 2); // sum along slices
+  return (arma::trace(summed) / (T * n));
+};
 
 /**
  * @brief Computes the negative expected complete-data log-likelihood
