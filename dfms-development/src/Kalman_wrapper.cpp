@@ -17,6 +17,15 @@ Rcpp::List SKF(const arma::mat& X,
   std::cout << "X dims: " << X.n_rows << " x " << X.n_cols << std::endl;
   std::cout << "Address of X memory: " << X.memptr() << std::endl;
 
+  // KalmanFilterInputByValue inp_val{.X = X,
+                        //.A = A,
+                        //.C = C,
+                        //.Q = Q,
+                        //.R = R,
+                        //.F_0 = F_0,
+                        //.P_0 = P_0,
+                        //.retLL = retLL};
+
 
   // make input struct
   KalmanFilterInput inp{.X = X,
@@ -49,13 +58,13 @@ Rcpp::List SKF(const arma::mat& X,
 
 // R version
 // [[Rcpp::export]]
-Rcpp::List SKFS(const arma::mat X,
-                const arma::mat A,
-                const arma::mat C,
-                const arma::mat Q,
-                const arma::mat R,
-                const arma::vec F_0,
-                const arma::mat P_0) {
+Rcpp::List SKFS(const arma::mat& X,
+                const arma::mat& A,
+                const arma::mat& C,
+                const arma::mat& Q,
+                const arma::mat& R,
+                const arma::vec& F_0,
+                const arma::mat& P_0) {
 
   // make input struct
   KalmanFilterInput inp{.X = X,

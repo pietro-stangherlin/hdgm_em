@@ -1,4 +1,4 @@
-#include <RcppArmadillo.h>
+#include <armadillo>
 #include <stdio.h>
 #include <functional>
 #include <cmath>
@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 
-using namespace std;
+#include <'EM_functions.h'>
 
 // Temp file
 
@@ -45,7 +45,6 @@ arma::mat ExpCor(const arma::mat& mdist,
  *  each of those is accessed by cPsm.slice(t)
  */
 
-// [[Rcpp::export]]
 double AlphaUpdate(const arma::mat & mY_fixed_res,
                    const arma::mat & mZ,
                    const arma::mat & mXz,
@@ -78,7 +77,7 @@ double AlphaUpdate(const arma::mat & mY_fixed_res,
 * of the nondiffuse part of the initial state vector.
 * @return (matrix) m x m
 */
-// [[Rcpp::export]]
+
 arma::mat ComputeS00(const arma::mat & smoothed_states,
                      const arma::cube & smoothed_vars,
                      const arma::vec & z0,
@@ -106,7 +105,7 @@ arma::mat ComputeS00(const arma::mat & smoothed_states,
 * of the nondiffuse part of the initial state vector.
 * @return (matrix) m x m
 */
-// [[Rcpp::export]]
+
 arma::mat ComputeS11(const arma::mat & smoothed_states,
                      const arma::cube & smoothed_vars,
                      const arma::mat & S00,
@@ -127,7 +126,7 @@ arma::mat ComputeS11(const arma::mat & smoothed_states,
 * @param z0 (matrix) z0: starting value m x 1 matrix (i.e. vector) containing the expected values of the initial states
 * @return (matrix) m x m
 */
-// [[Rcpp::export]]
+
 arma::mat ComputeS10(const arma::mat & smoothed_states,
                      const arma::cube & lagone_smoothed_covars,
                      const arma::vec & z0){
@@ -160,7 +159,7 @@ arma::mat ComputeS10(const arma::mat & smoothed_states,
 *
 * @return (num)
 */
-// [[Rcpp::export]]
+
 double gUpdate(const arma::mat & S00,
                const arma::mat & S10){
   return(arma::sum(arma::trace(S10)) / arma::sum(arma::trace(S00)));
@@ -183,7 +182,7 @@ double gUpdate(const arma::mat & S00,
 * @param Xzt (matrix) (s x s) unscaled transfer matrix at time t
 * @param Pt (matrix): (s x s) matrix of smoothed state variance at time t
 */
-// [[Rcpp::export]]
+
 arma::mat Omega_one_t(const arma::mat & mY_fixed_res,
                       const arma::vec & vZt,
                       const arma::mat & mXz,
@@ -213,7 +212,7 @@ arma::mat Omega_one_t(const arma::mat & mY_fixed_res,
  * @param N Number of time observations (T)
  * @return double The value of the negative objective function at given theta
  */
-// [[Rcpp::export]]
+
 double negative_to_optim(double theta,
                          const arma::mat& dist_matrix,
                          const arma::mat& S00,
@@ -250,7 +249,7 @@ double negative_to_optim(double theta,
  * @param max_iter Maximum number of iterations
  * @return double The value of theta that minimizes the objective function
  */
-// [[Rcpp::export]]
+
 double brent_optimize(const std::function<double(double)>& f,
                       double lower,
                       double upper,
@@ -288,7 +287,6 @@ double brent_optimize(const std::function<double(double)>& f,
  * @param upper Upper bound for theta in optimization
  * @return double Optimized value of theta that minimizes the objective
  */
-// [[Rcpp::export]]
 double ThetaUpdate(const arma::mat& dist_matrix,
                    double g,
                    const arma::mat& S00,
@@ -322,7 +320,6 @@ double ThetaUpdate(const arma::mat& dist_matrix,
  *
  * @return arma::vec Estimated fixed-effect coefficients (p x 1)
  */
-// [[Rcpp::export]]
 arma::vec BetaUpdate(const arma::cube& Xbeta,  // T elements of (q x p)
                      const arma::mat& y,                    // (q x T)
                      const arma::mat& z,                    // (s x T)

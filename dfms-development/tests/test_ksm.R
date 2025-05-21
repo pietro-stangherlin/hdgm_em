@@ -3,7 +3,8 @@ library(Rcpp)
 library(RcppArmadillo)
 library(mvtnorm)
 
-Rcpp::sourceCpp("src/helper.cpp")
+# NOT USED
+# Rcpp::sourceCpp("src/helper.cpp")
 
 
 # generate some data -------------------

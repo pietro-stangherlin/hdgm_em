@@ -1,52 +1,42 @@
-#include <RcppArmadillo.h>
+#include <armadillo>
 #include <stdio.h>
-#include<"EM_functions.h">
-#include<"KalmanFiltering.h">
 
-using namespace std;
+#include "Kalman_internal.h"
+#include "EM_functions.h"
+#include "EM_algorithm.h"
 
 
 // assuming no missing observations and no matrix permutations
-
-// [[Rcpp::export]]
-Rcpp::List EMHDGM(const arma::mat& y,
-                  const arma::mat& dist_matrix,
-                  double alpha0,
-                  const arma::vec& beta0,
-                  double theta0,
-                  double g0,
-                  double sigma20,
-                  Nullable<arma::cube> Xbeta = R_NilValue,
-                  Nullable<arma::vec> z0_in = R_NilValue,
-                  Nullable<arma::mat> P0_in = R_NilValue,
-                  int max_iter = 10,
-                  double sigma2_lower = 0.00001,
-                  double sigma2_upper = 10.0,
-                  bool verbose = true) {
+// temporarely return integer, then return all parameters
+int EMHDGM(EMInput em_in) {
 
   // Setup
-  bool is_fixed_effect = Xbeta.isNotNull();
-  int q = y.n_rows;
-  int T = y.n_cols;
-  int p = beta0.n_elem;
+  bool is_fixed_effect = em_in.Xbeta.has_value();
 
-  arma::vec beta_temp = beta0;
-  double alpha_temp = alpha0;
-  double theta_temp = theta0;
-  double g_temp = g0;
-  double sigma2_temp = sigma20;
+  int p = em_in.y.n_rows;
+  int T = em_in.y.n_cols;
 
-  arma::mat param_history(max_iter + 1, 4, arma::fill::zeros);
-  param_history.row(0) = arma::rowvec({alpha_temp, theta_temp, g_temp, sigma2_temp});
+  int q = em_in.beta0.n_elem;
 
-  arma::mat beta_iter_history;
-  if (is_fixed_effect)
-    beta_iter_history.set_size(max_iter + 1, p);
-  if (is_fixed_effect)
-    beta_iter_history.row(0) = beta_temp.t();
 
-  arma::vec z0 = z0_in.isNotNull() ? as<arma::vec>(z0_in) : arma::vec(q, arma::fill::zeros);
-  arma::mat P0 = P0_in.isNotNull() ? as<arma::mat>(P0_in) : arma::eye(q, q);
+  double alpha_temp = em_in.alpha0;
+  double theta_temp = em_in.theta0;
+  double g_temp = em_in.g0;
+  double sigma2_temp = em_in.sigma20;
+
+  arma::vec beta_temp = em_in.beta0;
+
+  //arma::mat param_history(max_iter + 1, 4, arma::fill::zeros);
+  //param_history.row(0) = arma::rowvec({alpha_temp, theta_temp, g_temp, sigma2_temp});
+
+  //arma::mat beta_iter_history;
+  //if (is_fixed_effect)
+    //beta_iter_history.set_size(max_iter + 1, p);
+  //if (is_fixed_effect)
+    //beta_iter_history.row(0) = beta_temp.t();
+
+  arma::vec z0 = em_in.z0_in.has_value() ? *em_in.z0_in : arma::vec(q, arma::fill::zeros);
+  arma::mat P0 = em_in.P0_in.has_value() ? *em_in.P0_in : arma::eye(q, q);
   arma::mat Xz = arma::eye(q, q);  // Transfer matrix
 
   // Precompute fixed-effects sum
@@ -57,44 +47,48 @@ Rcpp::List EMHDGM(const arma::mat& y,
 
     mXbeta_sum.zeros(p, p);
     for (int t = 0; t < T; ++t) {
-      mXbeta_sum += Xbeta.slice(t).t() * Xbeta.slice(t);
+      mXbeta_sum += em_in.Xbeta.slice(t).t() * em_in.Xbeta.slice(t);
     }
     m_inv_mXbeta_sum = arma::inv_sympd(mXbeta_sum);
   }
 
   // EM iterations
-  for (int iter = 0; iter < max_iter; ++iter) {
+  for (int iter = 0; iter < em_in.max_iter; ++iter) {
 
-    if (verbose)
-      Rcout << "Iteration " << iter << std::endl;
+    if (em_in.verbose)
+      std::cout << "Iteration " << iter << std::endl;
 
     // Subtract fixed effects
-    arma::mat y_res = y;
+    arma::mat y_res = em_in.y;
     if (is_fixed_effect) {
       for (int t = 0; t < T; ++t) {
-        y_res.col(t) -= Xbeta.slice(t) * beta_temp;
+        y_res.col(t) -= em_in.Xbeta.slice(t) * beta_temp;
       }
     }
 
     // Update Q
-    arma::mat Q_temp = exp(-theta_temp * dist_matrix);
+    arma::mat Q_temp = exp(-theta_temp * em_in.dist_matrix);
 
     // Kalman Smoother pass
-    List ksm_res = SKFS(y_res.t(),             // X
-                        g_temp * arma::eye(q, q), // A
-                        alpha_temp * Xz,       // C
-                        Q_temp,                // Q
-                        sigma2_temp * arma::eye(q, q), // R
-                        z0,                    // F_0
-                        P0);                   // P_0
 
-    // TO DO: check if this is overhead
-    // maybe the SKFS output ha to be redefined...
-    arma::mat z_smooth = as<arma::mat>(ksm_res["F_smooth"]).t();
-    arma::cube z_smooth_var = as<arma::cube>(ksm_res["P_smooth"]);
-    arma::mat z0_smooth = as<arma::mat>(ksm_res["F_smooth_0"]).t();
-    arma::mat P0_smooth = as<arma::mat>(ksm_res["P_smooth_0"]);
-    arma::cube lag1_cov = as<arma::cube>(ksm_res["PPm_smooth"]);
+    KalmanFilterInput kfin{
+      .X = em_in.y, // observations matrix
+      .A = g_temp *arma::eye(q, q), // Transition matrix
+      .C = alpha_temp * arma::eye(p, q), // observation matrix
+      .Q = Q_temp, // state covariance error matrix
+      .R = sigma2_temp * arma::eye(p, p), // observation error covariance matrix
+      .F_0 = z0, // first state
+      .P_0 = P0, // first state covariance
+      .retLL = true};
+
+    KalmanSmootherResult ksm_res = SKFS_cpp(kfin);
+
+    // TO DO: revwies assignemt
+    arma::mat& z_smooth = ksm_res.F_smooth;
+    arma::cube& z_smooth_var = ksm_res.P_smooth;
+    arma::mat& z0_smooth = ksm_res.F_smooth_0;
+    arma::mat& P0_smooth = ksm_res.P_smooth_0;
+    arma::cube& lag1_cov =  ksm_res.Lag_one_cov_smooth;
 
     // S matrices
     arma::mat S00 = ComputeS00(z_smooth , z_smooth_var, z0_smooth, P0_smooth);
@@ -102,40 +96,34 @@ Rcpp::List EMHDGM(const arma::mat& y,
     arma::mat S10 = ComputeS10(z_smooth, lag1_cov, z0_smooth);
 
     // Sigma2 update
-    sigma2_temp = Sigma2Update(y, z_smooth, alpha_temp, Xz);
+    sigma2_temp = Sigma2Update(em_in.y, z_smooth, alpha_temp, Xz);
 
     // Alpha update
-    alpha_temp = AlphaUpdate(y, z_smooth, Xbeta, beta_temp, Xz, z_smooth_var);
+    alpha_temp = AlphaUpdate(em_in.y, z_smooth, em_in.Xbeta, beta_temp, Xz, z_smooth_var);
 
     // Beta update
     if (is_fixed_effect) {
-      beta_temp = BetaUpdate(as<arma::cube>(Xbeta), y, z_smooth, alpha_temp, Xz, m_inv_mXbeta_sum);
-      beta_iter_history.row(iter + 1) = beta_temp.t();
+      beta_temp = BetaUpdate(em_in.Xbeta, em_in.y, z_smooth, alpha_temp, Xz, m_inv_mXbeta_sum);
+      // beta_iter_history.row(iter + 1) = beta_temp.t();
     }
 
     // Theta update (optimization)
-    theta_temp = ThetaUpdate(dist_matrix, g_temp, S00, S10, S11, theta_temp,
-                             T, sigma2_upper, sigma2_do_plot_objective);
+    theta_temp = ThetaUpdate(em_in.dist_matrix, g_temp,
+                             S00, S10, S11,
+                             theta_temp,
+                             T, em_in.sigma2_lower, em_in.sigma2_upper);
 
     // g update
     g_temp = gUpdate(S00, S10);
 
     // Track parameters
-    param_history.row(iter + 1) = arma::rowvec({alpha_temp, theta_temp, g_temp, sigma2_temp});
+    // param_history.row(iter + 1) = arma::rowvec({alpha_temp, theta_temp, g_temp, sigma2_temp});
   }
 
   // Assemble return
-  List out = List::create(
-    Named("alpha") = alpha_temp,
-    Named("beta") = beta_temp,
-    Named("theta") = theta_temp,
-    Named("g") = g_temp,
-    Named("sigma2") = sigma2_temp,
-    Named("iter_history") = param_history
-  );
 
-  if (is_fixed_effect)
-    out["beta_iter_history"] = beta_iter_history;
+  // if (is_fixed_effect)
+    //out["beta_iter_history"] = beta_iter_history;
 
-  return out;
+  return 0;
 }
