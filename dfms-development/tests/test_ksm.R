@@ -53,8 +53,18 @@ original.skf.res <- dfms::SKF(X = X.t, A = A, C = C, Q = Q, R = R,
 
 Rcpp::sourceCpp("src/Kalman_wrapper.cpp")
 
-custom.skf.res <- SKF(X = X, A = A, C = C, Q = Q, R = R,
-                F_0 = F_0, P_0 = P_0, retLL = FALSE)
+# NOT working: memory issues
+# custom.skf.res <- SKF(X = X, A = A, C = C, Q = Q, R = R,
+#                 F_0 = F_0, P_0 = P_0, retLL = FALSE)
+
+custom.skf.res.debug <- SKFDEBUG(X, # observation matrix: each observation is a column
+                            A, # state transition matrix
+                            C, # observation matrix
+                            Q, # state covariance error matrix
+                            R, # observation error covariance matrix
+                            F_0, # initial state
+                            P_0, # initial state covariance
+                            TRUE)
 
 
 # benchmark
@@ -93,8 +103,9 @@ CustomFilterBench(b = B)
 custom.skfs.res <- SKFS(X = X, A = A, C = C, Q = Q, R = R,
                       F_0 = F_0, P_0 = P_0)
 
-original.skfs.res <- dfms::SKFS(X = t(X), A = A, C = C, Q = Q, R = R,
-                              F_0 = F_0, P_0 = P_0)
+# NOT working: memory issues
+# original.skfs.res <- dfms::SKFS(X = t(X), A = A, C = C, Q = Q, R = R,
+#                               F_0 = F_0, P_0 = P_0)
 
 # check equivalence
 custom.skfs.res$F_smooth[,1:5] == t(original.skfs.res$F_smooth[1:5,])

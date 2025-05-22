@@ -23,6 +23,7 @@ int EMHDGM(EMInput em_in) {
   double g_temp = em_in.g0;
   double sigma2_temp = em_in.sigma20;
 
+
   arma::vec beta_temp = em_in.beta0;
 
   //arma::mat param_history(max_iter + 1, 4, arma::fill::zeros);
@@ -117,7 +118,14 @@ int EMHDGM(EMInput em_in) {
 
     // Beta update
     if (is_fixed_effect) {
-      beta_temp = BetaUpdate(em_in.Xbeta, em_in.y, z_smooth, alpha_temp, Xz, m_inv_mXbeta_sum);
+      const arma::cube& Xbeta_val = *(em_in.Xbeta);
+      beta_temp = BetaUpdate(Xbeta_val,
+                             em_in.y,
+                             z_smooth,
+                             alpha_temp,
+                             Xz,
+                             m_inv_mXbeta_sum);
+
       // beta_iter_history.row(iter + 1) = beta_temp.t();
     }
 
