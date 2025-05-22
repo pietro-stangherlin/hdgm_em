@@ -32,6 +32,12 @@ arma::mat Omega_one_t(const arma::vec & vY_fixed_res_t,
                       const arma::mat & mPsmt,
                       double alpha);
 
+arma::mat OmegaSumUpdate(const arma::mat & mY_fixed_res,
+                         const arma::mat & Zt,
+                         const arma::mat & mXz,
+                         const arma::cube & cPsmt,
+                         double alpha);
+
 double brent_optimize(const std::function<double(double)>& f,
                       double lower,
                       double upper,
@@ -48,8 +54,9 @@ double ThetaUpdate(const arma::mat& dist_matrix,
                    double lower = 0.00001,
                    double upper = 10.0);
 
-double Sigma2Update(const arma::cube& Omega,
-                    const int n);
+double Sigma2Update(const arma::mat& Omega_sum,
+                    const int n,
+                    const int T);
 
 arma::vec BetaUpdate(const arma::cube& Xbeta,
                      const arma::mat& y,

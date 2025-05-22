@@ -69,7 +69,9 @@ int EMHDGM(EMInput em_in) {
     // Update Q
     arma::mat Q_temp = exp(-theta_temp * em_in.dist_matrix);
 
+    ///////////////////////
     // Kalman Smoother pass
+    ///////////////////////
 
     KalmanFilterInput kfin{
       .X = em_in.y, // observations matrix
@@ -95,14 +97,23 @@ int EMHDGM(EMInput em_in) {
     arma::mat S11 = ComputeS11(z_smooth, z_smooth_var, S00, z0_smooth, P0_smooth);
     arma::mat S10 = ComputeS10(z_smooth, lag1_cov, z0_smooth);
 
+    //////////////////////////
+    // EM parameters updates
+    /////////////////////////
+
     // Omega Update
+    arma::mat omega_sum_temp = OmegaSumUpdate(y_res, // residual minus fixed effect
+                                              z_smooth,
+                                              Xz,
+                                              z_smooth_var,
+                                              alpha_temp);
 
 
     // Sigma2 update
-    sigma2_temp = Sigma2Update(em_in.y, z_smooth, alpha_temp, Xz);
+    sigma2_temp = Sigma2Update(omega_sum_temp, p, T);
 
     // Alpha update
-    alpha_temp = AlphaUpdate(em_in.y, z_smooth, em_in.Xbeta, beta_temp, Xz, z_smooth_var);
+    alpha_temp = AlphaUpdate(em_in.y, z_smooth, Xz, z_smooth_var);
 
     // Beta update
     if (is_fixed_effect) {

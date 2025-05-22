@@ -111,7 +111,6 @@ arma::mat ComputeS11(const arma::mat & smoothed_states,
                      const arma::mat & S00,
                      const arma::vec & z0,
                      const arma::mat & P0){
-
   int T = z0.n_cols;
 
   return(S00 - z0 * z0.t() - P0 +
@@ -203,7 +202,7 @@ arma::mat Omega_one_t(const arma::vec & vY_fixed_res_t,
 // NOTE: maybe it's also possible to define it just as a matrix
 // considering only the elements in the diagonal
 // since then the trace is taken
-arma::mat UpdateOmega(const arma::mat & mY_fixed_res,
+arma::mat OmegaSumUpdate(const arma::mat & mY_fixed_res,
                         const arma::mat & Zt,
                         const arma::mat & mXz,
                         const arma::cube & cPsmt,
@@ -228,13 +227,12 @@ arma::mat UpdateOmega(const arma::mat & mY_fixed_res,
 
 };
 
-double Sigma2Update(const arma::cube& Omega,
-                    const int n){ // dimension of observation vector
-  int T = Omega.n_slices;
+double Sigma2Update(const arma::mat& Omega_sum,
+                    const int n, // dimension of observation vector
+                    const int T){ // number of observations
 
   // TO DO: take sum of traces instead of trace of sums
-  arma::mat summed = arma::sum(Omega, 2); // sum along slices
-  return (arma::trace(summed) / (T * n));
+  return (arma::trace(Omega_sum) / (T * n));
 };
 
 /**

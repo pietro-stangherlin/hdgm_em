@@ -9,7 +9,7 @@ Rcpp::List SKF(const arma::mat& X,
                const arma::mat& C,
                const arma::mat& Q,
                const arma::mat& R,
-               const arma::colvec& F_0,
+               const arma::vec& F_0,
                const arma::mat& P_0,
                bool retLL) {
 

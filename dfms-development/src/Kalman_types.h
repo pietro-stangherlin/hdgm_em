@@ -1,5 +1,4 @@
 #pragma once
-
 #include<armadillo>
 #include<optional>
 
@@ -17,9 +16,10 @@ struct KalmanFilterInput {
   const arma::mat& C; // observation matrix
   const arma::mat& Q; // state covariance error matrix
   const arma::mat& R; // observation error covariance matrix
-  const arma::colvec& F_0; // initial state
+  const arma::vec& F_0; // initial state
   const arma::mat& P_0; // initial state covariance
   bool retLL;
+
 };
 
 // USED ONLY IN RCPP wrapper
