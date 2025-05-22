@@ -26,7 +26,7 @@ arma::mat ComputeS10(const arma::mat & smoothed_states,
 double gUpdate(const arma::mat & S00,
                const arma::mat & S10);
 
-arma::mat Omega_one_t(const arma::mat & mY_fixed_res,
+arma::mat Omega_one_t(const arma::vec & vY_fixed_res_t,
                       const arma::vec & vZt,
                       const arma::mat & mXz,
                       const arma::mat & mPsmt,

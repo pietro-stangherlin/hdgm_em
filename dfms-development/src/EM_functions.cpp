@@ -183,22 +183,50 @@ double gUpdate(const arma::mat & S00,
 * @param Pt (matrix): (s x s) matrix of smoothed state variance at time t
 */
 
-arma::mat Omega_one_t(const arma::mat & mY_fixed_res,
+arma::mat Omega_one_t(const arma::vec & vY_fixed_res_t,
                       const arma::vec & vZt,
                       const arma::mat & mXz,
                       const arma::mat & mPsmt,
                       double alpha){
 
-  arma::vec res = mY_fixed_res - alpha * mXz * vZt;
+  arma::vec res = vY_fixed_res_t - alpha * mXz * vZt;
 
     return (res * res.t() +
             alpha * alpha * mXz * mPsmt * mXz.t());
 
 }
 
-
 // TO DO: Omega_t function in case there are some missing observations
 // Along with Permutation matrix D definition
+
+// here assuming NOT missing values
+// NOTE: maybe it's also possible to define it just as a matrix
+// considering only the elements in the diagonal
+// since then the trace is taken
+arma::mat UpdateOmega(const arma::mat & mY_fixed_res,
+                        const arma::mat & Zt,
+                        const arma::mat & mXz,
+                        const arma::cube & cPsmt,
+                        double alpha){
+
+  int T = mY_fixed_res.n_cols;
+  int n = mY_fixed_res.n_rows;
+
+
+  arma::mat Omega_sum(n, n, arma::fill::zeros);
+
+  for(int t = 0; t < T; t++){
+    Omega_sum += Omega_one_t(mY_fixed_res.col(t),
+                             Zt.col(t),
+                             mXz,
+                             cPsmt.slice(t),
+                             alpha);
+  };
+
+  return(Omega_sum);
+
+
+};
 
 double Sigma2Update(const arma::cube& Omega,
                     const int n){ // dimension of observation vector

@@ -39,12 +39,13 @@ int EMHDGM(EMInput em_in) {
   arma::mat Xz = arma::eye(q, q);  // Transfer matrix
 
   // Precompute fixed-effects sum
+
+  // allocate here as a temp scope fix
+  arma::mat mXbeta_sum(q, q, arma::fill::zeros);
+  arma::mat m_inv_mXbeta_sum;
+
   if (is_fixed_effect) {
 
-    arma::mat mXbeta_sum;
-    arma::mat m_inv_mXbeta_sum;
-
-    mXbeta_sum.zeros(p, p);
     for (int t = 0; t < T; ++t) {
       mXbeta_sum += (*em_in.Xbeta).slice(t).t() * (*em_in.Xbeta).slice(t);
     }
@@ -82,7 +83,7 @@ int EMHDGM(EMInput em_in) {
 
     KalmanSmootherResult ksm_res = SKFS_cpp(kfin);
 
-    // TO DO: revwies assignemt
+    // TO DO: review assignemt
     arma::mat& z_smooth = ksm_res.F_smooth;
     arma::cube& z_smooth_var = ksm_res.P_smooth;
     arma::mat& z0_smooth = ksm_res.F_smooth_0;
@@ -93,6 +94,9 @@ int EMHDGM(EMInput em_in) {
     arma::mat S00 = ComputeS00(z_smooth , z_smooth_var, z0_smooth, P0_smooth);
     arma::mat S11 = ComputeS11(z_smooth, z_smooth_var, S00, z0_smooth, P0_smooth);
     arma::mat S10 = ComputeS10(z_smooth, lag1_cov, z0_smooth);
+
+    // Omega Update
+
 
     // Sigma2 update
     sigma2_temp = Sigma2Update(em_in.y, z_smooth, alpha_temp, Xz);
