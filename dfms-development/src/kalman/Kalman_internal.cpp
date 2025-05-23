@@ -30,11 +30,7 @@
 KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
 
   // cout in order to DEBUG rcpp porting behavior
-  //
-  std::cout << "Inside SKF_cpp\n";
-
-  std::cout << "X dims: " << kf_inp.X.n_rows << " x " << kf_inp.X.n_cols << std::endl;
-  std::cout << "Address of kf_inp.X memory: " << kf_inp.X.memptr() << std::endl;
+  // std::cout << "Inside SKF_cpp" << std::endl;
 
 
   const int n = kf_inp.X.n_rows;
@@ -42,30 +38,23 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
   const int rp = kf_inp.A.n_rows;
   int n_c;
 
-  std::cout << "kf_inp.X.n_rows " << n << "\n";
-  std::cout << "kf_inp.X.n_cols " << T << "\n";
-
-  std::cout << "X dims: " << kf_inp.X.n_rows << " x " << kf_inp.X.n_cols << std::endl;
-  std::cout << "Address of kf_inp.X memory: " << kf_inp.X.memptr() << std::endl;
-
-
   // In internal code factors are Z (instead of F) and factor covariance V (instead of P),
   // to avoid confusion between the matrices and their predicted (p) and filtered (f) states.
   // Additionally the results matrices for all time periods have a T in the name.
 
   double loglik = kf_inp.retLL ? 0.0 : std::numeric_limits<double>::quiet_NaN();
-  std::cout << "X dims: " << kf_inp.X.n_rows << " x " << kf_inp.X.n_cols << std::endl;
 
   double dn = 0.0;
   double detS = 0.0;
 
-  std::cout << "AFTER llik;\n";
+  //std::cout << "AFTER llik;\n";
 
-  arma::colvec Zp, Zf, et, xt;
-  Zf = arma::vectorise(kf_inp.F_0);
+  arma::vec Zp, Zf, et, xt;
+  Zf = kf_inp.F_0;
 
 
-  arma::mat K, Vp, Vf = kf_inp.P_0, S, VCt;
+  arma::mat K, Vp, Vf, S, VCt;
+  Vf = kf_inp.P_0;
 
   // Predicted state mean and covariance
   arma::mat ZTp(rp, T, arma::fill::zeros);
@@ -82,10 +71,11 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
     throw std::runtime_error("Missing first row of transition matrix\n");
   }
 
+  //std::cout << "[DEBUG] Before for loop" << std::endl;
   for (int i = 0; i < T; ++i) {
 
-
     // Run a prediction
+    
     Zp = kf_inp.A * Zf;
     Vp = kf_inp.A * Vf * kf_inp.A.t() + kf_inp.Q;
     Vp += Vp.t(); // Ensure symmetry
@@ -105,7 +95,6 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
         Ri = kf_inp.R.submat(nmiss, nmiss);
         xt = xt.elem(nmiss);
       }
-
 
       // Intermediate results
       VCt = Vp * Ci.t();
@@ -306,6 +295,9 @@ double SKFExplicitInput_cpp(const arma::mat& X, // observation matrix: each obse
 // Kalman Smoother
 // for parameters description see Kalman_types.h
 KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
+
+  // std::cout << "Inside FIS_cpp" << std::endl;
+
   const int T = ksm_inp.ZTf.n_cols;
   const int rp = ksm_inp.A.n_rows;
 
@@ -390,11 +382,11 @@ KalmanSmootherResult SKFS_cpp(const KalmanFilterInput& kfsm_inp) {
   .nc_last = kf.nc_last,
   };
 
-  std::cout << "Kalman Filter finished\n";
+  //std::cout << "Kalman Filter finished\n";
 
   KalmanSmootherResult ksmout = FIS_cpp(ksmin);
 
-  std::cout << "Kalman Smoother finished\n";
+  //std::cout << "Kalman Smoother finished\n";
 
   return ksmout;
 }

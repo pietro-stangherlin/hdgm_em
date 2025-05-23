@@ -18,5 +18,11 @@ struct EMInput{
   bool verbose = true;
 };
 
+
+struct EMOutput{
+  arma::mat par_history; // matrix (k x iter) each column is iter value of (alpha,theta,g, sigma2)^T
+  arma::mat beta_history; // (p x iter) each column is a beta (fixed effect value)
+};
+
 // change return type
-int EMHDGM(EMInput);
+EMOutput EMHDGM(EMInput);

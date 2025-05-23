@@ -1,3 +1,7 @@
+///////////////////
+Compile //////////
+//////////////////
+
 g++ src/tests/em/test_EM.cpp \
     src/em/EM_algorithm.cpp \
     src/em/EM_functions.cpp \
@@ -7,4 +11,10 @@ g++ src/tests/em/test_EM.cpp \
     -O2 -std=c++17 \
     -larmadillo -llapack -lblas -lgfortran -lquadmath \
     -static-libgcc -static-libstdc++
+    
 
+///////////////////
+Execute //////////
+//////////////////
+
+src/tests/em/test_em.exe

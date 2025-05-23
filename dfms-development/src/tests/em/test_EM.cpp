@@ -5,14 +5,18 @@
 #include "em/EM_algorithm.h"
 
 
-// Compile
-// g++ test_EM.cpp EM_algorithm.cpp EM_functions.cpp Kalman_internal.cpp -o test_em.exe -O2 -std=c++17 -larmadillo -llapack -lblas -lgfortran -lquadmath -static-libgcc -static-libstdc++
+
+int main(int argc, char* argv[]) {
+
+  int T = 10000;   // number of time steps
+  int n = 5;   // number of observed variables and states
+  int p = 10;   // number of fixed effects
 
 
-int main() {
-  int n = 3;   // number of observed variables
-  int T = 5;   // number of time steps
-  int p = 2;   // number of fixed effects
+  // If arguments are provided, override the defaults
+  if (argc > 1) T = std::atoi(argv[1]);
+  if (argc > 2) n = std::atoi(argv[2]);
+  if (argc > 3) p = std::atoi(argv[3]);
 
   // Randomly generated test matrices
   arma::mat y(n, T, arma::fill::randn);               // observations
@@ -44,9 +48,15 @@ int main() {
   };
 
   // Call the EM algorithm
-  int result = EMHDGM(em_in);
+  EMOutput result = EMHDGM(em_in);
 
-  std::cout << "\nEMHDGM finished with return code: " << result << std::endl;
+  std::cout << "\nEMHDGM finished" << std::endl;
+  std::cout << "Parameters iter history" << std::endl;
+  result.par_history.print();
+  std::cout << std::endl;
+  std::cout << "Beta iter history" << std::endl;
+  result.beta_history.print();
+
   return 0;
 }
 
