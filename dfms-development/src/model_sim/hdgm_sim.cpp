@@ -18,7 +18,7 @@ arma::vec rmvnorm(const arma::vec& mean, const arma::mat& sigma) {
 RHDGMResult RHDGM(const int n, // number of observations
                   const int y_len, // observation vector dimension
                   const arma::mat& cor_matr, // spatial state innovation correlation matrix
-                  const double sigmay, // observation variance (assuming IID)
+                  const double sigmay, // observation standard deviation (assuming IID)
                   const double upsilon, // observation matrix scale
                   const double gHDGM, // transition matrix scale (|g| < 1 for identifiability)
                   arma::vec z0) { // initial state

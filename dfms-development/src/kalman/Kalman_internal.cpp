@@ -10,28 +10,15 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-
-// Compile with: (delete the //)
-// g++ Kalman_internal.cpp -o Kalman_internal.exe -O2 -std=c++17 \
-//-larmadillo -llapack -lblas -lgfortran -lquadmath             \
-// -static-libgcc -static-libstdc++
-
-// one liner compile
-// g++ Kalman_internal.cpp -o Kalman_internal.exe -O2 -std=c++17 -larmadillo -llapack -lblas -lgfortran -lquadmath -static-libgcc -static-libstdc++
-
-
-// Change from github code: swap data matrix columns and rows definition
-// so each observation is read by column (much more efficient in Armadillo)
-// instead of by row
-
+// Changes from github code: swap data matrix columns and rows definition
+// so each observation is read by column (more efficient in Armadillo)
+// instead that by row
 
 // Kalman Filter
 // for parameters description see Kalman_types.h
 KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
 
-  // cout in order to DEBUG rcpp porting behavior
   // std::cout << "Inside SKF_cpp" << std::endl;
-
 
   const int n = kf_inp.X.n_rows;
   const int T = kf_inp.X.n_cols;
@@ -98,7 +85,7 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
 
       // Intermediate results
       VCt = Vp * Ci.t();
-      S = inv(Ci * VCt + Ri); // .i();
+      S = inv(Ci * VCt + Ri);
 
 
       // Prediction error
@@ -115,6 +102,8 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
       // Compute likelihood. Skip this part if S is not positive definite.
       if(kf_inp.retLL) {
         detS = det(S);
+        std::cout << "[DEBUG] S" << S << std::endl;
+        std::cout << "[DEBUG] det(S)" << detS << std::endl;
         if(detS > 0) loglik += log(detS) - arma::as_scalar(et.t() * S * et) - dn;
 
       }
