@@ -1,6 +1,6 @@
 #include <iostream>
 #include <armadillo>
-#include "Kalman_internal.h"
+#include "kalman/Kalman_internal.h"
 
 
 // compile

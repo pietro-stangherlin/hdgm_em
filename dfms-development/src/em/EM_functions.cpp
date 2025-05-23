@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 
-#include "EM_functions.h"
+#include "em/EM_functions.h"
 
 // Temp file
 

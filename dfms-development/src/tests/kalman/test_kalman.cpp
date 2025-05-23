@@ -1,13 +1,13 @@
 #include <iostream>
 #include <armadillo>
-#include "Kalman_internal.h"
+#include "kalman/Kalman_internal.h"
 
-
-// compile
-// g++ test_kalman.cpp Kalman_internal.cpp -o test_kalman.exe -O2 -std=c++17 -larmadillo -llapack -lblas -lgfortran -lquadmath -static-libgcc -static-libstdc++
 
 // testing
 int main(int argc, char* argv[]) {
+
+  std::cout << "Program started..." << std::endl;
+  
   // Default values
   int T = 100;
   int n = 5;
@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
   if (argc > 1) T = std::atoi(argv[1]);
   if (argc > 2) n = std::atoi(argv[2]);
   if (argc > 3) m = std::atoi(argv[3]);
+
 
   std::cout << "T = " << T << ", n = " << n << ", m = " << m << std::endl;
   // Simulate small input matrices for testing

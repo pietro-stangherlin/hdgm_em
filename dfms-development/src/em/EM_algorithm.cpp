@@ -1,9 +1,10 @@
 #include <armadillo>
 #include <stdio.h>
 
-#include "Kalman_internal.h"
-#include "EM_functions.h"
-#include "EM_algorithm.h"
+#include "kalman/Kalman_internal.h"
+#include "em/EM_functions.h"
+#include "em/EM_algorithm.h"
+
 
 
 // assuming no missing observations and no matrix permutations

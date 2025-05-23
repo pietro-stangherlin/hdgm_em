@@ -2,7 +2,7 @@
 #include <armadillo>
 #include <optional>
 
-#include "EM_algorithm.h"
+#include "em/EM_algorithm.h"
 
 
 // Compile

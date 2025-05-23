@@ -1,5 +1,5 @@
 #include <RcppArmadillo.h>
-#include "Kalman_internal.h"
+#include "kalman/Kalman_internal.h"
 
 
 // R version

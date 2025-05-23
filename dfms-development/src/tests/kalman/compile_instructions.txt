@@ -1,0 +1,18 @@
+///////////////////
+Compile //////////
+//////////////////
+
+g++ src/tests/kalman/test_kalman.cpp \
+    src/kalman/Kalman_internal.cpp \
+    -I./src \
+    -o src/tests/kalman/test_kalman.exe \
+    -O2 -std=c++17 \
+    -larmadillo -llapack -lblas -lgfortran -lquadmath \
+    -static-libgcc -static-libstdc++
+
+///////////////////
+Execute //////////
+//////////////////
+
+
+src/tests/kalman/test_kalman.exe

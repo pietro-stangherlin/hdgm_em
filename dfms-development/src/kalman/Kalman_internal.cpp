@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cstdlib> // For atoi
 
-#include"Kalman_internal.h"
+#include"kalman/Kalman_internal.h"
 
 
 #ifndef M_PI
@@ -12,7 +12,7 @@
 
 
 // Compile with: (delete the //)
-//g++ Kalman_internal.cpp -o Kalman_internal.exe -O2 -std=c++17 \
+// g++ Kalman_internal.cpp -o Kalman_internal.exe -O2 -std=c++17 \
 //-larmadillo -llapack -lblas -lgfortran -lquadmath             \
 // -static-libgcc -static-libstdc++
 
