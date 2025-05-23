@@ -1,0 +1,18 @@
+///////////////////
+Compile //////////
+//////////////////
+
+g++ src/tests/model_sim/test_hdgm_sim.cpp \
+    src/model_sim/hdgm_sim.cpp \
+    -I./src \
+    -o src/tests/model_sim/test_hdgm_sim.exe \
+    -O2 -std=c++17 \
+    -larmadillo -llapack -lblas -lgfortran -lquadmath \
+    -static-libgcc -static-libstdc++
+
+///////////////////
+Execute //////////
+//////////////////
+
+
+src/tests/model_sim/test_hdgm_sim.exe
