@@ -1,8 +1,5 @@
 #include <armadillo>
 
-arma::mat ExpCor(const arma::mat& mdist,
-                 double theta);
-
 double AlphaUpdate(const arma::mat & mY_fixed_res,
                    const arma::mat & mZ,
                    const arma::mat & mXz,
@@ -38,11 +35,9 @@ arma::mat OmegaSumUpdate(const arma::mat & mY_fixed_res,
                          const arma::cube & cPsmt,
                          double alpha);
 
-double brent_optimize(const std::function<double(double)>& f,
-                      double lower,
-                      double upper,
-                      double tol = 1e-5,
-                      int max_iter = 100);
+double brent_minimize(std::function<double(double)> f,
+                      double ax, double bx, double cx,
+                      double tol = 1e-8, int max_iter = 100);
 
 double ThetaUpdate(const arma::mat& dist_matrix,
                    double g,

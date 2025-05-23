@@ -2,11 +2,8 @@
 #include <random>
 
 #include "model_sim/hdgm_sim.h"
+#include "utils/covariances.h"
 
-// Compute exponential correlation matrix from distance matrix
-arma::mat ExpCor(const arma::mat& mdist, double theta) {
-    return arma::exp(-mdist / theta);
-}
 
 // Sample from multivariate normal: returns column vector
 arma::vec rmvnorm(const arma::vec& mean, const arma::mat& sigma) {

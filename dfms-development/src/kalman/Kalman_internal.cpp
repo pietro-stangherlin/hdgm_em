@@ -71,7 +71,7 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
     // If missing observations are present at some timepoints, exclude the
     // appropriate matrix slices from the filtering procedure.
     xt = kf_inp.X.col(i);
-    nmiss = find_finite(xt);
+    nmiss = arma::find_finite(xt);
     n_c = nmiss.n_elem;
     if(n_c > 0) {
       if(n_c == n) {
@@ -85,7 +85,7 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
 
       // Intermediate results
       VCt = Vp * Ci.t();
-      S = inv(Ci * VCt + Ri);
+      S = arma::inv_sympd(Ci * VCt + Ri);
 
 
       // Prediction error
@@ -101,10 +101,12 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
 
       // Compute likelihood. Skip this part if S is not positive definite.
       if(kf_inp.retLL) {
-        detS = det(S);
-        std::cout << "[DEBUG] S" << S << std::endl;
-        std::cout << "[DEBUG] det(S)" << detS << std::endl;
-        if(detS > 0) loglik += log(detS) - arma::as_scalar(et.t() * S * et) - dn;
+        //TO DO: Maybe convenient to compute one decomposition
+        // once and then do inverse and det
+        double log_det_val;
+        double det_sign;
+        arma::log_det(log_det_val, det_sign, S);
+        if(det_sign > 0) loglik += log_det_val - arma::as_scalar(et.t() * S * et) - dn;
 
       }
 

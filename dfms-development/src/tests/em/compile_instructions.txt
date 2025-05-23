@@ -6,8 +6,23 @@ g++ src/tests/em/test_EM.cpp \
     src/em/EM_algorithm.cpp \
     src/em/EM_functions.cpp \
     src/kalman/Kalman_internal.cpp \
+    src/utils/covariances.cpp \
     -I./src \
-    -o src/tests/em/test_EM.exe \
+    -o src/tests/em/test_em.exe \
+    -O2 -std=c++17 \
+    -larmadillo -llapack -lblas -lgfortran -lquadmath \
+    -static-libgcc -static-libstdc++
+
+
+// HDGM
+g++ src/tests/em/test_EM_hdgm.cpp \
+    src/em/EM_algorithm.cpp \
+    src/em/EM_functions.cpp \
+    src/kalman/Kalman_internal.cpp \
+    src/model_sim/hdgm_sim.cpp \
+    src/utils/covariances.cpp \
+    -I./src \
+    -o src/tests/em/test_EM_hdgm.exe \
     -O2 -std=c++17 \
     -larmadillo -llapack -lblas -lgfortran -lquadmath \
     -static-libgcc -static-libstdc++
@@ -18,3 +33,7 @@ Execute //////////
 //////////////////
 
 src/tests/em/test_em.exe
+
+// HDGM
+
+src/tests/em/test_em_hdgm.exe

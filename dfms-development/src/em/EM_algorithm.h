@@ -13,8 +13,8 @@ struct EMInput{
   std::optional<arma::vec> z0_in = std::nullopt;
   std::optional<arma::mat> P0_in = std::nullopt;
   int max_iter = 10; // TO change + add tolerance
-  double sigma2_lower = 0.00001; // TO decrease
-  double sigma2_upper = 10.0; // TO increase
+  double theta_lower = 0.00001; // TO decrease
+  double theta_upper = 10.0; // TO increase
   bool verbose = true;
 };
 

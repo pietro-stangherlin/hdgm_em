@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
   
   arma::arma_rng::set_seed(12345);
 
-    int T = 10; // number of observations
+    int T = 100; // number of observations
     int n = 5; // observation vector dimension
 
     double theta = 5;

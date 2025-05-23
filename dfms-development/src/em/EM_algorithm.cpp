@@ -148,7 +148,7 @@ EMOutput EMHDGM(EMInput em_in) {
     theta_temp = ThetaUpdate(em_in.dist_matrix, g_temp,
                              S00, S10, S11,
                              theta_temp,
-                             T, em_in.sigma2_lower, em_in.sigma2_upper);
+                             T, em_in.theta_lower, em_in.theta_upper);
 
     // g update
     g_temp = gUpdate(S00, S10);

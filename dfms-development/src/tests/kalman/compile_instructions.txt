@@ -17,6 +17,7 @@ g++ src/tests/kalman/test_kalman.cpp \
 g++ src/tests/kalman/test_kalman_hdgm.cpp \
     src/kalman/Kalman_internal.cpp \
     src/model_sim/hdgm_sim.cpp \
+    src/utils/covariances.cpp \
     -I./src \
     -o src/tests/kalman/test_kalman_hdgm.exe \
     -O2 -std=c++17 \

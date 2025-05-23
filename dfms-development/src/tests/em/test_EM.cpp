@@ -4,9 +4,8 @@
 
 #include "em/EM_algorithm.h"
 
-
-
 int main(int argc, char* argv[]) {
+  
 
   int T = 10000;   // number of time steps
   int n = 5;   // number of observed variables and states
@@ -42,8 +41,8 @@ int main(int argc, char* argv[]) {
     .z0_in = z0,
     .P0_in = P0,
     .max_iter = 10,
-    .sigma2_lower = 1e-5,
-    .sigma2_upper = 10.0,
+    .theta_lower = 1e-5,
+    .theta_upper = 10.0,
     .verbose = true
   };
 
