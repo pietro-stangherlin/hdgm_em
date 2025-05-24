@@ -18,9 +18,9 @@ int main(int argc, char* argv[]) {
     arma::arma_rng::set_seed(12345);
 
     double theta = 5;
+    double upsilon = 3;
+    double gHDGM = 0.8;
     double sigmay = 0.1;
-    double upsilon = 0.6;
-    double gHDGM = 0.5;
 
 
     if (argc > 1) T = std::atoi(argv[1]);
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
     .P0_in = P0,
     .max_iter = max_iter,
     .theta_lower = 1e-5,
-    .theta_upper = 50.0,
+    .theta_upper = 10.0,
     .verbose = true
   };
 

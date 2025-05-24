@@ -8,7 +8,7 @@
 
 #include "em/EM_functions.h"
 #include "utils/covariances.h"
-#include "optim/brent.hpp"
+#include "optim/golden_search.h"
 
 // Temp file
 
@@ -78,7 +78,7 @@ arma::mat ComputeS00(const arma::mat & smoothed_states,
 
   // all except the last time T
   for(int t = 0; t < (T - 1); t++){
-    S00 += smoothed_states.t() * smoothed_states.col(t).t() + smoothed_vars.slice(t);
+    S00 += smoothed_states.col(t) * smoothed_states.col(t).t() + smoothed_vars.slice(t);
   }
 
   return(S00);
@@ -124,7 +124,7 @@ arma::mat ComputeS10(const arma::mat & smoothed_states,
   arma::mat S10 = smoothed_states.col(0) * z0.t() + lagone_smoothed_covars.slice(0);
 
   // all except the last time T
-  for(int t = 1; t < T; t++){
+  for(int t = 1; t <= T - 1; t++){
     S10 += smoothed_states.col(t) * smoothed_states.col(t-1).t() + lagone_smoothed_covars.slice(t);
   }
 
@@ -296,7 +296,7 @@ double ThetaUpdate(const arma::mat& dist_matrix,
     return theta_negative_to_optim(theta, dist_matrix, S00, S10, S11, g, N);
   };
 
-  double result = brent::brent_minimize(obj_fun, lower, theta0, upper); // avoid theta = 0
+  double result = golden_search_minima(obj_fun, lower, upper); // avoid theta = 0
   return result;
 }
 
