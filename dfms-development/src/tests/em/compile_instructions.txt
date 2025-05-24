@@ -5,6 +5,7 @@ Compile //////////
 g++ src/tests/em/test_EM.cpp \
     src/em/EM_algorithm.cpp \
     src/em/EM_functions.cpp \
+    src/optim/brent.cpp \
     src/kalman/Kalman_internal.cpp \
     src/utils/covariances.cpp \
     -I./src \
@@ -18,6 +19,7 @@ g++ src/tests/em/test_EM.cpp \
 g++ src/tests/em/test_EM_hdgm.cpp \
     src/em/EM_algorithm.cpp \
     src/em/EM_functions.cpp \
+    src/optim/brent.cpp \
     src/kalman/Kalman_internal.cpp \
     src/model_sim/hdgm_sim.cpp \
     src/utils/covariances.cpp \
