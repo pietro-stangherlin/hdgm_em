@@ -18,15 +18,14 @@
 // for parameters description see Kalman_types.h
 KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
 
-  std::cout << "Inside SKF_cpp" << std::endl;
+  // std::cout << "Inside SKF_cpp" << std::endl;
 
   const int n = kf_inp.X.n_rows;
   const int T = kf_inp.X.n_cols;
   const int rp = kf_inp.A.n_rows;
   int n_c;
 
-  std::cout << "X dims: " << n << " x " << T << std::endl;
-  std::cout << "X:\n" << kf_inp.X << std::endl;
+  //std::cout << "X dims: " << n << " x " << T << std::endl;
 
   // In internal code factors are Z (instead of F) and factor covariance V (instead of P),
   // to avoid confusion between the matrices and their predicted (p) and filtered (f) states.
@@ -66,7 +65,7 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
   for (int i = 0; i < T; ++i) {
 
     // Run a prediction
-    
+
     Zp = kf_inp.A * Zf;
     Vp = kf_inp.A * Vf * kf_inp.A.t() + kf_inp.Q;
     Vp += Vp.t(); // Ensure symmetry
@@ -143,149 +142,6 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
   };
 }
 
-// DEBUG VERSION NOT USING structure as input
-double SKFExplicitInput_cpp(const arma::mat& X, // observation matrix: each observation is a column
-                                          const arma::mat& A, // state transition matrix
-                                          const arma::mat& C, // observation matrix
-                                          const arma::mat& Q, // state covariance error matrix
-                                          const arma::mat& R, // observation error covariance matrix
-                                          const arma::vec& F_0, // initial state
-                                          const arma::mat& P_0, // initial state covariance
-                                          bool retLL) {
-
-  // cout in order to DEBUG rcpp porting behavior
-  //
-  std::cout << "Inside SKF_cpp\n";
-
-  std::cout << "X dims: " << X.n_rows << " x " << X.n_cols << std::endl;
-  std::cout << "Address of X memory: " << X.memptr() << std::endl;
-
-  std::cout << "A dims: " << A.n_rows << " x " << A.n_cols << std::endl;
-  std::cout << "Address of A memory: " << A.memptr() << std::endl;
-
-  std::cout << "C dims: " << C.n_rows << " x " << C.n_cols << std::endl;
-  std::cout << "Address of C memory: " << C.memptr() << std::endl;
-
-  std::cout << "Q dims: " << Q.n_rows << " x " << Q.n_cols << std::endl;
-  std::cout << "Address of Q memory: " << Q.memptr() << std::endl;
-
-  std::cout << "R dims: " << R.n_rows << " x " << R.n_cols << std::endl;
-  std::cout << "Address of R memory: " << R.memptr() << std::endl;
-
-  std::cout << "F_0 dims: " << F_0.size() << std::endl;
-  std::cout << "Address of F_0 memory: " << F_0.memptr() << std::endl;
-
-  std::cout << "P_0 dims: " << R.n_rows << " x " << R.n_cols << std::endl;
-  std::cout << "Address of P_0 memory: " << R.memptr() << std::endl;
-
-
-
-  const int n = X.n_rows;
-  const int T = X.n_cols;
-  const int rp = A.n_rows;
-  int n_c;
-
-
-  // In internal code factors are Z (instead of F) and factor covariance V (instead of P),
-  // to avoid confusion between the matrices and their predicted (p) and filtered (f) states.
-  // Additionally the results matrices for all time periods have a T in the name.
-
-  double loglik = retLL ? 0.0 : std::numeric_limits<double>::quiet_NaN();
-  std::cout << "X dims: " << X.n_rows << " x " << X.n_cols << std::endl;
-
-  double dn = 0.0;
-  double detS = 0.0;
-
-  std::cout << "AFTER llik;\n";
-
-  arma::colvec Zp, Zf, et, xt;
-  Zf = arma::vectorise(F_0);
-
-
-  arma::mat K, Vp, Vf = P_0, S, VCt;
-
-  // Predicted state mean and covariance
-  arma::mat ZTp(rp, T, arma::fill::zeros);
-  arma::cube VTp(rp, rp, T, arma::fill::zeros);
-
-  // Filtered state mean and covariance
-  arma::mat ZTf(rp, T, arma::fill::zeros);
-  arma::cube VTf(rp, rp, T, arma::fill::zeros);
-
-  // Handling missing values in the filter
-  arma::mat Ci, Ri;
-  arma::uvec nmiss, arow = arma::find_finite(A.row(0));
-  if (arow.n_elem == 0) {
-    throw std::runtime_error("Missing first row of transition matrix\n");
-  }
-
-  for (int i = 0; i < T; ++i) {
-
-
-    // Run a prediction
-    Zp = A * Zf;
-    Vp = A * Vf * A.t() + Q;
-    Vp += Vp.t(); // Ensure symmetry
-    Vp *= 0.5;
-
-    // If missing observations are present at some timepoints, exclude the
-    // appropriate matrix slices from the filtering procedure.
-    xt = X.col(i);
-    nmiss = find_finite(xt);
-    n_c = nmiss.n_elem;
-    if(n_c > 0) {
-      if(n_c == n) {
-        Ci = C;
-        Ri = R;
-      } else {
-        Ci = C.submat(nmiss, arow);
-        Ri = R.submat(nmiss, nmiss);
-        xt = xt.elem(nmiss);
-      }
-
-
-      // Intermediate results
-      VCt = Vp * Ci.t();
-      S = inv(Ci * VCt + Ri); // .i();
-
-
-      // Prediction error
-      et = xt - Ci * Zp;
-      // Kalman gain
-      K = VCt * S;
-      // Updated state estimate
-      Zf = Zp + K * et;
-      // Updated state covariance estimate
-      Vf = Vp - K * Ci * Vp;
-      Vf += Vf.t(); // Ensure symmetry
-      Vf *= 0.5;
-
-      // Compute likelihood. Skip this part if S is not positive definite.
-      if(retLL) {
-        detS = det(S);
-        if(detS > 0) loglik += log(detS) - arma::as_scalar(et.t() * S * et) - dn;
-
-      }
-
-    } else { // If all missing: just prediction.
-      Zf = Zp;
-      Vf = Vp;
-    }
-
-
-    // Store predicted and filtered data needed for smoothing
-    ZTp.col(i) = Zp;
-    VTp.slice(i) = Vp;
-    ZTf.col(i) = Zf;
-    VTf.slice(i) = Vf;
-
-  }
-
-
-  if(retLL) loglik *= 0.5;
-
-  return 0.0;
-}
 
 // Kalman Smoother
 // for parameters description see Kalman_types.h

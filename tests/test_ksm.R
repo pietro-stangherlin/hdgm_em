@@ -6,10 +6,12 @@ library(mvtnorm)
 # NOT USED
 # Rcpp::sourceCpp("src/helper.cpp")
 
+Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp")
+
 
 # generate some data -------------------
-N <- 100 # times: t = 1,..,N
-n <- rp <- 2 # y_t dimension
+N <- 1000 # times: t = 1,..,N
+n <- rp <- 5 # y_t dimension
 # in this case state dimension = rp = n
 
 X <- matrix(NA, nrow = n, ncol = N) # data matrix
@@ -20,7 +22,7 @@ Q <- diag(1, rp) # state covariance
 R <- diag(0.1, n) # Observation covariance (n x n)
 
 
-F_0 <- as.vector(c(0, 0))  # Initial state vector (rp x 1)
+F_0 <- as.vector(rep(0, n))  # Initial state vector (rp x 1)
 P_0 <- diag(0.5, rp) # Initial state covariance (rp x rp)
 
 set.seed(123)
@@ -51,21 +53,19 @@ X.t <- t(X)
 original.skf.res <- dfms::SKF(X = X.t, A = A, C = C, Q = Q, R = R,
                               F_0 = F_0, P_0 = P_0)
 
-Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp")
-
-# NOT working: memory issues
 custom.skf.res <- SKF(X = X, A = A, C = C, Q = Q, R = R,
                 F_0 = F_0, P_0 = P_0, retLL = FALSE)
 
-custom.skf.res.debug <- SKFDEBUG(X, # observation matrix: each observation is a column
-                            A, # state transition matrix
-                            C, # observation matrix
-                            Q, # state covariance error matrix
-                            R, # observation error covariance matrix
-                            F_0, # initial state
-                            P_0, # initial state covariance
-                            TRUE)
 
+plot(Z[1,], type = "l",
+     xlab = "times",
+     ylab = "true states")
+
+lines(original.skf.res$F[,1],
+      col = "red")
+
+lines(custom.skf.res$F[1,],
+      col = "blue")
 
 # benchmark
 
@@ -74,7 +74,7 @@ CustomFilterBench <- function(b){
 
   for(i in 1:b){
     v <- SKF(X = X, A = A, C = C, Q = Q, R = R,
-             F_0 = F_0, P_0 = P_0)
+             F_0 = F_0, P_0 = P_0, retLL = FALSE)
   }
 
   return(Sys.time() - start)
@@ -93,19 +93,35 @@ OriginalFilterBench <- function(b){
   return(Sys.time() - start)
 }
 
-B = 100
+B = 1000
 
 OriginalFilterBench(b = B)
 CustomFilterBench(b = B)
+
 
 # Smoother ----------------------------------------------
 
 custom.skfs.res <- SKFS(X = X, A = A, C = C, Q = Q, R = R,
                       F_0 = F_0, P_0 = P_0)
 
-# NOT working: memory issues
-# original.skfs.res <- dfms::SKFS(X = t(X), A = A, C = C, Q = Q, R = R,
-#                               F_0 = F_0, P_0 = P_0)
+original.skfs.res <- dfms::SKFS(X = t(X), A = A, C = C, Q = Q, R = R,
+                              F_0 = F_0, P_0 = P_0)
+
+plot(Z[1,], type = "l",
+     xlab = "times",
+     ylab = "true states")
+
+lines(original.skf.res$F[,1],
+      col = "red")
+
+lines(custom.skf.res$F[1,],
+      col = "blue")
+
+lines(original.skfs.res$F_smooth[,1],
+      col = "orange")
+
+lines(custom.skfs.res$F_smooth[1,],
+      col = "violet")
 
 # check equivalence
 custom.skfs.res$F_smooth[,1:5] == t(original.skfs.res$F_smooth[1:5,])
@@ -135,7 +151,7 @@ OriginalSmootherBench <- function(b){
   return(Sys.time() - start)
 }
 
-B = 100
+B = 1000
 
 OriginalSmootherBench(b = B)
 CustomSmootherBench(b = B)

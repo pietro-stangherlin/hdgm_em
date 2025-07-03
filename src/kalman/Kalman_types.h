@@ -1,6 +1,6 @@
 #pragma once
-#include<armadillo>
-#include<optional>
+#include <RcppArmadillo.h>
+#include <optional>
 
 
 // Input and Output structures
@@ -22,19 +22,6 @@ struct KalmanFilterInput {
 
 };
 
-// USED ONLY IN RCPP wrapper
-// test data structure, only used in trying to solve
-// the Rcpp memory bug
-struct KalmanFilterInputByValue {
-  const arma::mat X; // observation matrix: each observation is a column
-  const arma::mat A; // state transition matrix
-  const arma::mat C; // observation matrix
-  const arma::mat Q; // state covariance error matrix
-  const arma::mat R; // observation error covariance matrix
-  const arma::colvec F_0; // initial state
-  const arma::mat P_0; // initial state covariance
-  bool retLL;
-};
 
 struct KalmanSmootherInput {
   const arma::mat& A; // state transition matrix
