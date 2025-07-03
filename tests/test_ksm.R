@@ -51,11 +51,11 @@ X.t <- t(X)
 original.skf.res <- dfms::SKF(X = X.t, A = A, C = C, Q = Q, R = R,
                               F_0 = F_0, P_0 = P_0)
 
-Rcpp::sourceCpp("src/Kalman_wrapper.cpp")
+Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp")
 
 # NOT working: memory issues
-# custom.skf.res <- SKF(X = X, A = A, C = C, Q = Q, R = R,
-#                 F_0 = F_0, P_0 = P_0, retLL = FALSE)
+custom.skf.res <- SKF(X = X, A = A, C = C, Q = Q, R = R,
+                F_0 = F_0, P_0 = P_0, retLL = FALSE)
 
 custom.skf.res.debug <- SKFDEBUG(X, # observation matrix: each observation is a column
                             A, # state transition matrix

@@ -1,4 +1,4 @@
-#include <armadillo>
+#include <RcppArmadillo.h>
 #include <stdio.h>
 
 #include "kalman/Kalman_internal.h"

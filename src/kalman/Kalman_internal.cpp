@@ -1,9 +1,9 @@
 #include <optional>
-#include <armadillo>
+#include <RcppArmadillo.h>
 #include <iostream>
 #include <cstdlib> // For atoi
 
-#include"kalman/Kalman_internal.h"
+#include"Kalman_internal.h"
 
 
 #ifndef M_PI
@@ -12,18 +12,21 @@
 
 // Changes from github code: swap data matrix columns and rows definition
 // so each observation is read by column (more efficient in Armadillo)
-// instead that by row
+// instead than by row
 
 // Kalman Filter
 // for parameters description see Kalman_types.h
 KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
 
-  // std::cout << "Inside SKF_cpp" << std::endl;
+  std::cout << "Inside SKF_cpp" << std::endl;
 
   const int n = kf_inp.X.n_rows;
   const int T = kf_inp.X.n_cols;
   const int rp = kf_inp.A.n_rows;
   int n_c;
+
+  std::cout << "X dims: " << n << " x " << T << std::endl;
+  std::cout << "X:\n" << kf_inp.X << std::endl;
 
   // In internal code factors are Z (instead of F) and factor covariance V (instead of P),
   // to avoid confusion between the matrices and their predicted (p) and filtered (f) states.
@@ -57,6 +60,7 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
   if (arow.n_elem == 0) {
     throw std::runtime_error("Missing first row of transition matrix\n");
   }
+
 
   //std::cout << "[DEBUG] Before for loop" << std::endl;
   for (int i = 0; i < T; ++i) {
