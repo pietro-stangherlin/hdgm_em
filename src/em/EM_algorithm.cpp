@@ -8,7 +8,7 @@
 
 // assuming no missing observations and no matrix permutations
 // temporarely return integer, then return all parameters
-EMOutput EMHDGM(EMInput em_in) {
+EMOutput EMHDGM_cpp(EMInput em_in) {
 
   // Setup
   bool is_fixed_effect = em_in.Xbeta.has_value();

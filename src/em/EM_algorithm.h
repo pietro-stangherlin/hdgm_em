@@ -25,4 +25,4 @@ struct EMOutput{
 };
 
 // change return type
-EMOutput EMHDGM(EMInput);
+EMOutput EMHDGM_cpp(EMInput);
