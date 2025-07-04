@@ -1,4 +1,4 @@
-#include <armadillo>
+#include <RcppArmadillo.h>
 
 double AlphaUpdate(const arma::mat & mY_fixed_res,
                    const arma::mat & mZ,

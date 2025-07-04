@@ -3,9 +3,9 @@ rm(list = ls())
 library(Rcpp)
 library(RcppArmadillo)
 
-Rcpp::sourceCpp("src/EM_functions.cpp")
-Rcpp::sourceCpp("src/EM_functions.cpp")
-Rcpp::sourceCpp("src/EM_algorithm.cpp")
+Rcpp::sourceCpp("src/em/EM_functions.cpp")
+Rcpp::sourceCpp("src/em/EM_functions.cpp")
+Rcpp::sourceCpp("src/em/EM_algorithm.cpp")
 
 
 # Constants -------------------------------
@@ -17,7 +17,7 @@ Y <- matrix(c(1,1,1,
 
 Z <- Y # smoothed states
 Xz <- diag(0.5, 2)
-Ps <- array(NA, dim = c(2,2,3)) #smoothed variances
+Ps <- array(NA, dim = c(2,2,3)) # smoothed variances
 Ps[,,1] <- diag(1, 2)
 Ps[,,2] <- diag(1, 2)
 Ps[,,3] <- diag(1, 2)

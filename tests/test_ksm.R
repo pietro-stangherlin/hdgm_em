@@ -3,6 +3,8 @@ library(Rcpp)
 library(RcppArmadillo)
 library(mvtnorm)
 
+# This testing requires the dfms package
+
 # NOT USED
 # Rcpp::sourceCpp("src/helper.cpp")
 
