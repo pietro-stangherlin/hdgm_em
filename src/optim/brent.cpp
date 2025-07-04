@@ -4,7 +4,7 @@
 # include <iostream>
 #include <functional>
 
-#include "optim/brent.hpp"
+#include "../optim/brent.hpp"
 
 using namespace std;
 
@@ -99,7 +99,7 @@ double r8_sign ( double x )
  * @param f         Function to minimize. Must be a callable of type double -> double.
  * @param a        Lower bound of the search interval.
  * @param b        Upper bound of the search interval.
- * @param status        
+ * @param status
  * @return          The x-coordinate of the minimum.
  */
 double local_min_rc ( double &a, double &b, int &status, double value )
@@ -404,7 +404,7 @@ double local_min_rc ( double &a, double &b, int &status, double value )
  * @param f         Function to minimize. Must be a callable of type double -> double.
  * @param a_init        Lower bound of the search interval.
  * @param b_init      Upper bound of the search interval.
- * @param max_iterations  maximum iteration number    
+ * @param max_iterations  maximum iteration number
  * @return          The x-coordinate of the minimum.
  */
 

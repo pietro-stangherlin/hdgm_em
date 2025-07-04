@@ -1,5 +1,5 @@
-#include <armadillo>
-#include "utils/covariances.h"
+#include <RcppArmadillo.h>
+#include "../utils/covariances.h"
 
 // Compute exponential correlation matrix from distance matrix
 /**

@@ -6,9 +6,9 @@
 #include <iostream>
 #include <vector>
 
-#include "em/EM_functions.h"
-#include "utils/covariances.h"
-#include "optim/golden_search.h"
+#include "EM_functions.h"
+#include "../utils/covariances.h"
+#include "../optim/golden_search.h"
 
 // Temp file
 
@@ -264,7 +264,7 @@ double theta_negative_to_optim(double theta,
   return N * logdet_val + trace_val;
 }
 
- 
+
 // NOTE: to change if one (reasonably) wants to add a scale factor to state error covariance
 // otherwise we make the unreasonable assumption of unit variance for state error.
 /**

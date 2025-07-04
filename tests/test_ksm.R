@@ -1,7 +1,6 @@
 rm(list = ls())
 library(Rcpp)
 library(RcppArmadillo)
-library(mvtnorm)
 
 source("tests/test_helper.R")
 
