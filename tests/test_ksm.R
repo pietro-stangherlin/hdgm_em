@@ -3,6 +3,8 @@ library(Rcpp)
 library(RcppArmadillo)
 library(mvtnorm)
 
+source("tests/test_helper.R")
+
 # This testing requires the dfms package
 
 # NOT USED
@@ -16,8 +18,7 @@ N <- 1000 # times: t = 1,..,N
 n <- rp <- 5 # y_t dimension
 # in this case state dimension = rp = n
 
-X <- matrix(NA, nrow = n, ncol = N) # data matrix
-Z <- matrix(NA, nrow = rp, ncol = N + 1) # state matrix
+
 A <- diag(0.8, rp) # transition matrix
 C <- diag(1, rp) # observation matrix: diagonal only if rp = n
 Q <- diag(1, rp) # state covariance
@@ -29,21 +30,17 @@ P_0 <- diag(0.5, rp) # Initial state covariance (rp x rp)
 
 set.seed(123)
 
-# simulate process
-Z[,1] <- A %*% as.matrix(F_0) + t(rmvnorm(n = 1,
-                             mean = rep(0, rp),
-                             sigma = Q))
+sim_res <- LinGauStateSpaceSim(n_times = N,
+                                obs_dim = n,
+                                state_dim = rp,
+                                transMatr = A,
+                                obsMatr = C,
+                                stateCovMatr = Q,
+                                obsCovMatr = R,
+                                zeroState = F_0)
 
-for(i in 1:N){
-  # generate state
-  Z[,i+1] <- A %*% as.matrix(Z[,i]) + t(rmvnorm(n = 1,
-                                              mean = rep(0, rp),
-                                              sigma = Q))
-  # generate observation
-  X[,i] <- C %*% as.matrix(Z[,i]) + t(rmvnorm(n = 1,
-                                              mean = rep(0, n),
-                                              sigma = R))
-}
+X <- sim_res$observations
+Z <- sim_res$states
 
 # so the transposition operation doesn't affect the benchmark
 X.t <- t(X)
