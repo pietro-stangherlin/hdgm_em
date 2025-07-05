@@ -1,23 +1,25 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
-#include <optional>
+
 #include "EM_algorithm.h"
 
-// R version
+
 // [[Rcpp::export]]
 Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n. obs
                     const arma::mat& dist_matrix, // state distance matrix (complete data)
                     double alpha0, // initial observation matrix scaling
                     const arma::vec beta0, // initial fixed effect
                     double theta0, // initial state covariance parameter (exponential)
+                    double v0, // initial state scale covariance parameter (exponential)
                     double g0, // initial state transition matrix scaling
                     double sigma20, // initial observations variance
                     Rcpp::Nullable<Rcpp::NumericVector> Xbeta_in = R_NilValue,
                     Rcpp::Nullable<arma::vec> z0_in = R_NilValue,
                     Rcpp::Nullable<arma::mat> P0_in = R_NilValue,
+                    const std::array<double,2> theta_v_step = {0.01, 0.01}, // step for each variable nelder-mead step
+                    const double var_terminating_lim = 1.0e-10, // stopping criterion for nelder-mead method: variance of values
+                    const int nelder_mead_max_iter = 50, // max iteration nelder-mead
                     int max_iter = 10, // TO change + add tolerance
-                    double theta_lower = 0.00001, // TO decrease
-                    double theta_upper = 10.0, // TO increase
                     bool verbose = true) {
 
   std::cout << "Inside EMHDGM\n";
@@ -62,20 +64,20 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
     .alpha0 = alpha0,
     .beta0 = beta0,
     .theta0 = theta0,
+    .v0 = v0,
     .g0 = g0,
     .sigma20 = sigma20,
     .Xbeta = Xbeta_opt,
     .z0_in = z0_opt,
     .P0_in = P0_opt,
+    .theta_v_step = theta_v_step,
+    .var_terminating_lim = var_terminating_lim,
+    .nelder_mead_max_iter = nelder_mead_max_iter,
     .max_iter = max_iter,
-    .theta_lower = theta_lower,
-    .theta_upper = theta_upper,
-    .verbose = verbose,
+    .verbose = verbose
   };
 
   std::cout << "After optional EMInput \n";
-
-
 
   EMOutput res = EMHDGM_cpp(inp);
 

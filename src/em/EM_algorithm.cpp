@@ -7,7 +7,6 @@
 
 
 // assuming no missing observations and no matrix permutations
-// temporarely return integer, then return all parameters
 EMOutput EMHDGM_cpp(EMInput em_in) {
 
   // Setup
@@ -19,7 +18,9 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
   int p = em_in.beta0.n_elem; // fixed effect vector length
 
   double alpha_temp = em_in.alpha0;
-  double theta_temp = em_in.theta0;
+
+  std::array<double,2> theta_v_temp = {em_in.theta0, em_in.v0};
+
   double g_temp = em_in.g0;
   double sigma2_temp = em_in.sigma20;
 
@@ -28,10 +29,11 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
 
   // NOTE: parameter dimension has to be changed if the parameters space change
   // also, zero is not a perfect initialization value
-  arma::mat par_history = arma::mat(4, em_in.max_iter + 1);
+  arma::mat par_history = arma::mat(5, em_in.max_iter + 1);
   arma::mat beta_history = arma::mat(p, em_in.max_iter + 1);
 
-  par_history.col(0) = arma::vec({alpha_temp, theta_temp, g_temp, sigma2_temp});
+  par_history.col(0) = arma::vec({alpha_temp, theta_v_temp[0], theta_v_temp[1],
+                  g_temp, sigma2_temp});
   beta_history.col(0) = beta_temp;
 
 
@@ -65,8 +67,10 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
   // EM iterations
   for (int iter = 1; iter < em_in.max_iter + 1; ++iter) {
 
-    //if (em_in.verbose)
-      //std::cout << "Iteration " << iter << std::endl;
+    if (em_in.verbose){
+      std::cout << "Iteration " << iter << std::endl;
+    };
+
 
     // Subtract fixed effects
     arma::mat y_res = em_in.y;
@@ -80,7 +84,7 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
     //std::cout << "[DEBUG] y_res (fixed effect done) " <<std::endl;
 
     // Update Q
-    arma::mat Q_temp = exp(-theta_temp * em_in.dist_matrix);
+    arma::mat Q_temp = theta_v_temp[1] * exp(-theta_v_temp[0] * em_in.dist_matrix);
     //std::cout << "[DEBUG] Q_temp matrix updated " << std::endl;
 
     ///////////////////////
@@ -143,17 +147,20 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
 
     }
 
-    // Theta update (optimization)
-    theta_temp = ThetaUpdate(em_in.dist_matrix, g_temp,
+    // Theta and V update (optimization)
+    theta_v_temp = ThetaVUpdate(em_in.dist_matrix, g_temp, T,
                              S00, S10, S11,
-                             theta_temp,
-                             T, em_in.theta_lower, em_in.theta_upper);
+                             theta_v_temp,
+                             em_in.theta_v_step,
+                             em_in.var_terminating_lim,
+                             em_in.nelder_mead_max_iter);
 
     // g update
     g_temp = gUpdate(S00, S10);
 
   // Update parameters history
-  par_history.col(iter) = arma::vec({alpha_temp, theta_temp, g_temp, sigma2_temp});
+  par_history.col(iter) = arma::vec({alpha_temp, theta_v_temp[0], theta_v_temp[1],
+                  g_temp, sigma2_temp});
   beta_history.col(iter) = beta_temp;
   }
 

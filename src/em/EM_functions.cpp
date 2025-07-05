@@ -8,7 +8,7 @@
 
 #include "EM_functions.h"
 #include "../utils/covariances.h"
-#include "../optim/golden_search.h"
+#include "../optim/nelder_mead.h"
 
 // Temp file
 
@@ -228,7 +228,10 @@ double Sigma2Update(const arma::mat& Omega_sum,
  * @brief Computes the negative expected complete-data log-likelihood
  *        (up to a constant) for the HDGM model, to be minimized over theta.
  *
- * @param theta Spatial decay parameter to evaluate
+ * @param theta_v array of two elements
+ * the first is theta: Spatial decay parameter to evaluate,
+ * the second is sigma_z which is the state innovation covariance scaling standard
+ * deviation
  * @param dist_matrix Distance matrix between spatial locations (p x p)
  * @param S00 Smoothed second moment of z_{t-1} (p x p)
  * @param S10 Smoothed cross-moment between z_t and z_{t-1} (p x p)
@@ -238,14 +241,17 @@ double Sigma2Update(const arma::mat& Omega_sum,
  * @return double The value of the negative objective function at given theta
  */
 
-double theta_negative_to_optim(double theta,
+double theta_v_negative_to_optim(const std::array<double,2> theta_v,
                          const arma::mat& dist_matrix,
                          const arma::mat& S00,
                          const arma::mat& S10,
                          const arma::mat& S11,
-                         double g,
-                         int N) {
-  arma::mat Sigma_eta = ExpCor(dist_matrix, theta);
+                         const double g,
+                         const int N) {
+
+
+
+  arma::mat Sigma_eta = theta_v[1] * ExpCor(dist_matrix, theta_v[0]);
 
   double logdet_val = 0.0;
   double sign = 0.0;
@@ -276,39 +282,38 @@ double theta_negative_to_optim(double theta,
  * @param S00 Smoothed second moment of z_{t-1} over time (p x p)
  * @param S10 Smoothed cross-moment of z_t and z_{t-1} over time (p x p)
  * @param S11 Smoothed second moment of z_t over time (p x p)
- * @param theta0 Initial guess for theta (not used in optimization directly)
+ * @param theta_v0 Initial guess for theta_v
+ * @param theta_v_step: step for each variable nelder-mead step
+ * @param var_terminating_lim: stopping criterion for nelder-mead method: variance of values
+ * @param max_iter: max iteration nelder-mead
  * @param N Number of time points
- * @param lower lower bound for theta optimization
- * @param upper Upper bound for theta optimization
  * @return double Optimized value of theta that minimizes the objective
  */
-double ThetaUpdate(const arma::mat& dist_matrix,
+std::array<double,2> ThetaVUpdate(const arma::mat& dist_matrix,
                    double g,
+                   int N,
                    const arma::mat& S00,
                    const arma::mat& S10,
                    const arma::mat& S11,
-                   double theta0,
-                   int N,
-                   double lower,
-                   double upper) {
+                   const std::array<double,2> theta_v0,
+                   const std::array<double,2> theta_v_step,
+                   const double var_terminating_lim,
+                   const int max_iter) {
 
-  auto obj_fun = [&](double theta) {
-    return theta_negative_to_optim(theta, dist_matrix, S00, S10, S11, g, N);
+  auto obj_fun = [&](const std::array<double,2> theta_v) {
+    return theta_v_negative_to_optim(theta_v, dist_matrix, S00, S10, S11, g, N);
   };
 
-  // Diagnostic: Sample the objective function over the interval
-  const int num_samples = 100;
-  std::ofstream diag_file("src/debug/theta_diagnostics.csv");
-  diag_file << "theta,value\n";
-  for (int i = 0; i <= num_samples; ++i) {
-    double theta = lower + i * (upper - lower) / num_samples;
-    double val = obj_fun(theta);
-    diag_file << theta << "," << val << "\n";
-  }
-  diag_file.close();
+  nelder_mead_result<double,2> result = nelder_mead<double,2>(
+    obj_fun,
+    theta_v0,
+    var_terminating_lim, // the terminating limit for the variance of function values
+    theta_v_step
+  );
 
-  double result = golden_search_minima(obj_fun, lower, upper); // avoid theta = 0
-  return result;
+  std::array<double,2> res = { result.xmin[0], result.xmin[1] };
+
+  return res;
 }
 
 /**
