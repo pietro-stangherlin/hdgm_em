@@ -1,6 +1,5 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
-
 #include "EM_algorithm.h"
 
 
@@ -16,14 +15,17 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
                     Rcpp::Nullable<Rcpp::NumericVector> Xbeta_in = R_NilValue,
                     Rcpp::Nullable<arma::vec> z0_in = R_NilValue,
                     Rcpp::Nullable<arma::mat> P0_in = R_NilValue,
-                    const std::array<double,2> theta_v_step = {0.01, 0.01}, // step for each variable nelder-mead step
-                    const double var_terminating_lim = 1.0e-10, // stopping criterion for nelder-mead method: variance of values
-                    const int nelder_mead_max_iter = 50, // max iteration nelder-mead
+                    const double var_terminating_lim = 1.0e-4, // stopping criterion for nelder-mead method: variance of values
+                    const int nelder_mead_max_iter = 20, // max iteration nelder-mead
                     int max_iter = 10, // TO change + add tolerance
                     bool verbose = true) {
 
   std::cout << "Inside EMHDGM\n";
 
+  // WARNING: this is a temporary solution
+  // TO DO: move this to input, but without changing anything
+  // this will give problems not recognizing the function
+  const std::array<double,2> theta_v_step = {0.01, 0.01};
 
   // convert array to arma::cube
   std::optional<arma::cube> Xbeta_opt = std::nullopt;
@@ -86,6 +88,11 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
   return Rcpp::List::create(
     Rcpp::Named("par_history") = res.par_history,
     Rcpp::Named("beta_history") = res.beta_history
+  );
+
+  // debugging
+  return Rcpp::List::create(
+    Rcpp::Named("par_history") = 1
   );
 
 

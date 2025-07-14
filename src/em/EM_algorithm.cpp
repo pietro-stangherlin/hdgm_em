@@ -147,6 +147,9 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
 
     }
 
+    // DEBUG
+    std::cout << "Before ThetaVUpdate" << std::endl;
+
     // Theta and V update (optimization)
     theta_v_temp = ThetaVUpdate(em_in.dist_matrix, g_temp, T,
                              S00, S10, S11,
@@ -154,6 +157,9 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
                              em_in.theta_v_step,
                              em_in.var_terminating_lim,
                              em_in.nelder_mead_max_iter);
+
+    // DEBUG
+    std::cout << "After ThetaVUpdate" << std::endl;
 
     // g update
     g_temp = gUpdate(S00, S10);
