@@ -2,10 +2,8 @@
 Compile //////////
 //////////////////
 
-g++ src/tests/optim/test_nelder_mead.cpp \
-    src/optim/nelder_mead.h \
-    -I./src \
-    -o src/tests/optim/test_nelder_mead.exe \
-    -O2 -std=c++17
+g++ src/tests/optim/test_nelder_mead.cpp -Isrc -o src/tests/optim/test_nelder_mead.exe
 
-g++ src/optim/nelder_mead.h -o src/optim/nelder_mead.exe
+
+//// Execute
+./src/tests/optim/test_nelder_mead.exe
