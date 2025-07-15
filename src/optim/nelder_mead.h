@@ -113,7 +113,7 @@ nelder_mead_result<real,n> nelder_mead(
     const std::function<real(const std::array<real,n> &)> &fn,
     std::array<real,n> start,
     real reqmin,
-    const std::array<real,n> &step,
+    const std::array<real,n> step,
     int konvge = 1,
     int kcount = INT_MAX
 ) {

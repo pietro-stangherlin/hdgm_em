@@ -72,28 +72,24 @@ ExpCor <- function(mdist, theta){
 
 #' @param n (int): number of simulated observations
 #' @param y_len (int): dimension of observed and state vectors
-#' @param cor_matr (matrix): matrix of spatial correlations of the
+#' @param state_cov_matr (matrix): matrix of spatial covariance of the
 #' state vector (same for each time)
 #' @param sigmay (num): observation error standard deviation
-#' @param sigmaz (num): state error standard deviation
-#' @param upsilon (num): scaling factor passing from state to observed
+#' @param a (num): scaling factor passing from state to observed
 #' @param gHDGM (num): state vector autoregressive factor
 #' @param z0 (vector): starting state
 
 RHDGM <- function(n,
                   y_len,
-                  cor_matr,
+                  state_cov_matr,
                   sigmay,
-                  sigmaz,
-                  upsilon,
+                  a,
                   gHDGM,
                   z0 = NULL){
 
   if(is.null(z0)){
     z0 <- rep(0, y_len)
   }
-
-  sigma2z <- sigmaz^2
 
   y_vals <- matrix(NA,
                    nrow = n,
@@ -110,8 +106,8 @@ RHDGM <- function(n,
   for(i in 2:(n + 1)){
     z_vals[i,] <- gHDGM * z_vals[i-1,] + rmvnorm(n = 1,
                                                  mean = rep(0, y_len),
-                                                 sigma = sigma2z * cor_matr)
-    y_vals[i-1,] <- upsilon * z_vals[i,] + rnorm(y_len, sd = sigmay)
+                                                 sigma = state_cov_matr)
+    y_vals[i-1,] <- a * z_vals[i,] + rnorm(y_len, sd = sigmay)
 
   }
 

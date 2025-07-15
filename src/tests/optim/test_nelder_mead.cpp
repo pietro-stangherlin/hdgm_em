@@ -17,7 +17,7 @@ int main() {
     step
   );
   std::cout << "Found minimum: " << std::fixed << result.xmin[0] << ' ' << result.xmin[1] << std::endl;
-  std::cout<< "Expected (0,0)";
+  std::cout<< "Expected (0,0)"<< std::endl;
 
   return 0;
 }

@@ -16,7 +16,6 @@ struct EMInput{
   std::optional<arma::mat> P0_in = std::nullopt;
   const std::array<double,2> theta_v_step = {0.01, 0.01}; // step for each variable nelder-mead step
   const double var_terminating_lim = 1.0e-10; // stopping criterion for nelder-mead method: variance of values
-  const int nelder_mead_max_iter = 50; // max iteration nelder-mead
   int max_iter = 10; // TO change + add tolerance
   bool verbose = true;
 };

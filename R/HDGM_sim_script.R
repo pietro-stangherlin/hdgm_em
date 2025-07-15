@@ -28,15 +28,18 @@ ExpCor <- function(mdist, theta){
 #' @param y_len (int): dimension of observed and state vectors
 #' @param cor_matr (matrix): matrix of spatial correlations of the
 #' state vector (same for each time)
-#' @param upsilon (num): scaling factor passing from state to observed
+#' @param sigma2y (num): variance scale of observed innovations
+#' @param sigma2z (num): variance scale of state innovations
+#' @param a (num): scaling factor passing from state to observed
 #' @param gHDGM (num): state vector autoregressive factor
 #' @param z0 (vector): starting state
 
 RHDGM <- function(n,
                   y_len,
                   cor_matr,
-                  sigmay,
-                  upsilon,
+                  sigma2y,
+                  sigma2z,
+                  a,
                   gHDGM,
                   z0 = NULL){
 
@@ -57,14 +60,16 @@ RHDGM <- function(n,
   # because we can just simulate from the gaussian once
   # but in this way the data generating process is clear
 
+  sigmay <- sqrt(sigma2y)
+
   for(i in 2:(n + 1)){
     # NOTE: for the moment the state variables innovations only present
     # unitary variance, this has to be fixed
     z_vals[i,] <- gHDGM * z_vals[i-1,] + rmvnorm(n = 1,
                                                   mean = rep(0, y_len),
-                                                  sigma = cor_matr)
+                                                  sigma = sigma2z * cor_matr)
 
-    y_vals[i-1,] <- upsilon * z_vals[i,] + rnorm(y_len, sd = sigmay)
+    y_vals[i-1,] <- a * z_vals[i,] + rnorm(y_len, sd = sigmay)
 
   }
 

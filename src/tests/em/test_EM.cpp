@@ -1,11 +1,11 @@
+#include <RcppArmadillo.h>
 #include <iostream>
-#include <armadillo>
 #include <optional>
 
 #include "em/EM_algorithm.h"
 
 int main(int argc, char* argv[]) {
-  
+
 
   int T = 10000;   // number of time steps
   int n = 5;   // number of observed variables and states

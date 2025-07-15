@@ -4,6 +4,7 @@
 #include "../kalman/Kalman_internal.h"
 #include "EM_functions.h"
 #include "EM_algorithm.h"
+#include "../utils/covariances.h"
 
 
 // assuming no missing observations and no matrix permutations
@@ -84,7 +85,7 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
     //std::cout << "[DEBUG] y_res (fixed effect done) " <<std::endl;
 
     // Update Q
-    arma::mat Q_temp = theta_v_temp[1] * exp(-theta_v_temp[0] * em_in.dist_matrix);
+    arma::mat Q_temp = theta_v_temp[1] * ExpCor(em_in.dist_matrix, theta_v_temp[0]);
     //std::cout << "[DEBUG] Q_temp matrix updated " << std::endl;
 
     ///////////////////////
@@ -155,8 +156,7 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
                              S00, S10, S11,
                              theta_v_temp,
                              em_in.theta_v_step,
-                             em_in.var_terminating_lim,
-                             em_in.nelder_mead_max_iter);
+                             em_in.var_terminating_lim);
 
     // DEBUG
     std::cout << "After ThetaVUpdate" << std::endl;

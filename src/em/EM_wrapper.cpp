@@ -16,7 +16,6 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
                     Rcpp::Nullable<arma::vec> z0_in = R_NilValue,
                     Rcpp::Nullable<arma::mat> P0_in = R_NilValue,
                     const double var_terminating_lim = 1.0e-4, // stopping criterion for nelder-mead method: variance of values
-                    const int nelder_mead_max_iter = 20, // max iteration nelder-mead
                     int max_iter = 10, // TO change + add tolerance
                     bool verbose = true) {
 
@@ -74,7 +73,6 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
     .P0_in = P0_opt,
     .theta_v_step = theta_v_step,
     .var_terminating_lim = var_terminating_lim,
-    .nelder_mead_max_iter = nelder_mead_max_iter,
     .max_iter = max_iter,
     .verbose = verbose
   };

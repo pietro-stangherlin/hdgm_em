@@ -14,8 +14,9 @@ N <- 1000
 Y_LEN <- 2
 THETA <- 5
 G <- 0.8
-UPSILON <- 3
-SIGMA <- 0.1
+A <- 3
+SIGMAY <- 0.1
+SIGMAZ <- 1
 
 DIST_MATRIX <- matrix(c(0, 1,
                         1, 0),
@@ -27,10 +28,9 @@ COR_MATRIX <- ExpCor(mdist = DIST_MATRIX,
 
 res <- RHDGM(n = N,
              y_len = Y_LEN,
-             cor_matr = COR_MATRIX,
-             sigmay = SIGMA,
-             sigmaz = 1,
-             upsilon = UPSILON,
+             state_cov_matr = SIGMAZ^2 * COR_MATRIX,
+             sigmay = SIGMAY,
+             a = A,
              gHDGM = G,
              z0 = rep(0, Y_LEN))
 
@@ -43,12 +43,12 @@ y.matr <- t(res$y)
 
 res_EM <- EMHDGM(y = y.matr,
                  dist_matrix = DIST_MATRIX,
-                 alpha0 = UPSILON,
+                 alpha0 = A,
                  beta0 = rep(0, 2),
                  theta0 = THETA,
                  v0 = 1,
                  g0 = G,
-                 sigma20 = SIGMA^2,
+                 sigma20 = SIGMAY^2,
                  Xbeta_in = NULL,
                  z0_in = NULL,
                  P0_in = NULL,

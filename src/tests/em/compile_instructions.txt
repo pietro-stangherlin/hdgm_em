@@ -2,6 +2,26 @@
 Compile //////////
 //////////////////
 
+// ThetaVUpate
+
+g++ -std=c++17 \
+  -I"C:/Users/pietr/AppData/Local/R/win-library/4.5/RcppArmadillo/include" \
+  -I"C:/Users/pietr/AppData/Local/R/win-library/4.5/Rcpp/include" \
+  -I"C:/Program Files/R/R-4.5.1/include" \
+  -L"C:/Program Files/R/R-4.5.1/bin/x64" -lR -lRblas -lRlapack \
+  -fopenmp \
+  -fPIC \
+  src/tests/em/test_ThetaVUpdate.cpp \
+  -o src/tests/em/test_ThetaVUpdate.exe
+
+
+// execute
+src/tests/em/test_ThetaVUpdate.exe
+
+
+
+
+// EM
 g++ src/tests/em/test_EM.cpp \
     src/em/EM_algorithm.cpp \
     src/em/EM_functions.cpp \
@@ -28,7 +48,7 @@ g++ src/tests/em/test_EM_hdgm.cpp \
     -O2 -std=c++17 \
     -larmadillo -llapack -lblas -lgfortran -lquadmath \
     -static-libgcc -static-libstdc++
-    
+
 
 ///////////////////
 Execute //////////
