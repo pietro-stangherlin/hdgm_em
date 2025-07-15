@@ -25,7 +25,7 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
   // WARNING: this is a temporary solution
   // TO DO: move this to input, but without changing anything
   // this will give problems not recognizing the function
-  const std::array<double,2> theta_v_step = {0.01, 0.01};
+  const std::array<double,2> theta_v_step = {0.0001, 0.0001};
 
   // convert array to arma::cube
   std::optional<arma::cube> Xbeta_opt = std::nullopt;
