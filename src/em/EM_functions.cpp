@@ -255,8 +255,9 @@ double theta_v_negative_to_optim(const std::array<double,2>& theta_v,
   // debug
   // std::cout << "Sigma_eta" << Sigma_eta << std::endl;
 
-  // std::cout << "theta_v[0]: " << theta_v[0] << std::endl;
-  // std::cout << "theta_v[1]: " << theta_v[1] << std::endl;
+  std::cout << "inside negative to optim: " << std::endl;
+  std::cout << "theta_v[0]: " << theta_v[0] << std::endl;
+  std::cout << "theta_v[1]: " << theta_v[1] << std::endl;
   // std::cout << "dist_matrix: " << dist_matrix << std::endl;
 
   double logdet_val = 0.0;
@@ -327,6 +328,10 @@ std::array<double,2> ThetaVUpdate(const arma::mat& dist_matrix,
   };
 
   std::cout << "before nelder mead:" << std::endl;
+
+  // DEBUG
+  std::cerr << "Calling nelder_mead from: " << __FILE__ << ":" << __LINE__ << std::endl;
+
 
   nelder_mead_result<double,2> result = nelder_mead<double,2>(
     obj_fun,

@@ -88,11 +88,6 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
     Rcpp::Named("beta_history") = res.beta_history
   );
 
-  // debugging
-  return Rcpp::List::create(
-    Rcpp::Named("par_history") = 1
-  );
-
 
 }
 

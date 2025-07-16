@@ -72,12 +72,14 @@
  *    This C++ version is available at
  *    https://github.com/develancer/nelder-mead/
  */
+
 #ifndef PTR_NELDER_MEAD_H
 #define PTR_NELDER_MEAD_H
 
 #include <array>
 #include <climits>
 #include <functional>
+#include <iostream>
 
 /**
  * Plain data object with output information from the run of nelder_mead routine.
@@ -117,6 +119,7 @@ nelder_mead_result<real,n> nelder_mead(
     int konvge = 1,
     int kcount = INT_MAX
 ) {
+
   const real ccoeff = 0.5;
   real del;
   const real ecoeff = 2.0;
@@ -132,6 +135,12 @@ nelder_mead_result<real,n> nelder_mead(
   real ylo;
   real ystar;
   real z;
+
+  // DEBUG
+  std::cout << "[DEBUG] test " << std::endl;
+  std::cout << "[DEBUG] start[0]: " << start[0] << std::endl;
+  std::cout << "[DEBUG] start[1]: " << start[1] << std::endl;
+
 
   nelder_mead_result<real,n> result;
 
@@ -358,7 +367,9 @@ nelder_mead_result<real,n> nelder_mead(
     result.numres++;
   }
 
+  // original result
   return result;
+
 }
 
 #endif // PTR_NELDER_MEAD_H
