@@ -5,23 +5,25 @@ library(RcppArmadillo)
 
 source("tests/test_helper.R")
 
-Rcpp::sourceCpp("src/em/EM_wrapper.cpp")
+Rcpp::sourceCpp("src/em/EM_wrapper.cpp",
+                rebuild = TRUE)
 
 # Simulation 1 -----------------------------------
 set.seed(123)
 
 N <- 1000
-Y_LEN <- 2
+Y_LEN <- 4
 THETA <- 5
 G <- 0.8
 A <- 3
 SIGMAY <- 0.1
 SIGMAZ <- 1
 
-DIST_MATRIX <- matrix(c(0, 1,
-                        1, 0),
+DIST_MATRIX <- matrix(rep(1, Y_LEN * Y_LEN),
                       ncol = Y_LEN,
                       nrow = Y_LEN)
+
+diag(DIST_MATRIX) = 0
 
 COR_MATRIX <- ExpCor(mdist = DIST_MATRIX,
                      theta = THETA)
@@ -46,13 +48,13 @@ res_EM <- EMHDGM(y = y.matr,
                  alpha0 = A,
                  beta0 = rep(0, 2),
                  theta0 = THETA,
-                 v0 = 1,
+                 v0 = SIGMAZ^2,
                  g0 = G,
                  sigma20 = SIGMAY^2,
                  Xbeta_in = NULL,
                  z0_in = NULL,
                  P0_in = NULL,
-                 max_iter = 10,
+                 max_iter = 5,
                  verbose = TRUE)
 
 dim(res_EM$par_history)

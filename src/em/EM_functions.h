@@ -35,23 +35,23 @@ arma::mat OmegaSumUpdate(const arma::mat & mY_fixed_res,
                          const arma::cube & cPsmt,
                          double alpha);
 
-double theta_v_negative_to_optim(const std::array<double,2>& theta_v,
-                                 const arma::mat dist_matrix,
-                                 const arma::mat S00,
-                                 const arma::mat S10,
-                                 const arma::mat S11,
-                                 const double g,
-                                 const int N);
+double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta_v,
+                                 const arma::mat& dist_matrix,
+                                 const arma::mat& S00,
+                                 const arma::mat& S10,
+                                 const arma::mat& S11,
+                                 const double& g,
+                                 const int& N);
 
 std::array<double,2> ThetaVUpdate(const arma::mat& dist_matrix,
-                   double g,
-                   int N,
+                   double& g,
+                   int& N,
                    const arma::mat& S00,
                    const arma::mat& S10,
                    const arma::mat& S11,
-                   const std::array<double,2> theta_v0,
-                   const std::array<double,2> theta_v_step = {0.01, 0.01},
-                   const double var_terminating_lim = 1e-10);
+                   const std::array<double,2>& theta_v0,
+                   const std::array<double,2>& theta_v_step = {0.01, 0.01},
+                   const double& var_terminating_lim = 1e-10);
 
 double Sigma2Update(const arma::mat& Omega_sum,
                     const int n,

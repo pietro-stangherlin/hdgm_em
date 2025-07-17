@@ -241,23 +241,23 @@ double Sigma2Update(const arma::mat& Omega_sum,
  * @return double The value of the negative objective function at given theta
  */
 
-double theta_v_negative_to_optim(const std::array<double,2>& theta_v,
-                         const arma::mat dist_matrix,
-                         const arma::mat S00,
-                         const arma::mat S10,
-                         const arma::mat S11,
-                         const double g,
-                         const int N) {
+double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta_v,
+                         const arma::mat& dist_matrix,
+                         const arma::mat& S00,
+                         const arma::mat& S10,
+                         const arma::mat& S11,
+                         const double& g,
+                         const int& N) {
 
 
 
-  arma::mat Sigma_eta = theta_v[1] * ExpCor(dist_matrix, theta_v[0]);
+  arma::mat Sigma_eta = exp(log_theta_v[1]) * ExpCor(dist_matrix, exp(log_theta_v[0]));
   // debug
   // std::cout << "Sigma_eta" << Sigma_eta << std::endl;
 
-  std::cout << "inside negative to optim: " << std::endl;
-  std::cout << "theta_v[0]: " << theta_v[0] << std::endl;
-  std::cout << "theta_v[1]: " << theta_v[1] << std::endl;
+  // std::cout << "inside negative to optim: " << std::endl;
+  // std::cout << "theta_v[0]: " << theta_v[0] << std::endl;
+  // std::cout << "theta_v[1]: " << theta_v[1] << std::endl;
   // std::cout << "dist_matrix: " << dist_matrix << std::endl;
 
   double logdet_val = 0.0;
@@ -306,14 +306,14 @@ double theta_v_negative_to_optim(const std::array<double,2>& theta_v,
  * @return double Optimized value of theta that minimizes the objective
  */
 std::array<double,2> ThetaVUpdate(const arma::mat& dist_matrix,
-                   double g,
-                   int N,
+                   double& g,
+                   int& N,
                    const arma::mat& S00,
                    const arma::mat& S10,
                    const arma::mat& S11,
-                   const std::array<double,2> theta_v0,
-                   const std::array<double,2> theta_v_step,
-                   const double var_terminating_lim) {
+                   const std::array<double,2>& theta_v0,
+                   const std::array<double,2>& theta_v_step,
+                   const double& var_terminating_lim) {
 
   // debug
   std::cout << "inside ThetaVUpdate:" << std::endl;
@@ -323,15 +323,17 @@ std::array<double,2> ThetaVUpdate(const arma::mat& dist_matrix,
   std::cout << "dist_matrix" << dist_matrix << std::endl;
   std::cout << "Sigma_eta" << Sigma_eta << std::endl;
 
-  auto obj_fun = [&](const std::array<double,2>& theta_v) {
-    return theta_v_negative_to_optim(theta_v, dist_matrix, S00, S10, S11, g, N);
+  std::cout << "S00" << S00 << std::endl;
+  std::cout << "S10" << S10 << std::endl;
+  std::cout << "S11" << S11 << std::endl;
+
+  auto obj_fun = [&](const std::array<double,2>& log_theta_v) {
+    return theta_v_negative_to_optim_log_scale(log_theta_v, dist_matrix, S00, S10, S11, g, N);
   };
 
   std::cout << "before nelder mead:" << std::endl;
 
-  // DEBUG
-  std::cerr << "Calling nelder_mead from: " << __FILE__ << ":" << __LINE__ << std::endl;
-
+  std::array<double,2> log_theta_v0 = {log(theta_v0[0]), log(theta_v0[1])};
 
   nelder_mead_result<double,2> result = nelder_mead<double,2>(
     obj_fun,
@@ -342,7 +344,7 @@ std::array<double,2> ThetaVUpdate(const arma::mat& dist_matrix,
 
   std::cout << "after nelder mead:" << std::endl;
 
-  std::array<double,2> res = { result.xmin[0], result.xmin[1] };
+  std::array<double,2> res = { exp(result.xmin[0]), exp(result.xmin[1]) };
 
   return res;
 }
