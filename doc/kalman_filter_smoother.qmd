@@ -1,0 +1,81 @@
+---
+title: "Kalman Filter and Smoother Derivations"
+format: html
+editor: visual
+bibliography: bibliography.bib
+---
+
+We will use the notation and follow chapter 6 of [@ShumwayStoffer].
+
+## General Linear Gaussian State Space
+
+$$
+\begin{align}
+y_t &= A_t x_t + \Gamma_t u_t + w_t \\
+x_{t} &= \Phi_t x_{t-1} + \Upsilon_t u_t + v_t
+\end{align}
+$$ {#eq-state-space}
+
+where
+
+-   Vectors
+
+    -   $x_t$ : state vector (p x 1)
+
+    -   $y_t$ : observation vector (q x 1)
+
+    -   $u_t$ : exogenous input vector (r x 1)
+
+-   Erros
+
+    -   $w_t \sim N(0, Q_t)$ i.i.d
+
+    -   $v_t \sim N(0, R_t)$ i.i.d
+
+## Notation
+
+$$
+x^{s}_t = E(x_t|y_{1:s})
+$$ {#eq-conditional-mean}
+
+$$
+P^{s}_{t1,t2} = E\{(x_{t_1} - x^s_{t_1})(x_{t_2} - x^s_{t_2})^\top|y_{1:s}\}
+$$ {#eq-conditional-covariance}
+
+## Kalman Filter 
+
+Assuming known initial conditions $x^0_0$ and $P^0_0$ we have
+
+### Filtering
+
+$$
+x^{t-1}_t = \Phi_t x^{t-1}_{t-1} + \Upsilon_t u_t 
+$$ {#eq-filter-state}
+
+$$
+P^{t-1}_t = \Phi_t P^{t-1}_{t-1} \Phi^{\top}_{t} + Q_t
+$$ {#eq-filter-covariance}
+
+### Prediction
+
+$$ x^{t}_t = x^{t-1}_{t} + K_t (y_t - A_t x^{t-1}_{t} - \Gamma u_t) $$ {#eq-predicted-state}
+
+$$ P^{t}_t = (I - K_t A_t)P^{t-1}_t $$ {#eq-predicted-covariance}
+
+Where the Kalman gain is
+
+$$
+K_t = P^{t-1}_t A^\top_t(A_t P^{t-1}_t A^{\top}_t + R_t)^{-1}
+$$
+
+Innovations and their covariance are then defined as
+
+$$
+\epsilon_t = y_t - E(y_t|y_{1:(t-1)}) = y_t - A_t x^{t-1}_t - \Gamma u_t
+$$ {#eq-innovations}
+
+$$
+\Gamma_t = \text{var}(\epsilon_t) = \text{var}\{A_t(x_t - x^{t-1}_t) + v_t\} = A_t P^{t-1}_t A^\top_t
+$$
+
+## Kalman Smoother
