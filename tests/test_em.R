@@ -17,7 +17,7 @@ THETA <- 5
 G <- 0.8
 A <- 3
 SIGMAY <- 0.1
-SIGMAZ <- 5
+SIGMAZ <- 2
 
 # generate x coordinate
 # generate y coordinate

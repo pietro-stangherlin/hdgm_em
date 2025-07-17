@@ -10,26 +10,36 @@ ExpCor <- function(mdist, theta){
 }
 
 N <- 1000
+Y_LEN <- 4
 
-dist_matrix <- matrix(c(0, 1,
-                        1, 0), ncol = 2)
+dist_matrix <- matrix(scan(text = "0   1.0255   0.4299   0.5974
+   1.0255        0   0.6138   0.8521
+   0.4299   0.6138        0   0.5979
+   0.5974   0.8521   0.5979        0",
+                           what = numeric(), quiet = T), ncol = Y_LEN)
 
-S00 <- matrix(c(0.5250,   0.2839,
-                0.2839,   0.4948),
-              ncol = 2)
+S00 <- matrix(scan(text = "0.5524   0.0354   0.1927   0.1697
+   0.0354   1.2121   0.2719  -0.4025
+   0.1927   0.2719   0.5100   0.0273
+   0.1697  -0.4025   0.0273   1.0155",
+                   what = numeric(), quiet = T), ncol = Y_LEN)
 
-S10 <- matrix(c(0.1168,  0.0651,
-                0.0959,   0.0550),
-              ncol = 2)
+S10 <- matrix(scan(text = "-0.0153   0.5307   0.0977  -0.4607
+  -0.0503   1.6796   0.3097  -1.4570
+  -0.0270   0.8917   0.1653  -0.7740
+   0.0021  -0.0769  -0.0143   0.0672",
+                   what = numeric(), quiet = T), ncol = Y_LEN)
 
-S11 <- matrix(c(0.3060,   0.2530,
-                0.2530,   0.2110),
-              ncol = 2)
+S11 <- matrix(scan(text = "0.4770   1.5054   0.7996  -0.0688
+   1.5054   4.7631   2.5294  -0.2176
+   0.7996   2.5294   1.3447  -0.1156
+  -0.0688  -0.2176  -0.1156   0.0111",
+                   what = numeric(), quiet = T), ncol = Y_LEN)
 
 g <- 0.8
 
 theta0 <- 5
-v0 <- 1
+v0 <- 4
 
 
 NegToOptimThetaV <- function(x){
@@ -44,9 +54,10 @@ NegToOptimThetaV <- function(x){
                  (S11 - g * S10 - g * t(S10)  + g^2 * S00))))
 }
 
+eps <- 3
 n_grid <- 100
-theta_grid <- seq(theta0 - 2, theta0 + 2, length = n_grid)
-v_grid <- seq(1e-5, v0 + 2, length = n_grid)
+theta_grid <- seq(1e-05, theta0 + eps, length = n_grid)
+v_grid <- seq(1e-05, v0 + eps, length = n_grid)
 
 z = matrix(NA, ncol = n_grid, nrow = n_grid)
 
@@ -57,10 +68,10 @@ for(i in 1:length(theta_grid)){
 }
 
 contour(theta_grid, v_grid, z)
-
-
-
-
+min(z)
+index_min = which(z == min(z), arr.ind = T)
+theta_grid[index_min[1,1]]
+v_grid[index_min[1,2]]
 
 
 
