@@ -17,7 +17,7 @@ THETA <- 5
 G <- 0.8
 A <- 3
 SIGMAY <- 0.1
-SIGMAZ <- 1
+SIGMAZ <- 5
 
 # generate x coordinate
 # generate y coordinate
@@ -40,15 +40,16 @@ diag(DIST_MATRIX) = 0
 COR_MATRIX <- ExpCor(mdist = DIST_MATRIX,
                      theta = THETA)
 
-res <- RHDGM(n = N,
-             y_len = Y_LEN,
-             state_cov_matr = SIGMAZ^2 * COR_MATRIX,
-             sigmay = SIGMAY,
-             a = A,
-             gHDGM = G,
-             z0 = rep(0, Y_LEN))
+ETA_MATRIX <- SIGMAZ^2 * COR_MATRIX # state covariance
 
-y.matr <- t(res$y)
+y.matr <- LinGauStateSpaceSim(n_times = N,
+                            obs_dim = Y_LEN,
+                            state_dim = Y_LEN,
+                            transMatr = G * diag(nrow = Y_LEN),
+                            obsMatr = A * diag(nrow = Y_LEN),
+                            stateCovMatr = ETA_MATRIX,
+                            obsCovMatr = SIGMAY^2 * diag(nrow = Y_LEN),
+                            zeroState = rep(0, Y_LEN))$observations
 
 
 # Testing ---------------------------------

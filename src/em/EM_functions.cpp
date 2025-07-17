@@ -320,12 +320,12 @@ std::array<double,2> ThetaVUpdate(const arma::mat& dist_matrix,
   arma::mat Sigma_eta = theta_v0[1] * ExpCor(dist_matrix, theta_v0[0]);
   std::cout << "theta_v[0]" << theta_v0[0] << std::endl;
   std::cout << "theta_v[1]" << theta_v0[1] << std::endl;
-  std::cout << "dist_matrix" << dist_matrix << std::endl;
-  std::cout << "Sigma_eta" << Sigma_eta << std::endl;
+  std::cout << "dist_matrix\n" << dist_matrix << std::endl;
+  std::cout << "Sigma_eta\n" << Sigma_eta << std::endl;
 
-  std::cout << "S00" << S00 << std::endl;
-  std::cout << "S10" << S10 << std::endl;
-  std::cout << "S11" << S11 << std::endl;
+  std::cout << "S00\n" << S00 << std::endl;
+  std::cout << "S10\n" << S10 << std::endl;
+  std::cout << "S11\n" << S11 << std::endl;
 
   auto obj_fun = [&](const std::array<double,2>& log_theta_v) {
     return theta_v_negative_to_optim_log_scale(log_theta_v, dist_matrix, S00, S10, S11, g, N);
