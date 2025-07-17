@@ -19,9 +19,21 @@ A <- 3
 SIGMAY <- 0.1
 SIGMAZ <- 1
 
-DIST_MATRIX <- matrix(rep(1, Y_LEN * Y_LEN),
-                      ncol = Y_LEN,
-                      nrow = Y_LEN)
+# generate x coordinate
+# generate y coordinate
+
+POINTS <- matrix(NA,
+                 nrow = Y_LEN,
+                 ncol = 2)
+
+POINTS[,1] <- runif(Y_LEN)
+POINTS[,2] <- runif(Y_LEN)
+
+DIST_MATRIX <- as.matrix(dist(POINTS))
+# add noise
+for (i in NCOL(DIST_MATRIX)){
+
+}
 
 diag(DIST_MATRIX) = 0
 
@@ -54,7 +66,7 @@ res_EM <- EMHDGM(y = y.matr,
                  Xbeta_in = NULL,
                  z0_in = NULL,
                  P0_in = NULL,
-                 max_iter = 5,
+                 max_iter = 5, # increment
                  verbose = TRUE)
 
 dim(res_EM$par_history)
