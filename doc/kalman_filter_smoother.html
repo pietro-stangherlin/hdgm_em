@@ -168,17 +168,38 @@ K_t = P^{t-1}_t A^\top_t(A_t P^{t-1}_t A^{\top}_t + R_t)^{-1}
 <p><span id="eq-innovations"><span class="math display">\[
 \epsilon_t = y_t - E(y_t|y_{1:(t-1)}) = y_t - A_t x^{t-1}_t - \Gamma u_t
 \tag{8}\]</span></span></p>
-<p><span class="math display">\[
+<p><span id="eq-innovations-covariance"><span class="math display">\[
 \Gamma_t = \text{var}(\epsilon_t) = \text{var}\{A_t(x_t - x^{t-1}_t) + v_t\} = A_t P^{t-1}_t A^\top_t
-\]</span></p>
+\tag{9}\]</span></span></p>
 </section>
 </section>
-<section id="kalman-smoother" class="level2 unnumbered">
-
+<section id="kalman-smoother" class="level2">
+<h2 class="anchored" data-anchor-id="kalman-smoother">Kalman Smoother</h2>
+<p><span id="eq-smoothed-state"><span class="math display">\[
+x^n_{t-1} = x^{t-1}_{t-1} + J_{t-1} (x^n_{t} - x^{t-1}_t)
+\tag{10}\]</span></span></p>
+<p><span id="eq-smoothed-covariance"><span class="math display">\[
+P^n_{t-1} = P^{t-1}_{t-1} + J_{t-1}(P^n_{t} - P^{t-1}_t) J^\top_{t-1}
+\tag{11}\]</span></span></p>
+<p>where</p>
+<p><span id="eq-smoother-gain"><span class="math display">\[
+J_{t-1} = P^{t-1}_{t-1} \Phi_t (P^{t-1}_{t})^{-1}
+\tag{12}\]</span></span></p>
+<section id="lag-one-covariance-smoother" class="level3">
+<h3 class="anchored" data-anchor-id="lag-one-covariance-smoother">Lag-One Covariance Smoother</h3>
+<p>Needed in EM.</p>
+<p><span id="eq-lagone-covariance-smoother-recursion"><span class="math display">\[
+P^n_{t-1, t-2} = P^{t-1}_{t-1} J^\top_{t-2} + J_{t-1}(P^n_{t,t-1} - \Phi_t P^{t-1}_{t-1}) J^\top_{t-2}
+\tag{13}\]</span></span></p>
+<p>with initial condition</p>
+<p><span id="eq-lagone-covariance-smoother-initialization"><span class="math display">\[
+P^n_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
+\tag{14}\]</span></span></p>
 
 </section>
+</section>
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">Kalman Smoother</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-ShumwayStoffer" class="csl-entry" role="listitem">
 Shumway, Robert H., and David S. Stoffer. 2005. <em>Time Series Analysis and Its Applications (Springer Texts in Statistics)</em>. Berlin, Heidelberg: Springer-Verlag.
 </div>

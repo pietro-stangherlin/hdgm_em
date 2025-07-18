@@ -5,6 +5,15 @@
 
 #include"Kalman_internal.h"
 
+// This code is an adaptaion from Sebastian Krantz DFMS package.
+// https://cran.r-project.org/package=dfms
+
+/* Linear Gaussian State-Space Kalman Filter and Smoother implementations.
+ * With reference to the Shumway and Stoffer model here
+ * - obsrvations and state covariance matrices are considered constant in time
+ * - no exogenus variables are considered
+ * (one can always consider the residuals as the new response)
+*/
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846

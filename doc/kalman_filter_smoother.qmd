@@ -42,7 +42,7 @@ $$
 P^{s}_{t1,t2} = E\{(x_{t_1} - x^s_{t_1})(x_{t_2} - x^s_{t_2})^\top|y_{1:s}\}
 $$ {#eq-conditional-covariance}
 
-## Kalman Filter 
+## Kalman Filter
 
 Assuming known initial conditions $x^0_0$ and $P^0_0$ we have
 
@@ -76,6 +76,34 @@ $$ {#eq-innovations}
 
 $$
 \Gamma_t = \text{var}(\epsilon_t) = \text{var}\{A_t(x_t - x^{t-1}_t) + v_t\} = A_t P^{t-1}_t A^\top_t
-$$
+$$ {#eq-innovations-covariance}
 
 ## Kalman Smoother
+
+$$
+x^n_{t-1} = x^{t-1}_{t-1} + J_{t-1} (x^n_{t} - x^{t-1}_t)
+$$ {#eq-smoothed-state}
+
+$$
+P^n_{t-1} = P^{t-1}_{t-1} + J_{t-1}(P^n_{t} - P^{t-1}_t) J^\top_{t-1}
+$$ {#eq-smoothed-covariance}
+
+where
+
+$$
+J_{t-1} = P^{t-1}_{t-1} \Phi_t (P^{t-1}_{t})^{-1}
+$$ {#eq-smoother-gain}
+
+### Lag-One Covariance Smoother
+
+Needed in EM.
+
+$$
+P^n_{t-1, t-2} = P^{t-1}_{t-1} J^\top_{t-2} + J_{t-1}(P^n_{t,t-1} - \Phi_t P^{t-1}_{t-1}) J^\top_{t-2}
+$$ {#eq-lagone-covariance-smoother-recursion}
+
+with initial condition
+
+$$
+P^n_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
+$$ {#eq-lagone-covariance-smoother-initialization}
