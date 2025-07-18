@@ -3,15 +3,15 @@ rm(list = ls())
 library(Rcpp)
 library(RcppArmadillo)
 
-source("tests/test_helper.R")
-
 Rcpp::sourceCpp("src/em/EM_wrapper.cpp",
                 rebuild = TRUE)
+
+source("tests/test_helper.R")
 
 # Simulation 1 -----------------------------------
 set.seed(123)
 
-N <- 1000
+N <- 10000
 Y_LEN <- 4
 THETA <- 5
 G <- 0.8
