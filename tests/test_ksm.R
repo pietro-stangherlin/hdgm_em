@@ -62,9 +62,11 @@ plot(Z[1,], type = "l",
 lines(original.skf.res$F[,1],
       col = "red")
 
-lines(custom.skf.res$F[1,],
+lines(custom.skf.res$xf[1,],
       col = "blue")
 
+# check equivalence
+custom.skf.res$xf[,1:5] == t(original.skf.res$F[1:5,])
 # benchmark
 
 CustomFilterBench <- function(b){

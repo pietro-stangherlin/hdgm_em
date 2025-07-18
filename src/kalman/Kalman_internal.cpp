@@ -176,7 +176,7 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
 
   arma::mat Vf = ksm_inp.Pf.slice(T-1);
   arma::mat Vp = ksm_inp.Pp.slice(T-1);
-  arma::mat K; // Kalman gain last observation
+  arma::mat K_times_A; // Kalman gain last observation
 
   // Kalman smoothing
   arma::mat ZsT(p, T, arma::fill::zeros);
@@ -192,9 +192,9 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
   arma::mat Ji, Jim_tr;
   arma::mat Phi_tr = ksm_inp.Phi.t();
 
-  K_times_A = (ksm_inp.nc_last == 0) ? arma::mat(rp, rp, arma::fill::zeros) : ksm_inp.K_last * ksm_inp.C_last;
+  K_times_A = (ksm_inp.nc_last == 0) ? arma::mat(p, p, arma::fill::zeros) : ksm_inp.K_last * ksm_inp.A_last;
 
-  VVsT.slice(T-1) = (arma::eye(rp,rp) - K_times_A) * ksm_inp.Phi * ksm_inp.Pf.slice(T-2);
+  VVsT.slice(T-1) = (arma::eye(p,p) - K_times_A) * ksm_inp.Phi * ksm_inp.Pf.slice(T-2);
 
   // Smoothed state variable and covariance
   for (int t = T - 2; t >= 0; --t) {
@@ -222,7 +222,7 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
     Ji * (VVsT.slice(1) - ksm_inp.Phi * ksm_inp.Pf.slice(0)) * Jim_tr.t();
 
   // Initial smoothed values
-  arma::colvec F_smooth_0 = ksm_inp.F_0 + Jim_tr * (ZsT.col(0) - ksm_inp.xp.col(0));
+  arma::colvec F_smooth_0 = ksm_inp.x_0 + Jim_tr * (ZsT.col(0) - ksm_inp.xp.col(0));
   arma::mat P_smooth_0 = ksm_inp.P_0 + Jim_tr * (VsT.slice(0) - Vp) * Jim_tr.t();
 
 
