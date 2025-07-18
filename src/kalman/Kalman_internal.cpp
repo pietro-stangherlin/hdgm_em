@@ -207,7 +207,7 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
     ZsT.col(t) = ksm_inp.xf.col(t) + Ji * (ZsT.col(t+1) - ksm_inp.xp.col(t+1));
     VsT.slice(t) = Vf + Ji * (VsT.slice(t+1) - Vp) * Jim_tr;
 
-    // Cov(Z_t, Z_t-1): Needed for EM
+    // smoothed Cov(x_t, x_t-1 | y_{1:T}): Needed for EM
     if (t > 0) {
       Jim_tr = ksm_inp.Pf.slice(t-1) * Phi_tr * inv_sympd(ksm_inp.Pp.slice(t));
       VVsT.slice(t) = ksm_inp.Pf.slice(t) * Jim_tr +
