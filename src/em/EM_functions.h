@@ -7,18 +7,18 @@ double AlphaUpdate(const arma::mat & mY_fixed_res,
 
 arma::mat ComputeS00(const arma::mat & smoothed_states,
                      const arma::cube & smoothed_vars,
-                     const arma::vec & z0,
-                     const arma::mat & P0);
+                     const arma::vec & z0_smoothed,
+                     const arma::mat & P0_smoothed);
 
 arma::mat ComputeS11(const arma::mat & smoothed_states,
                      const arma::cube & smoothed_vars,
                      const arma::mat & S00,
-                     const arma::vec & z0,
-                     const arma::mat & P0);
+                     const arma::vec & z0_smoothed,
+                     const arma::mat & P0_smoothed);
 
 arma::mat ComputeS10(const arma::mat & smoothed_states,
                      const arma::cube & lagone_smoothed_covars,
-                     const arma::vec & z0);
+                     const arma::vec & z0_smoothed);
 
 double gUpdate(const arma::mat & S00,
                const arma::mat & S10);

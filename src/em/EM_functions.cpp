@@ -10,7 +10,89 @@
 #include "../utils/covariances.h"
 #include "../optim/nelder_mead.h"
 
-// Temp file
+// General EM updates --------------------------------
+
+/**
+ * @description compute the matrix S00
+ * @param smoothed_states (matrix): matrix of smoothed states
+ * @param smoothed_vars (array): array of smoothed sates variance matrices
+ * @param z0 (matrix) z0: starting value m x 1 matrix (i.e. vector) containing the expected values of the initial states
+ * @param P0 (matrix) P0: starting value m x m matrix containing the covariance matrix
+ * of the nondiffuse part of the initial state vector.
+ * @return (matrix) m x m
+ */
+
+arma::mat ComputeS00(const arma::mat & smoothed_states,
+                     const arma::cube & smoothed_vars,
+                     const arma::vec & z0_smoothed,
+                     const arma::mat & P0_smoothed){
+
+  int T = smoothed_states.n_cols;
+
+  arma::mat S00 = z0_smoothed * z0_smoothed.t() + P0_smoothed;
+
+  // all except the last time T
+  for(int t = 0; t < (T - 1); t++){
+    S00 += smoothed_states.col(t) * smoothed_states.col(t).t() + smoothed_vars.slice(t);
+  }
+
+  return(S00);
+}
+
+/**
+ * @description compute the matrix S11
+ * @param smoothed_states (matrix): matrix of smoothed states
+ * @param smoothed_vars (array): array of smoothed sates variance matrices
+ * @param S00 (matrix) m x m as defined in the paper
+ * @param z0 (matrix) z0: starting value m x 1 matrix (i.e. vector) containing the expected values of the initial states
+ * @param P0 (matrix) P0: starting value m x m matrix containing the covariance matrix
+ * of the nondiffuse part of the initial state vector.
+ * @return (matrix) m x m
+ */
+
+arma::mat ComputeS11(const arma::mat & smoothed_states,
+                     const arma::cube & smoothed_vars,
+                     const arma::mat & S00,
+                     const arma::vec & z0_smoothed,
+                     const arma::mat & P0_smoothed){
+  int T = smoothed_states.n_cols;
+
+  return(S00 - z0_smoothed * z0_smoothed.t() - P0_smoothed +
+         smoothed_states.col(T-1) * smoothed_states.col(T-1).t() + smoothed_vars.slice(T-1));
+}
+
+/**
+ * @description compute the matrix S11
+ * @param smoothed_states (matrix): matrix of smoothed states
+ * @param lagone_smoothed_covars (array): array of lag one
+ * smoothed states covariance matrices
+ * @param z0 (matrix) z0: starting value m x 1 matrix (i.e. vector) containing the expected values of the initial states
+ * @return (matrix) m x m
+ */
+
+arma::mat ComputeS10(const arma::mat & smoothed_states,
+                     const arma::cube & lagone_smoothed_covars,
+                     const arma::vec & z0_smoothed){
+
+  int T = smoothed_states.n_cols;
+
+  arma::mat S10 = smoothed_states.col(0) * z0_smoothed.t() + lagone_smoothed_covars.slice(0);
+
+  // all except the last time T
+  for(int t = 1; t <= T - 1; t++){
+    S10 += smoothed_states.col(t) * smoothed_states.col(t-1).t() + lagone_smoothed_covars.slice(t);
+  }
+
+  return(S10);
+}
+
+
+
+// Unstructured EM updates ----------------------------
+
+
+// Structured EM updates -------------------------------
+
 
 
 // covariance specification ----------------------------
@@ -55,80 +137,6 @@ double AlphaUpdate(const arma::mat & mY_fixed_res,
   // TO DO: add error message if den == 0
   return num / den;
 
-}
-
-/**
-* @description compute the matrix S00
-* @param smoothed_states (matrix): matrix of smoothed states
-* @param smoothed_vars (array): array of smoothed sates variance matrices
-* @param z0 (matrix) z0: starting value m x 1 matrix (i.e. vector) containing the expected values of the initial states
-* @param P0 (matrix) P0: starting value m x m matrix containing the covariance matrix
-* of the nondiffuse part of the initial state vector.
-* @return (matrix) m x m
-*/
-
-arma::mat ComputeS00(const arma::mat & smoothed_states,
-                     const arma::cube & smoothed_vars,
-                     const arma::vec & z0,
-                     const arma::mat & P0){
-
-  int T = z0.n_cols;
-
-  arma::mat S00 = z0 * z0.t() + P0;
-
-  // all except the last time T
-  for(int t = 0; t < (T - 1); t++){
-    S00 += smoothed_states.col(t) * smoothed_states.col(t).t() + smoothed_vars.slice(t);
-  }
-
-  return(S00);
-}
-
-/**
-* @description compute the matrix S11
-* @param smoothed_states (matrix): matrix of smoothed states
-* @param smoothed_vars (array): array of smoothed sates variance matrices
-* @param S00 (matrix) m x m as defined in the paper
-* @param z0 (matrix) z0: starting value m x 1 matrix (i.e. vector) containing the expected values of the initial states
-* @param P0 (matrix) P0: starting value m x m matrix containing the covariance matrix
-* of the nondiffuse part of the initial state vector.
-* @return (matrix) m x m
-*/
-
-arma::mat ComputeS11(const arma::mat & smoothed_states,
-                     const arma::cube & smoothed_vars,
-                     const arma::mat & S00,
-                     const arma::vec & z0,
-                     const arma::mat & P0){
-  int T = z0.n_cols;
-
-  return(S00 - z0 * z0.t() - P0 +
-         smoothed_states.col(T-1) * smoothed_states.col(T-1).t() + smoothed_vars.slice(T-1));
-}
-
-/**
-* @description compute the matrix S11
-* @param smoothed_states (matrix): matrix of smoothed states
-* @param lagone_smoothed_covars (array): array of lag one
-* smoothed states covariance matrices
-* @param z0 (matrix) z0: starting value m x 1 matrix (i.e. vector) containing the expected values of the initial states
-* @return (matrix) m x m
-*/
-
-arma::mat ComputeS10(const arma::mat & smoothed_states,
-                     const arma::cube & lagone_smoothed_covars,
-                     const arma::vec & z0){
-
-  int T = z0.n_cols;
-
-  arma::mat S10 = smoothed_states.col(0) * z0.t() + lagone_smoothed_covars.slice(0);
-
-  // all except the last time T
-  for(int t = 1; t <= T - 1; t++){
-    S10 += smoothed_states.col(t) * smoothed_states.col(t-1).t() + lagone_smoothed_covars.slice(t);
-  }
-
-  return(S10);
 }
 
 
