@@ -62,9 +62,11 @@ plot(Z[1,], type = "l",
 lines(original.skf.res$F[,1],
       col = "red")
 
-lines(custom.skf.res$F[1,],
+lines(custom.skf.res$xf[1,],
       col = "blue")
 
+# check equivalence
+custom.skf.res$xf[,1:5] == t(original.skf.res$F[1:5,])
 # benchmark
 
 CustomFilterBench <- function(b){
@@ -112,17 +114,17 @@ plot(Z[1,], type = "l",
 lines(original.skf.res$F[,1],
       col = "red")
 
-lines(custom.skf.res$F[1,],
+lines(custom.skf.res$xf[1,],
       col = "blue")
 
 lines(original.skfs.res$F_smooth[,1],
       col = "orange")
 
-lines(custom.skfs.res$F_smooth[1,],
+lines(custom.skfs.res$xs[1,],
       col = "violet")
 
 # check equivalence
-custom.skfs.res$F_smooth[,1:5] == t(original.skfs.res$F_smooth[1:5,])
+custom.skfs.res$xs[,1:5] == t(original.skfs.res$F_smooth[1:5,])
 
 # this should be different
 custom.skf.res$F[,1:5] == custom.skfs.res$F_smooth[,1:5]

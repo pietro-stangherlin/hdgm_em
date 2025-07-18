@@ -20,12 +20,12 @@ Rcpp::List SKF(const arma::mat& X,
 
 
   // make input struct
-  KalmanFilterInput inp{.X = X,
-                        .A = A,
-                        .C = C,
+  KalmanFilterInput inp{.Y = X,
+                        .Phi = A,
+                        .A = C,
                         .Q = Q,
                         .R = R,
-                        .F_0 = F_0,
+                        .x_0 = F_0,
                         .P_0 = P_0,
                         .retLL = retLL};
 
@@ -37,12 +37,12 @@ Rcpp::List SKF(const arma::mat& X,
   KalmanFilterResult res = SKF_cpp(inp);
 
  return Rcpp::List::create(
- Rcpp::Named("F")       = res.F,
- Rcpp::Named("P")       = res.P,
- Rcpp::Named("F_pred")  = res.F_pred,
- Rcpp::Named("P_pred")  = res.P_pred,
+ Rcpp::Named("xf")       = res.xf,
+ Rcpp::Named("Pf")       = res.Pf,
+ Rcpp::Named("Fp")  = res.xp,
+ Rcpp::Named("Pp")  = res.Pp,
  Rcpp::Named("K_last")  = res.K_last,
- Rcpp::Named("C_last")  = res.C_last,
+ Rcpp::Named("A_last")  = res.A_last,
  Rcpp::Named("nc_last") = res.nc_last,
  Rcpp::Named("loglik")  = res.loglik
  );
@@ -62,19 +62,19 @@ Rcpp::List SKFS(const arma::mat& X,
                 const arma::mat& P_0) {
 
   // make input struct
-  KalmanFilterInput inp{.X = X,
-                        .A = A,
-                        .C = C,
+  KalmanFilterInput inp{.Y = X,
+                        .Phi = A,
+                        .A = C,
                         .Q = Q,
                         .R = R,
-                        .F_0 = F_0,
+                        .x_0 = F_0,
                         .P_0 = P_0};
 
   KalmanSmootherResult res = SKFS_cpp(inp);
 
   return Rcpp::List::create(
-    Rcpp::Named("F_smooth") = res.F_smooth,
-    Rcpp::Named("P_smooth") = res.P_smooth,
+    Rcpp::Named("xs") = res.xs,
+    Rcpp::Named("Ps") = res.Ps,
     Rcpp::Named("Lag_one_cov_smooth") = res.Lag_one_cov_smooth
   );
 }
