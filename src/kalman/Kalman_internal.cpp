@@ -176,7 +176,7 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
 
   arma::mat Vf = ksm_inp.Pf.slice(T-1);
   arma::mat Vp = ksm_inp.Pp.slice(T-1);
-  arma::mat K_times_A; // Kalman gain last observation
+  arma::mat K_times_A; // Kalman gain last observation times observation matrix
 
   // Kalman smoothing
   arma::mat ZsT(p, T, arma::fill::zeros);
