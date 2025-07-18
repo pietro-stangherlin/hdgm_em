@@ -51,10 +51,10 @@ struct KalmanFilterResult {
 
 
 struct KalmanSmootherResult {
-  arma::mat F_smooth;       // Smoothed state means
-  arma::cube P_smooth;      // Smoothed state covariances
+  arma::mat xs;       // Smoothed state means
+  arma::cube Ps;      // Smoothed state covariances
   arma::cube Lag_one_cov_smooth; // Lag one smoothed covariances
-  arma::colvec F_smooth_0;  // smoothed initial state mean
-  arma::mat P_smooth_0;     // smoothed initial state covariance
+  arma::colvec x_0s;  // smoothed initial state mean
+  arma::mat P_0s;     // smoothed initial state covariance
 };
 

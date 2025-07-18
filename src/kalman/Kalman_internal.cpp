@@ -174,19 +174,19 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
   const int T = ksm_inp.xf.n_cols;
   const int p = ksm_inp.Phi.n_rows;
 
-  arma::mat Vf = ksm_inp.Pf.slice(T-1);
-  arma::mat Vp = ksm_inp.Pp.slice(T-1);
+  arma::mat Pf = ksm_inp.Pf.slice(T-1);
+  arma::mat Pp = ksm_inp.Pp.slice(T-1);
   arma::mat K_times_A; // Kalman gain last observation times observation matrix
 
-  // Kalman smoothing
-  arma::mat ZsT(p, T, arma::fill::zeros);
-  arma::cube VsT(p, p, T, arma::fill::zeros);
-  arma::cube VVsT(p, p, T, arma::fill::zeros);
+  // allocate smoothed quantities
+  arma::mat xs_vals(p, T, arma::fill::zeros);
+  arma::cube Ps(p, p, T, arma::fill::zeros);
+  arma::cube Plos(p, p, T, arma::fill::zeros);
 
 
   // populate last smoothed values
-  ZsT.col(T-1) = ksm_inp.xf.col(T-1); // last smoothed state = filtered state
-  VsT.slice(T-1) = ksm_inp.Pf.slice(T-1); // last smoothed state cov = filtered state cov
+  xs_vals.col(T-1) = ksm_inp.xf.col(T-1); // last smoothed state = filtered state
+  Ps.slice(T-1) = ksm_inp.Pf.slice(T-1); // last smoothed state cov = filtered state cov
 
 
   arma::mat Ji, Jim_tr;
@@ -194,44 +194,44 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
 
   K_times_A = (ksm_inp.nc_last == 0) ? arma::mat(p, p, arma::fill::zeros) : ksm_inp.K_last * ksm_inp.A_last;
 
-  VVsT.slice(T-1) = (arma::eye(p,p) - K_times_A) * ksm_inp.Phi * ksm_inp.Pf.slice(T-2);
+  Plos.slice(T-1) = (arma::eye(p,p) - K_times_A) * ksm_inp.Phi * ksm_inp.Pf.slice(T-2);
 
   // Smoothed state variable and covariance
   for (int t = T - 2; t >= 0; --t) {
-    arma::mat Vf = ksm_inp.Pf.slice(t);
-    arma::mat Vp = ksm_inp.Pp.slice(t+1);
-    Ji = Vf * Phi_tr * inv_sympd(Vp);
+    arma::mat Pf = ksm_inp.Pf.slice(t);
+    arma::mat Pp = ksm_inp.Pp.slice(t+1);
+    Ji = Pf * Phi_tr * inv_sympd(Pp);
 
     arma::mat Jim_tr = Ji.t();
 
-    ZsT.col(t) = ksm_inp.xf.col(t) + Ji * (ZsT.col(t+1) - ksm_inp.xp.col(t+1));
-    VsT.slice(t) = Vf + Ji * (VsT.slice(t+1) - Vp) * Jim_tr;
+    xs_vals.col(t) = ksm_inp.xf.col(t) + Ji * (xs_vals.col(t+1) - ksm_inp.xp.col(t+1));
+    Ps.slice(t) = Pf + Ji * (Ps.slice(t+1) - Pp) * Jim_tr;
 
     // smoothed Cov(x_t, x_t-1 | y_{1:T}): Needed for EM
     if (t > 0) {
       Jim_tr = ksm_inp.Pf.slice(t-1) * Phi_tr * inv_sympd(ksm_inp.Pp.slice(t));
-      VVsT.slice(t) = ksm_inp.Pf.slice(t) * Jim_tr +
-        Ji * (VVsT.slice(t+1) - ksm_inp.Phi * ksm_inp.Pf.slice(t)) * Jim_tr;
+      Plos.slice(t) = ksm_inp.Pf.slice(t) * Jim_tr +
+        Ji * (Plos.slice(t+1) - ksm_inp.Phi * ksm_inp.Pf.slice(t)) * Jim_tr;
     }
   }
 
   // Smoothing t = 0
-  Vp = ksm_inp.Pp.slice(0);
-  Jim_tr = ksm_inp.P_0 * Phi_tr * inv_sympd(Vp);
-  VVsT.slice(0) = ksm_inp.Pf.slice(0) * Jim_tr.t() +
-    Ji * (VVsT.slice(1) - ksm_inp.Phi * ksm_inp.Pf.slice(0)) * Jim_tr.t();
+  Pp = ksm_inp.Pp.slice(0);
+  Jim_tr = ksm_inp.P_0 * Phi_tr * inv_sympd(Pp);
+  Plos.slice(0) = ksm_inp.Pf.slice(0) * Jim_tr.t() +
+    Ji * (Plos.slice(1) - ksm_inp.Phi * ksm_inp.Pf.slice(0)) * Jim_tr.t();
 
   // Initial smoothed values
-  arma::colvec F_smooth_0 = ksm_inp.x_0 + Jim_tr * (ZsT.col(0) - ksm_inp.xp.col(0));
-  arma::mat P_smooth_0 = ksm_inp.P_0 + Jim_tr * (VsT.slice(0) - Vp) * Jim_tr.t();
+  arma::colvec x_0s = ksm_inp.x_0 + Jim_tr * (xs_vals.col(0) - ksm_inp.xp.col(0));
+  arma::mat P_0s = ksm_inp.P_0 + Jim_tr * (Ps.slice(0) - Pp) * Jim_tr.t();
 
 
   return KalmanSmootherResult{
-  .F_smooth = ZsT,
-  .P_smooth = VsT,
-  .Lag_one_cov_smooth = VVsT,
-  .F_smooth_0 = F_smooth_0,
-  .P_smooth_0 = P_smooth_0
+  .xs = xs_vals,
+  .Ps = Ps,
+  .Lag_one_cov_smooth = Plos,
+  .x_0s = x_0s,
+  .P_0s = P_0s
   };
 }
 

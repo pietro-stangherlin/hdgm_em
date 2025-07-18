@@ -73,8 +73,8 @@ Rcpp::List SKFS(const arma::mat& X,
   KalmanSmootherResult res = SKFS_cpp(inp);
 
   return Rcpp::List::create(
-    Rcpp::Named("F_smooth") = res.F_smooth,
-    Rcpp::Named("P_smooth") = res.P_smooth,
+    Rcpp::Named("xs") = res.xs,
+    Rcpp::Named("Ps") = res.Ps,
     Rcpp::Named("Lag_one_cov_smooth") = res.Lag_one_cov_smooth
   );
 }
