@@ -93,24 +93,24 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
     ///////////////////////
 
     KalmanFilterInput kfin{
-      .X = y_res, // observations matrix
-      .A = g_temp * arma::eye(q, q), // Transition matrix
-      .C = alpha_temp * arma::eye(q, q), // observation matrix
+      .Y = y_res, // observations matrix
+      .Phi = g_temp * arma::eye(q, q), // Transition matrix
+      .A = alpha_temp * arma::eye(q, q), // observation matrix
       .Q = Q_temp, // state covariance error matrix
       .R = sigma2_temp * arma::eye(q, q), // observation error covariance matrix
-      .F_0 = z0, // first state
+      .x_0 = z0, // first state
       .P_0 = P0, // first state covariance
-      .retLL = true};
+      .retLL = false};
 
     KalmanSmootherResult ksm_res = SKFS_cpp(kfin);
 
     //std::cout << "KalmanSmootherPassDone" << std::endl;
 
     // TO DO: review assignemt
-    arma::mat& z_smooth = ksm_res.F_smooth;
-    arma::cube& z_smooth_var = ksm_res.P_smooth;
-    arma::mat& z0_smooth = ksm_res.F_smooth_0;
-    arma::mat& P0_smooth = ksm_res.P_smooth_0;
+    arma::mat& z_smooth = ksm_res.xs;
+    arma::cube& z_smooth_var = ksm_res.Ps;
+    arma::mat& z0_smooth = ksm_res.x_0s;
+    arma::mat& P0_smooth = ksm_res.P_0s;
     arma::cube& lag1_cov =  ksm_res.Lag_one_cov_smooth;
 
     // S matrices
