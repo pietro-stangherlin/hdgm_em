@@ -11,8 +11,8 @@ We will use the notation and follow chapter 6 of [@ShumwayStoffer].
 
 $$
 \begin{align}
-y_t &= A_t x_t + \Gamma_t u_t + w_t \\
-x_{t} &= \Phi_t x_{t-1} + \Upsilon_t u_t + v_t
+x_{t} &= \Phi_t x_{t-1} + \Upsilon_t u_t + w_t \\
+y_t &= A_t x_t + \Gamma_t u_t + v_t
 \end{align}
 $$ {#eq-state-space}
 
