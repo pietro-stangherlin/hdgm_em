@@ -249,7 +249,8 @@ double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta
                          const double& g,
                          const int& N) {
 
-
+  int p;
+  p = S00.n_cols;
 
   arma::mat Sigma_eta = exp(log_theta_v[1]) * ExpCor(dist_matrix, exp(log_theta_v[0]));
   // debug
@@ -271,8 +272,11 @@ double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta
   // debug
   //std::cout << "logdet_val" << logdet_val << std::endl;
 
+  arma::mat G(p, p, arma::fill::eye);
+  G = g * G;
+
   arma::mat Sigma_eta_inv = arma::inv(Sigma_eta);
-  arma::mat expr = S11 - g * S10 - g * S10.t() + g * g * S00;
+  arma::mat expr = S11 - S10 * G.t() - G * S10.t() + G * S00 * G.t();
 
   // debug
   //std::cout << "Sigma_eta_inv" << Sigma_eta_inv << std::endl;
