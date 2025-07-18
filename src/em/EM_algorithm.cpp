@@ -161,6 +161,8 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
     // DEBUG
     std::cout << "After ThetaVUpdate" << std::endl;
 
+    std::cout << "g_temp: " << g_temp <<  std::endl;
+
     // g update
     g_temp = gUpdate(S00, S10);
 

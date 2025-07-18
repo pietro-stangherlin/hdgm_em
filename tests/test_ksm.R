@@ -124,6 +124,8 @@ lines(custom.skfs.res$F_smooth[1,],
 # check equivalence
 custom.skfs.res$F_smooth[,1:5] == t(original.skfs.res$F_smooth[1:5,])
 
+# this should be different
+custom.skf.res$F[,1:5] == custom.skfs.res$F_smooth[,1:5]
 
 CustomSmootherBench <- function(b){
   start = Sys.time()
@@ -155,6 +157,7 @@ OriginalSmootherBench(b = B)
 CustomSmootherBench(b = B)
 
 
+# Smoothed covariances -----------------------------
 
 
 

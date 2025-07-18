@@ -150,7 +150,7 @@ arma::mat ComputeS10(const arma::mat & smoothed_states,
 
 double gUpdate(const arma::mat & S00,
                const arma::mat & S10){
-  return(arma::sum(arma::trace(S10)) / arma::sum(arma::trace(S00)));
+  return(arma::trace(S10) / arma::trace(S00));
 }
 
 // NOTE: without missing data Omega_one_t = Omega_t

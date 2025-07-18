@@ -36,7 +36,7 @@ S11 <- matrix(scan(text = "0.4770   1.5054   0.7996  -0.0688
   -0.0688  -0.2176  -0.1156   0.0111",
                    what = numeric(), quiet = T), ncol = Y_LEN)
 
-g <- 0.8
+g <- 0.6
 
 theta0 <- 5
 v0 <- 4
@@ -48,10 +48,14 @@ NegToOptimThetaV <- function(x){
 
   Sigma_eta <- v * ExpCor(mdist = dist_matrix,
                       theta = theta)
+
+  I = diag(nrow = NROW(S00))
+  G = g * I
+
   return(
     N * determinant(x = Sigma_eta, logarithm = TRUE)$modulus +
       sum(diag(solve(Sigma_eta) %*%
-                 (S11 - g * S10 - g * t(S10)  + g^2 * S00))))
+                 (S11 - S10 %*% t(G) - G %*% t(S10)  + G %*% S00 %*% t(G)))))
 }
 
 eps <- 3

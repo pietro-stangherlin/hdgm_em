@@ -76,7 +76,7 @@ plot(res_EM$par_history[1,])
 plot(res_EM$par_history[2,])
 plot(res_EM$par_history[3,])
 plot(res_EM$par_history[4,])
-
+plot(res_EM$par_history[5,])
 
 
 
