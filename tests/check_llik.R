@@ -49,7 +49,7 @@ y.matr <- LinGauStateSpaceSim(n_times = N,
 N_grid = 30
 
 alpha_vals = seq(A - 0.5, A + 0.5, length = N_grid)
-sigma2z_vals = seq(SIGMAZ^2, SIGMAZ^2 + 1, length = N_grid)
+sigma2z_vals = seq(SIGMAZ^2 - 1, SIGMAZ^2 + 1, length = N_grid)
 
 llik_vals <- matrix(NA, N_grid, N_grid)
 
@@ -78,7 +78,7 @@ for(i in 1:N_grid){
 contour(alpha_vals, sigma2z_vals, llik_vals,
         xlab = "alpha",
         ylab = "sigma2z",
-        nlevels = 40,
+        levels = quantile(llik_vals, c(0.7, 0.8, 0.9, 0.95, 0.975, 0.99)),
         main = "llik")
 
 max_index <- which(llik_vals == max(llik_vals),
