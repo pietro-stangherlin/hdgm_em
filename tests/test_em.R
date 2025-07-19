@@ -70,13 +70,27 @@ res_EM <- EMHDGM(y = y.matr,
                  max_iter = 5, # increment
                  verbose = TRUE)
 
-dim(res_EM$par_history)
-colnames(res_EM$par_history)
-plot(res_EM$par_history[1,])
-plot(res_EM$par_history[2,])
-plot(res_EM$par_history[3,])
-plot(res_EM$par_history[4,])
-plot(res_EM$par_history[5,])
+res_EM$par_history
+
+cbind(res_EM$par_history[,1], res_EM$par_history[,NCOL(res_EM$par_history)])
+
+# Starting from not true values -------------------------
+
+res_EM_dist <- EMHDGM(y = y.matr,
+                 dist_matrix = DIST_MATRIX,
+                 alpha0 = A + 0.5 ,
+                 beta0 = rep(0, 2),
+                 theta0 = THETA,
+                 v0 = SIGMAZ^2,
+                 g0 = G, # assuming stationarity: this has to be in (-1,1)
+                 sigma20 = SIGMAY^2,
+                 Xbeta_in = NULL,
+                 z0_in = NULL,
+                 P0_in = NULL,
+                 max_iter = 100, # increment
+                 verbose = TRUE)
+
+cbind(res_EM$par_history[,1], res_EM_dist$par_history[,NCOL(res_EM_dist$par_history)])
 
 
 

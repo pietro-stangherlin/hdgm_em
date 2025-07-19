@@ -137,9 +137,9 @@ nelder_mead_result<real,n> nelder_mead(
   real z;
 
   // DEBUG
-  std::cout << "[DEBUG] Inside Nelder Mead " << std::endl;
-  std::cout << "[DEBUG] start[0]: " << start[0] << std::endl;
-  std::cout << "[DEBUG] start[1]: " << start[1] << std::endl;
+  // std::cout << "[DEBUG] Inside Nelder Mead " << std::endl;
+  // std::cout << "[DEBUG] start[0]: " << start[0] << std::endl;
+  // std::cout << "[DEBUG] start[1]: " << start[1] << std::endl;
 
 
   nelder_mead_result<real,n> result;

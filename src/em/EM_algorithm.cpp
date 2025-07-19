@@ -47,9 +47,10 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
   //if (is_fixed_effect)
     //beta_iter_history.row(0) = beta_temp.t();
 
-  arma::vec z0 = em_in.z0_in.has_value() ? *em_in.z0_in : arma::vec(q, arma::fill::zeros);
-  arma::mat P0 = em_in.P0_in.has_value() ? *em_in.P0_in : arma::eye(q, q);
-  arma::mat Xz = arma::eye(q, q);  // Transfer matrix
+  // at first iteration this is not smoothed
+  arma::vec z0_smooth = em_in.z0_in.has_value() ? *em_in.z0_in : arma::vec(q, arma::fill::zeros);
+  arma::mat P0_smooth = em_in.P0_in.has_value() ? *em_in.P0_in : arma::eye(q, q);
+  arma::mat Xz = arma::eye(q, q);  // unscaled transfer matrix
 
   // Precompute fixed-effects sum
 
@@ -69,7 +70,13 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
   for (int iter = 1; iter < em_in.max_iter + 1; ++iter) {
 
     if (em_in.verbose){
-      std::cout << "Iteration " << iter << std::endl;
+      int remainder;
+      remainder = iter % 100;
+
+      if(remainder == 0){
+        std::cout << "Iteration " << iter << std::endl;
+      };
+
     };
 
 
@@ -98,25 +105,18 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
       .A = alpha_temp * arma::eye(q, q), // observation matrix
       .Q = Q_temp, // state covariance error matrix
       .R = sigma2_temp * arma::eye(q, q), // observation error covariance matrix
-      .x_0 = z0, // first state
-      .P_0 = P0, // first state covariance
+      .x_0 = z0_smooth, // first state
+      .P_0 = P0_smooth, // first state covariance
       .retLL = false};
 
     KalmanSmootherResult ksm_res = SKFS_cpp(kfin);
 
     //std::cout << "KalmanSmootherPassDone" << std::endl;
 
-    // TO DO: review assignemt
-    arma::mat& z_smooth = ksm_res.xs;
-    arma::cube& z_smooth_var = ksm_res.Ps;
-    arma::mat& z0_smooth = ksm_res.x_0s;
-    arma::mat& P0_smooth = ksm_res.P_0s;
-    arma::cube& lag1_cov =  ksm_res.Lag_one_cov_smooth;
-
     // S matrices
-    arma::mat S00 = ComputeS00(z_smooth , z_smooth_var, z0_smooth, P0_smooth);
-    arma::mat S11 = ComputeS11(z_smooth, z_smooth_var, S00, z0_smooth, P0_smooth);
-    arma::mat S10 = ComputeS10(z_smooth, lag1_cov, z0_smooth);
+    arma::mat S00 = ComputeS00(ksm_res.x_smoothed, ksm_res.P_smoothed, ksm_res.x0_smoothed, ksm_res.P0_smoothed);
+    arma::mat S11 = ComputeS11(ksm_res.x_smoothed, ksm_res.P_smoothed, S00, ksm_res.x0_smoothed, ksm_res.P0_smoothed);
+    arma::mat S10 = ComputeS10(ksm_res.x_smoothed, ksm_res.Lag_one_cov_smoothed, ksm_res.x0_smoothed);
 
     //////////////////////////
     // EM parameters updates
@@ -124,9 +124,9 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
 
     // Omega Update
     arma::mat omega_sum_temp = OmegaSumUpdate(y_res, // residual minus fixed effect
-                                              z_smooth,
+                                              ksm_res.x_smoothed,
                                               Xz,
-                                              z_smooth_var,
+                                              ksm_res.P_smoothed,
                                               alpha_temp);
 
 
@@ -134,14 +134,14 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
     sigma2_temp = Sigma2Update(omega_sum_temp, q, T);
 
     // Alpha update
-    alpha_temp = AlphaUpdate(em_in.y, z_smooth, Xz, z_smooth_var);
+    alpha_temp = AlphaUpdate(em_in.y, ksm_res.x_smoothed, Xz, ksm_res.P_smoothed);
 
     // Beta update
     if (is_fixed_effect) {
       const arma::cube& Xbeta_val = *(em_in.Xbeta);
       beta_temp = BetaUpdate(Xbeta_val,
                              em_in.y,
-                             z_smooth,
+                             ksm_res.x_smoothed,
                              alpha_temp,
                              Xz,
                              m_inv_mXbeta_sum);
@@ -149,7 +149,7 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
     }
 
     // DEBUG
-    std::cout << "Before ThetaVUpdate" << std::endl;
+    // std::cout << "Before ThetaVUpdate" << std::endl;
 
     // Theta and V update (optimization)
     theta_v_temp = ThetaVUpdate(em_in.dist_matrix, g_temp, T,
@@ -159,9 +159,9 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
                              em_in.var_terminating_lim);
 
     // DEBUG
-    std::cout << "After ThetaVUpdate" << std::endl;
+    // std::cout << "After ThetaVUpdate" << std::endl;
 
-    std::cout << "g_temp: " << g_temp <<  std::endl;
+    // std::cout << "g_temp: " << g_temp <<  std::endl;
 
     // g update
     g_temp = gUpdate(S00, S10);

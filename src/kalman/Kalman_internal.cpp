@@ -227,11 +227,11 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
 
 
   return KalmanSmootherResult{
-  .xs = xs_vals,
-  .Ps = Ps,
-  .Lag_one_cov_smooth = Plos,
-  .x_0s = x_0s,
-  .P_0s = P_0s
+  .x_smoothed = xs_vals,
+  .P_smoothed = Ps,
+  .Lag_one_cov_smoothed = Plos,
+  .x0_smoothed = x_0s,
+  .P0_smoothed = P_0s
   };
 }
 
