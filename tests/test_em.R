@@ -92,8 +92,8 @@ res_EM_dist <- EMHDGM(y = y.matr,
 
 cbind(res_EM$par_history[,1], res_EM_dist$par_history[,NCOL(res_EM_dist$par_history)])
 
-
-
+plot(res_EM_dist$par_history[1,])
+plot(res_EM_dist$par_history[3,])
 
 
 

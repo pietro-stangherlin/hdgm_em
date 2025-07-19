@@ -5,12 +5,12 @@
 
 // R version
 // [[Rcpp::export]]
-Rcpp::List SKF(const arma::mat& X,
+Rcpp::List SKF(const arma::mat& Y,
+               const arma::mat& Phi,
                const arma::mat& A,
-               const arma::mat& C,
                const arma::mat& Q,
                const arma::mat& R,
-               const arma::vec& F_0,
+               const arma::vec& x_0,
                const arma::mat& P_0,
                bool retLL) {
 
@@ -20,12 +20,12 @@ Rcpp::List SKF(const arma::mat& X,
 
 
   // make input struct
-  KalmanFilterInput inp{.Y = X,
-                        .Phi = A,
-                        .A = C,
+  KalmanFilterInput inp{.Y = Y,
+                        .Phi = Phi,
+                        .A = A,
                         .Q = Q,
                         .R = R,
-                        .x_0 = F_0,
+                        .x_0 = x_0,
                         .P_0 = P_0,
                         .retLL = retLL};
 
@@ -53,21 +53,21 @@ Rcpp::List SKF(const arma::mat& X,
 
 // R version
 // [[Rcpp::export]]
-Rcpp::List SKFS(const arma::mat& X,
+Rcpp::List SKFS(const arma::mat& Y,
+                const arma::mat& Phi,
                 const arma::mat& A,
-                const arma::mat& C,
                 const arma::mat& Q,
                 const arma::mat& R,
-                const arma::vec& F_0,
+                const arma::vec& x_0,
                 const arma::mat& P_0) {
 
   // make input struct
-  KalmanFilterInput inp{.Y = X,
-                        .Phi = A,
-                        .A = C,
+  KalmanFilterInput inp{.Y = Y,
+                        .Phi = Phi,
+                        .A = A,
                         .Q = Q,
                         .R = R,
-                        .x_0 = F_0,
+                        .x_0 = x_0,
                         .P_0 = P_0};
 
   KalmanSmootherResult res = SKFS_cpp(inp);

@@ -51,8 +51,8 @@ X.t <- t(X)
 original.skf.res <- dfms::SKF(X = X.t, A = A, C = C, Q = Q, R = R,
                               F_0 = F_0, P_0 = P_0)
 
-custom.skf.res <- SKF(X = X, A = A, C = C, Q = Q, R = R,
-                F_0 = F_0, P_0 = P_0, retLL = FALSE)
+custom.skf.res <- SKF(Y = X, Phi = A, A = C, Q = Q, R = R,
+                x_0 = F_0, P_0 = P_0, retLL = FALSE)
 
 
 plot(Z[1,], type = "l",
@@ -95,14 +95,14 @@ OriginalFilterBench <- function(b){
 
 B = 1000
 
-OriginalFilterBench(b = B)
-CustomFilterBench(b = B)
+# OriginalFilterBench(b = B)
+# CustomFilterBench(b = B)
 
 
 # Smoother ----------------------------------------------
 
-custom.skfs.res <- SKFS(X = X, A = A, C = C, Q = Q, R = R,
-                      F_0 = F_0, P_0 = P_0)
+custom.skfs.res <- SKFS(Y = X, Phi = A, A = C, Q = Q, R = R,
+                      x_0 = F_0, P_0 = P_0)
 
 original.skfs.res <- dfms::SKFS(X = t(X), A = A, C = C, Q = Q, R = R,
                               F_0 = F_0, P_0 = P_0)
@@ -155,12 +155,8 @@ OriginalSmootherBench <- function(b){
 
 B = 1000
 
-OriginalSmootherBench(b = B)
-CustomSmootherBench(b = B)
-
-
-# Smoothed covariances -----------------------------
-
+# OriginalSmootherBench(b = B)
+# CustomSmootherBench(b = B)
 
 
 
