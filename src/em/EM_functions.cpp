@@ -90,6 +90,17 @@ arma::mat ComputeS10(const arma::mat & smoothed_states,
 
 // Unstructured EM updates ----------------------------
 
+arma::mat PhiUpdate(const arma::mat S10_times_S00_inv){
+  // just return input
+  return S10_times_S00_inv;
+}
+
+arma::mat QUpdate(const arma::mat S11,
+                  const arma::mat S10_tr,
+                  const arma::mat S10_times_S00_inv){
+  return S11 - S10_times_S00_inv * S10_tr;
+
+}
 
 // Structured EM updates -------------------------------
 

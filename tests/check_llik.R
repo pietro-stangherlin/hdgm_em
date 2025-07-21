@@ -8,8 +8,8 @@ Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp")
 
 
 # generate some data -------------------
-N <- 10000
-Y_LEN <- 4
+N <- 1000
+Y_LEN <- 10
 THETA <- 5
 G <- 0.8
 A <- 3

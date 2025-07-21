@@ -17,7 +17,7 @@ THETA <- 5
 G <- 0.8
 A <- 3
 SIGMAY <- 0.1
-SIGMAZ <- 2
+SIGMAZ <- 0.1
 
 # generate x coordinate
 # generate y coordinate
@@ -67,10 +67,8 @@ res_EM <- EMHDGM(y = y.matr,
                  Xbeta_in = NULL,
                  z0_in = NULL,
                  P0_in = NULL,
-                 max_iter = 5, # increment
+                 max_iter = 50, # increment
                  verbose = TRUE)
-
-res_EM$par_history
 
 cbind(res_EM$par_history[,1], res_EM$par_history[,NCOL(res_EM$par_history)])
 
