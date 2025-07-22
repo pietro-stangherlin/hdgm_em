@@ -4,6 +4,40 @@
 
 
 // [[Rcpp::export]]
+Rcpp::List UnstructuredEM( const arma::mat& y, // observation matrix (n x T) where T = n. obs
+                          const arma::mat& Phi_0, // initial value transfer matrix
+                          const arma::mat& A_0, // initial value observation matrix
+                          const arma::mat& Q_0, // initial value state error covariance matrix
+                          const arma::mat& R_0, // initial value observation error covariance matrix
+                          const arma::vec& x0_in, // initial state
+                          const arma::mat& P0_in, // initial state covariance matrix
+                          int max_iter = 10){ // TO change + add tolerance
+
+  EMInputUnstructured em_in{
+  .y = y,
+  .Phi_0 = Phi_0,
+  .A_0 = A_0,
+  .Q_0 = Q_0,
+  .R_0 = R_0,
+  .x0_in = x0_in,
+  .P0_in = P0_in,
+  .max_iter = max_iter
+  };
+
+  EMOutputUnstructured res = UnstructuredEM_cpp(em_in);
+
+  return Rcpp::List::create(
+    Rcpp::Named("Phi") = res.Phi,
+    Rcpp::Named("A") = res.A,
+    Rcpp::Named("Q") = res.Q,
+    Rcpp::Named("R") = res.R
+  );
+
+}
+
+
+
+// [[Rcpp::export]]
 Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n. obs
                     const arma::mat& dist_matrix, // state distance matrix (complete data)
                     double alpha0, // initial observation matrix scaling

@@ -176,10 +176,10 @@ K_t = P^{t-1}_t A^\top_t(A_t P^{t-1}_t A^{\top}_t + R_t)^{-1}
 <section id="kalman-smoother" class="level2">
 <h2 class="anchored" data-anchor-id="kalman-smoother">Kalman Smoother</h2>
 <p><span id="eq-smoothed-state"><span class="math display">\[
-x^n_{t-1} = x^{t-1}_{t-1} + J_{t-1} (x^n_{t} - x^{t-1}_t)
+x^T_{t-1} = x^{t-1}_{t-1} + J_{t-1} (x^T_{t} - x^{t-1}_t)
 \tag{10}\]</span></span></p>
 <p><span id="eq-smoothed-covariance"><span class="math display">\[
-P^n_{t-1} = P^{t-1}_{t-1} + J_{t-1}(P^n_{t} - P^{t-1}_t) J^\top_{t-1}
+P^T_{t-1} = P^{t-1}_{t-1} + J_{t-1}(P^T_{t} - P^{t-1}_t) J^\top_{t-1}
 \tag{11}\]</span></span></p>
 <p>where</p>
 <p><span id="eq-smoother-gain"><span class="math display">\[
@@ -187,16 +187,24 @@ J_{t-1} = P^{t-1}_{t-1} \Phi_t (P^{t-1}_{t})^{-1}
 \tag{12}\]</span></span></p>
 <section id="lag-one-covariance-smoother" class="level3">
 <h3 class="anchored" data-anchor-id="lag-one-covariance-smoother">Lag-One Covariance Smoother</h3>
-<p>Needed in EM.</p>
 <p><span id="eq-lagone-covariance-smoother-recursion"><span class="math display">\[
-P^n_{t-1, t-2} = P^{t-1}_{t-1} J^\top_{t-2} + J_{t-1}(P^n_{t,t-1} - \Phi_t P^{t-1}_{t-1}) J^\top_{t-2}
+P^T_{t-1, t-2} = P^{t-1}_{t-1} J^\top_{t-2} + J_{t-1}(P^T_{t,t-1} - \Phi_t P^{t-1}_{t-1}) J^\top_{t-2}
 \tag{13}\]</span></span></p>
 <p>with initial condition</p>
 <p><span id="eq-lagone-covariance-smoother-initialization"><span class="math display">\[
-P^n_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
+P^T_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
 \tag{14}\]</span></span></p>
-
 </section>
+</section>
+<section id="complete-data-likelihood" class="level2">
+<h2 class="anchored" data-anchor-id="complete-data-likelihood">Complete Data Likelihood</h2>
+<p>The “complete data” likelihood including the states is</p>
+<p><span class="math display">\[
+\begin{align}Q\left( \Theta \mid \Theta^{(j-1)} \right) = \ln \left| \Sigma_0 \right| + \text{tr} \left\{ \Sigma_0^{-1} \left[ P_0^T + \left( x_0^T - \mu_0 \right) \left( x_0^T - \mu_0 \right)^\top \right] \right\} \\
++ \sum^T_{t=1} \ln \left| Q_t \right| + \text{tr} \left\{ Q^{-1} \left[ S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top \right] \right\} \\
++ \sum^T_{t=1} \ln \left| R_t \right| + \text{tr} \left\{ R^{-1} \sum_{t=1}^{n} \left[ \left( y_t - A_t x_t^T \right) \left( y_t - A_t x_t^T \right)^\top + A_t P_t^T A_t^\top \right] \right\}\end{align}
+\]</span></p>
+
 </section>
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">

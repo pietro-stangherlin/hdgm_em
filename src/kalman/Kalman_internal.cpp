@@ -252,7 +252,7 @@ KalmanSmootherResult SKFS_cpp(const KalmanFilterInput& kfsm_inp) {
   .A_last = kf.A_last,
   .x_0 = kfsm_inp.x_0,
   .P_0 = kfsm_inp.P_0,
-  .nc_last = kf.nc_last,
+  .nc_last = kf.nc_last
   };
 
   KalmanSmootherResult ksmout = FIS_cpp(ksmin);

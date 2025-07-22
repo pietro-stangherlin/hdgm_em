@@ -68,7 +68,8 @@ Rcpp::List SKFS(const arma::mat& Y,
                         .Q = Q,
                         .R = R,
                         .x_0 = x_0,
-                        .P_0 = P_0};
+                        .P_0 = P_0,
+                        .retLL = false};
 
   KalmanSmootherResult res = SKFS_cpp(inp);
 

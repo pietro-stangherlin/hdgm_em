@@ -52,7 +52,7 @@ original.skf.res <- dfms::SKF(X = X.t, A = A, C = C, Q = Q, R = R,
                               F_0 = F_0, P_0 = P_0)
 
 custom.skf.res <- SKF(Y = X, Phi = A, A = C, Q = Q, R = R,
-                x_0 = F_0, P_0 = P_0, retLL = FALSE)
+                x_0 = F_0, P_0 = P_0, retLL = TRUE)
 
 
 plot(Z[1,], type = "l",

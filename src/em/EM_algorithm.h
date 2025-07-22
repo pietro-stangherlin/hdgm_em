@@ -2,6 +2,18 @@
 #include<optional>
 #pragma once
 
+
+struct EMInputUnstructured{
+ const arma::mat& y; // observation matrix (n x T) where T = n. obs
+ const arma::mat& Phi_0; // initial value transfer matrix
+ const arma::mat& A_0; // initial value observation matrix
+ const arma::mat& Q_0; // initial value state error covariance matrix
+ const arma::mat& R_0; // initial value observation error covariance matrix
+ arma::vec x0_in; // initial state
+ arma::mat P0_in; // initial state covariance matrix
+ int max_iter = 10; // TO change + add tolerance
+};
+
 struct EMInput{
   const arma::mat& y; // observation matrix (n x T) where T = n. obs
   const arma::mat& dist_matrix; // state distance matrix (complete data)
@@ -21,6 +33,14 @@ struct EMInput{
 };
 
 
+struct EMOutputUnstructured{
+  const arma::mat& Phi; // transfer matrix
+  const arma::mat& A; // observation matrix
+  const arma::mat& Q; // state error covariance matrix
+  const arma::mat& R; // observation error covariance matrix
+};
+
+
 struct EMOutput{
   arma::mat par_history; // matrix (k x iter) each column is iter value of (alpha,theta,g, sigma2)^T
   arma::mat beta_history; // (p x iter) each column is a beta (fixed effect value)
@@ -28,3 +48,12 @@ struct EMOutput{
 
 // change return type
 EMOutput EMHDGM_cpp(EMInput);
+
+EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured);
+
+
+
+
+
+
+
