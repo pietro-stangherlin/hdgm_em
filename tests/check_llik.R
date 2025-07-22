@@ -92,7 +92,10 @@ points(A, SIGMAZ^2,
        pch = 16, col = "blue")
 
 
+# Optim llik via optim + Kalman ---------------------------------------------
+FunctionToOptim <- function(param){
 
+}
 
 
 

@@ -1,10 +1,14 @@
 #include <RcppArmadillo.h>
 #include <stdio.h>
+#include <limits>
 
 #include "../kalman/Kalman_internal.h"
 #include "EM_functions.h"
 #include "EM_algorithm.h"
 #include "../utils/covariances.h"
+
+
+constexpr double LOWEST_DOUBLE = std::numeric_limits<double>::lowest();
 
 
 // assuming no missing observations and no matrix permutations
@@ -66,6 +70,11 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
     m_inv_mXbeta_sum = arma::inv_sympd(mXbeta_sum);
   }
 
+  double llik_prev;
+  double llik_next;
+
+  llik_prev = LOWEST_DOUBLE;
+
   // EM iterations
   for (int iter = 1; iter < em_in.max_iter + 1; ++iter) {
 
@@ -107,7 +116,18 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
       .R = sigma2_temp * arma::eye(q, q), // observation error covariance matrix
       .x_0 = z0_smooth, // first state
       .P_0 = P0_smooth, // first state covariance
-      .retLL = false};
+      .retLL = true};
+
+    llik_next = kfin.retLL;
+
+    if(llik_next < llik_prev){
+      std::cout << "WARNING: Log Likelihood decreasing, returning" << std::endl;
+      return EMOutput{.par_history = par_history,
+                      .beta_history = beta_history};
+
+    }
+
+    llik_prev = llik_next;
 
     KalmanSmootherResult ksm_res = SKFS_cpp(kfin);
 

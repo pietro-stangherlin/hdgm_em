@@ -13,7 +13,7 @@ set.seed(123)
 
 N <- 10000
 Y_LEN <- 4
-THETA <- 5
+THETA <- 2
 G <- 0.8
 A <- 3
 SIGMAY <- 0.1
@@ -85,7 +85,7 @@ res_EM_dist <- EMHDGM(y = y.matr,
                  Xbeta_in = NULL,
                  z0_in = NULL,
                  P0_in = NULL,
-                 max_iter = 100, # increment
+                 max_iter = 300, # increment
                  verbose = TRUE)
 
 cbind(res_EM$par_history[,1], res_EM_dist$par_history[,NCOL(res_EM_dist$par_history)])
