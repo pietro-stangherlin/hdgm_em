@@ -22,13 +22,13 @@ struct KalmanFilterInput {
 
 };
 
-
-struct KalmanSmootherInput {
+template <typename PType>
+struct KalmanSmootherInputT {
   const arma::mat& Phi; // state transition matrix
   const arma::mat& xf; // Filtered state means
   const arma::mat& xp; // Predicted state means
-  const arma::cube& Pf; // Filtered state covariances
-  const arma::cube& Pp; // Predicted state covariances
+  const PType& Pf; // Filtered state covariances
+  const PType& Pp; // Predicted state covariances
   const arma::mat& K_last; // Kalman gain last observation
   const arma::mat& A_last; // Observation matrix submatrix for non-missing (used in the smoother first step)
   const arma::colvec& x_0; // Initial state vector (rp x 1)
@@ -36,27 +36,38 @@ struct KalmanSmootherInput {
   const int nc_last; // number of non missing elements in the last observation
 };
 
+using KalmanSmootherInput = KalmanSmootherInputT<arma::cube>;
+using KalmanSmootherInputMat = KalmanSmootherInputT<arma::mat>;
+
 // ---------------------- Output -------------------------- //
 
-struct KalmanFilterResult {
+template <typename PType>
+struct KalmanFilterResultT {
   arma::mat xf;         // Filtered state means
-  arma::cube Pf;        // Filtered state covariances
+  PType Pf;        // Filtered state covariances
   arma::mat xp;    // Predicted state means
-  arma::cube Pp;   // Predicted state covariances
+  PType Pp;   // Predicted state covariances
   arma::mat K_last; // Kalman gain value for the last iteration (used in the smoother first step)
   arma::mat A_last; // Observation matrix submatrix for non-missing (used in the smoother first step)
   int nc_last;
   double loglik;  // Default to NA
 };
 
+using KalmanFilterResult = KalmanFilterResultT<arma::cube>;
+using KalmanFilterResultMat = KalmanFilterResultT<arma::mat>;
 
-struct KalmanSmootherResult {
-  arma::mat x_smoothed;       // Smoothed state means
-  arma::cube P_smoothed;      // Smoothed state covariances
-  arma::cube Lag_one_cov_smoothed; // Lag one smoothed covariances
-  arma::colvec x0_smoothed;  // smoothed initial state mean
-  arma::mat P0_smoothed;     // smoothed initial state covariance
+
+template <typename PType>
+struct KalmanSmootherResultT {
+  arma::mat x_smoothed;
+  PType P_smoothed;
+  arma::cube Lag_one_cov_smoothed;
+  arma::colvec x0_smoothed;
+  arma::mat P0_smoothed;
 };
+
+using KalmanSmootherResult = KalmanSmootherResultT<arma::cube>;
+using KalmanSmootherResultMat = KalmanSmootherResultT<arma::mat>;
 
 // while doing Kalman Filter and Smoother in one pass
 // return smoothed quantities and likelihood from the filter
@@ -66,5 +77,13 @@ struct KalmanSmootherLlikResult : KalmanSmootherResult {
   // constructor
   KalmanSmootherLlikResult(const KalmanSmootherResult& ksm_res, double loglik):
     KalmanSmootherResult(ksm_res), loglik(loglik){}
+};
+
+struct KalmanSmootherLlikResultMat : KalmanSmootherResultMat {
+  double loglik; // likelihood from Kalman Filter
+
+  // constructor
+  KalmanSmootherLlikResultMat(const KalmanSmootherResultMat& ksm_res, double loglik):
+    KalmanSmootherResultMat(ksm_res), loglik(loglik){}
 };
 

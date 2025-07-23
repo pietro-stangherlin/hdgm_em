@@ -120,7 +120,7 @@ lines(custom.skf.res$xf[1,],
 lines(original.skfs.res$F_smooth[,1],
       col = "orange")
 
-lines(custom.skfs.res$xs[1,],
+lines(custom.skfs.res$x_smoothed[1,],
       col = "violet")
 
 # check equivalence
