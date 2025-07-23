@@ -238,7 +238,7 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
 // Kalman Filter and Smoother
 // Only Kalman Smoother ouptput is returned
 // for parameters description see Kalman_types.h
-KalmanSmootherResult SKFS_cpp(const KalmanFilterInput& kfsm_inp) {
+KalmanSmootherLlikResult SKFS_cpp(const KalmanFilterInput& kfsm_inp) {
 
   KalmanFilterResult kf = SKF_cpp(kfsm_inp);
 
@@ -257,7 +257,8 @@ KalmanSmootherResult SKFS_cpp(const KalmanFilterInput& kfsm_inp) {
 
   KalmanSmootherResult ksmout = FIS_cpp(ksmin);
 
-  return ksmout;
+
+  return KalmanSmootherLlikResult(ksmout, kf.loglik);
 }
 
 

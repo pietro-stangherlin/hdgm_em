@@ -80,7 +80,7 @@ res_un_EM = UnstructuredEM(y = y.matr,
                            Q_0 = ETA_MATRIX,
                            R_0 = SIGMAY^2 * diag(nrow = Y_LEN),
                            x0_in = rep(0, Y_LEN),
-                           P0_in = 0.5 * diag(nrow = Y_LEN),
+                           P0_in = 5 * diag(nrow = Y_LEN),
                            max_iter = 50)
 
 res_un_EM$Phi

@@ -102,7 +102,7 @@ B = 1000
 # Smoother ----------------------------------------------
 
 custom.skfs.res <- SKFS(Y = X, Phi = A, A = C, Q = Q, R = R,
-                      x_0 = F_0, P_0 = P_0)
+                      x_0 = F_0, P_0 = P_0, retLL = TRUE)
 
 original.skfs.res <- dfms::SKFS(X = t(X), A = A, C = C, Q = Q, R = R,
                               F_0 = F_0, P_0 = P_0)

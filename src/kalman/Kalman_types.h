@@ -58,5 +58,13 @@ struct KalmanSmootherResult {
   arma::mat P0_smoothed;     // smoothed initial state covariance
 };
 
+// while doing Kalman Filter and Smoother in one pass
+// return smoothed quantities and likelihood from the filter
+struct KalmanSmootherLlikResult : KalmanSmootherResult {
+  double loglik; // likelihood from Kalman Filter
 
+  // constructor
+  KalmanSmootherLlikResult(const KalmanSmootherResult& ksm_res, double loglik):
+    KalmanSmootherResult(ksm_res), loglik(loglik){}
+};
 

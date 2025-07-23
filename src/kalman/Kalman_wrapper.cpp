@@ -59,7 +59,8 @@ Rcpp::List SKFS(const arma::mat& Y,
                 const arma::mat& Q,
                 const arma::mat& R,
                 const arma::vec& x_0,
-                const arma::mat& P_0) {
+                const arma::mat& P_0,
+                const bool retLL) {
 
   // make input struct
   KalmanFilterInput inp{.Y = Y,
@@ -69,15 +70,16 @@ Rcpp::List SKFS(const arma::mat& Y,
                         .R = R,
                         .x_0 = x_0,
                         .P_0 = P_0,
-                        .retLL = false};
+                        .retLL = retLL};
 
-  KalmanSmootherResult res = SKFS_cpp(inp);
+  KalmanSmootherLlikResult res = SKFS_cpp(inp);
 
   return Rcpp::List::create(
     Rcpp::Named("x_smoothed") = res.x_smoothed,
     Rcpp::Named("P_smoothed") = res.P_smoothed,
     Rcpp::Named("Lag_one_cov_smoothed") = res.Lag_one_cov_smoothed,
     Rcpp::Named("x0_smoothed") = res.x0_smoothed,
-    Rcpp::Named("P0_smoothed") = res.P0_smoothed
+    Rcpp::Named("P0_smoothed") = res.P0_smoothed,
+    Rcpp::Named("loglik") = res.loglik
   );
 }

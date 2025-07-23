@@ -25,6 +25,7 @@ EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured em_in){
   arma::mat y, Phi, A, Q, R, P0_smooth;
   arma::vec x0_smooth;
   double llik_prev, llik_next;
+  llik_prev = LOWEST_DOUBLE;
 
   y = em_in.y;
   Phi = em_in.Phi_0;
@@ -44,6 +45,8 @@ EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured em_in){
 
   for(int iter = 1; iter < em_in.max_iter + 1; ++iter){
 
+    std::cout << "iter" << iter << std::endl;
+
 
     ///////////////////////
     // Kalman Smoother pass
@@ -51,7 +54,7 @@ EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured em_in){
 
     KalmanFilterInput kfin{
       .Y = y,
-      .Phi =Phi,
+      .Phi = Phi,
       .A = A,
       .Q = Q,
       .R = R,
@@ -59,7 +62,10 @@ EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured em_in){
       .P_0 = P0_smooth,
       .retLL = true};
 
-    llik_next = kfin.retLL;
+
+    KalmanSmootherLlikResult ksm_res = SKFS_cpp(kfin);
+
+    llik_next = ksm_res.loglik;
 
     if(llik_next < llik_prev){
       std::cout << "WARNING: Log Likelihood decreasing, returning" << std::endl;
@@ -68,8 +74,6 @@ EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured em_in){
     }
 
     llik_prev = llik_next;
-
-    KalmanSmootherResult ksm_res = SKFS_cpp(kfin);
 
     //////////////////////////
     // EM parameters updates
@@ -173,7 +177,7 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
 
     if (em_in.verbose){
       int remainder;
-      remainder = iter % 100;
+      remainder = iter % 1;
 
       if(remainder == 0){
         std::cout << "Iteration " << iter << std::endl;
@@ -211,7 +215,9 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
       .P_0 = P0_smooth, // first state covariance
       .retLL = true};
 
-    llik_next = kfin.retLL;
+    KalmanSmootherLlikResult ksm_res = SKFS_cpp(kfin);
+
+    llik_next = ksm_res.loglik;
 
     if(llik_next < llik_prev){
       std::cout << "WARNING: Log Likelihood decreasing, returning" << std::endl;
@@ -222,7 +228,6 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
 
     llik_prev = llik_next;
 
-    KalmanSmootherResult ksm_res = SKFS_cpp(kfin);
 
     //std::cout << "KalmanSmootherPassDone" << std::endl;
 
