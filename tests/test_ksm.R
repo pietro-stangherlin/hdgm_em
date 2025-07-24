@@ -9,6 +9,8 @@ source("tests/test_helper.R")
 # NOT USED
 # Rcpp::sourceCpp("src/helper.cpp")
 
+Sys.setenv("PKG_CXXFLAGS"="-std=c++20")
+
 Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp",
                 rebuild = TRUE)
 
@@ -133,9 +135,6 @@ custom.skfs.res.mat <- SKFS_mat(Y = X, Phi = A, A = C, Q = Q, R = R,
 original.skfs.res <- dfms::SKFS(X = t(X), A = A, C = C, Q = Q, R = R,
                               F_0 = F_0, P_0 = P_0)
 
-original.skfs.res <- dfms::SKFS(X = t(X), A = A, C = C, Q = Q, R = R,
-                              F_0 = F_0, P_0 = P_0)
-
 plot(Z[1,], type = "l",
      xlab = "times",
      ylab = "true states")
@@ -149,7 +148,7 @@ lines(custom.skf.res$xf[1,],
 lines(original.skfs.res$F_smooth[,1],
       col = "orange")
 
-lines(custom.skfs.res$x_smoothed[1,],
+lines(custom.skfs.res.mat$x_smoothed[1,],
       col = "violet")
 
 # check equivalence

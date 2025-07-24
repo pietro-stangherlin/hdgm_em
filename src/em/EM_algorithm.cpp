@@ -4,6 +4,7 @@
 
 #include "../kalman/Kalman_internal.h"
 #include "EM_functions.h"
+#include "EM_functions.hpp"
 #include "EM_algorithm.h"
 #include "../utils/covariances.h"
 
@@ -63,7 +64,7 @@ EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured em_in){
       .retLL = true};
 
 
-    KalmanSmootherLlikResult ksm_res = SKFS_cpp(kfin);
+    KalmanSmootherLlikResult ksm_res = SKFS_cpp(kfin, std::type_identity<arma::cube>{});
 
     llik_next = ksm_res.loglik;
 
@@ -215,7 +216,7 @@ EMOutput EMHDGM_cpp(EMInput em_in) {
       .P_0 = P0_smooth, // first state covariance
       .retLL = true};
 
-    KalmanSmootherLlikResult ksm_res = SKFS_cpp(kfin);
+    KalmanSmootherLlikResult ksm_res = SKFS_cpp(kfin, std::type_identity<arma::cube>{});
 
     llik_next = ksm_res.loglik;
 

@@ -1,4 +1,6 @@
 #include <RcppArmadillo.h>
+#include "EM_functions.hpp"
+#include "../utils/symmetric_matr_vec.h"
 
 double AlphaUpdate(const arma::mat & mY_fixed_res,
                    const arma::mat & mZ,
@@ -10,15 +12,49 @@ arma::mat ComputeS00(const arma::mat & smoothed_states,
                      const arma::vec & z0_smoothed,
                      const arma::mat & P0_smoothed);
 
+arma::mat ComputeS00_mat(const arma::mat & smoothed_states,
+                         const arma::mat & smoothed_vars,
+                         const arma::vec & z0_smoothed,
+                         const arma::mat & P0_smoothed){
+
+  return ComputeS00_core<arma::mat>(const arma::mat & smoothed_states,
+                                    const arma::mat & smoothed_vars,
+                                    const arma::vec & z0_smoothed,
+                                    const arma::mat & P0_smoothed);
+};
+
 arma::mat ComputeS11(const arma::mat & smoothed_states,
                      const arma::cube & smoothed_vars,
                      const arma::mat & S00,
                      const arma::vec & z0_smoothed,
                      const arma::mat & P0_smoothed);
 
+arma::mat ComputeS11_mat(const arma::mat & smoothed_states,
+                     const arma::mat & smoothed_vars,
+                     const arma::mat & S00,
+                     const arma::vec & z0_smoothed,
+                     const arma::mat & P0_smoothed){
+
+  return ComputeS11_core<arma::mat>(const arma::mat & smoothed_states,
+                         const arma::mat & smoothed_vars,
+                         const arma::mat & S00,
+                         const arma::vec & z0_smoothed,
+                         const arma::mat & P0_smoothed);
+}
+
+
 arma::mat ComputeS10(const arma::mat & smoothed_states,
                      const arma::cube & lagone_smoothed_covars,
                      const arma::vec & z0_smoothed);
+
+arma::mat ComputeS10_mat(const arma::mat & smoothed_states,
+                                    const arma::mat & lagone_smoothed_covars,
+                                    const arma::vec & z0_smoothed){
+
+  return ComputeS10_core<arma::mat>(const arma::mat & smoothed_states,
+                                    const arma::mat & lagone_smoothed_covars,
+                                    const arma::vec & z0_smoothed);
+}
 
 double gUpdate(const arma::mat & S00,
                const arma::mat & S10);
@@ -34,6 +70,20 @@ arma::mat OmegaSumUpdate(const arma::mat & mY_fixed_res,
                          const arma::mat & mXz,
                          const arma::cube & cPsmt,
                          double alpha);
+
+arma::mat OmegaSumUpdate_mat(const arma::mat & mY_fixed_res,
+                         const arma::mat & Zt,
+                         const arma::mat & mXz,
+                         const arma::mat & cPsmt,
+                         double alpha){
+
+  return OmegaSumUpdate_core<arma::mat>(const arma::mat & mY_fixed_res,
+                                        const arma::mat & Zt,
+                                        const arma::mat & mXz,
+                                        const arma::mat & cPsmt,
+                                        double alpha);
+}
+
 
 double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta_v,
                                  const arma::mat& dist_matrix,

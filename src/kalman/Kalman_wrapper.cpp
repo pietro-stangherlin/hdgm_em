@@ -96,7 +96,7 @@ Rcpp::List SKFS(const arma::mat& Y,
                         .P_0 = P_0,
                         .retLL = retLL};
 
-  KalmanSmootherLlikResult res = SKFS_cpp(inp);
+  KalmanSmootherLlikResult res = SKFS_cpp(inp, std::type_identity<arma::cube>{});
 
   return Rcpp::List::create(
     Rcpp::Named("x_smoothed") = res.x_smoothed,
@@ -129,7 +129,7 @@ Rcpp::List SKFS_mat(const arma::mat& Y,
                         .P_0 = P_0,
                         .retLL = retLL};
 
-  KalmanSmootherLlikResultMat res = SKFS_cpp_mat(inp);
+  KalmanSmootherLlikResultMat res = SKFS_cpp(inp, std::type_identity<arma::mat>{});
 
   return Rcpp::List::create(
     Rcpp::Named("x_smoothed") = res.x_smoothed,

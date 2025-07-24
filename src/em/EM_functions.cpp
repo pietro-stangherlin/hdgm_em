@@ -7,6 +7,8 @@
 #include <vector>
 
 #include "EM_functions.h"
+#include "EM_functions.hpp"
+#include "../utils/symmetric_matr_vec.h"
 #include "../utils/covariances.h"
 #include "../optim/nelder_mead.h"
 
@@ -38,6 +40,7 @@ arma::mat ComputeS00(const arma::mat & smoothed_states,
 
   return(S00);
 }
+
 
 /**
  * @description compute the matrix S11

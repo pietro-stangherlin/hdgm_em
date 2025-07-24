@@ -259,10 +259,13 @@ KalmanSmootherResultMat FIS_cpp_mat(const KalmanSmootherInputMat& ksm_inp) {
   return FIS_core<arma::mat>(ksm_inp, Ps, Plos);
 };
 
+// function overloading: only return type changes
+
 // Kalman Filter and Smoother
 // Only Kalman Smoother ouptput is returned
 // for parameters description see Kalman_types.h
-KalmanSmootherLlikResult SKFS_cpp(const KalmanFilterInput& kfsm_inp) {
+KalmanSmootherLlikResult SKFS_cpp(const KalmanFilterInput& kfsm_inp,
+                                  std::type_identity<arma::cube>) {
 
   KalmanFilterResult kf = SKF_cpp(kfsm_inp);
 
@@ -286,7 +289,8 @@ KalmanSmootherLlikResult SKFS_cpp(const KalmanFilterInput& kfsm_inp) {
 }
 
 
-KalmanSmootherLlikResultMat SKFS_cpp_mat(const KalmanFilterInput& kfsm_inp) {
+KalmanSmootherLlikResultMat SKFS_cpp(const KalmanFilterInput& kfsm_inp,
+                                     std::type_identity<arma::mat>) {
 
   KalmanFilterResultMat kf = SKF_cpp_mat(kfsm_inp);
 
