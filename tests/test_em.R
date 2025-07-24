@@ -3,6 +3,8 @@ rm(list = ls())
 library(Rcpp)
 library(RcppArmadillo)
 
+Sys.setenv("PKG_CXXFLAGS"="-std=c++20")
+
 Rcpp::sourceCpp("src/em/EM_wrapper.cpp",
                 rebuild = TRUE)
 

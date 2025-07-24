@@ -6,6 +6,8 @@
 #include "EM_functions.h"
 #include "EM_functions.hpp"
 #include "EM_algorithm.h"
+#include "EM_algorithm.hpp"
+#include "EM_functions_impl.hpp"
 #include "../utils/covariances.h"
 
 
@@ -16,7 +18,7 @@ constexpr double LOWEST_DOUBLE = std::numeric_limits<double>::lowest();
 // from Parameter estimation for linear dynamical systems.
 // Ghahramani, Z. & Hinton, G. E. Technical Report Technical Report CRG-TR-96-2,
 // University of Totronto, Dept. of Computer Science, 1996.
-EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured em_in){
+EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured& em_in){
 
   // ------------------ setup ------------- //
   int p = em_in.x0_in.n_rows; // state vector dimension
@@ -105,6 +107,11 @@ EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured em_in){
   return EMOutputUnstructured{ .Phi = Phi, .A = A, .Q = Q, .R = R};
 
 
+};
+
+
+EMOutputUnstructured UnstructuredEM_cpp_mat(EMInputUnstructured& em_in){
+  return UnstructuredEM_cpp_core<arma::mat>(em_in);
 };
 
 

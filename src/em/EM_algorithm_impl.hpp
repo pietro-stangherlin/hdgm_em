@@ -3,20 +3,21 @@
 #include <limits>
 
 #include "../kalman/Kalman_internal.h"
+#include "../kalman/Kalman_internal.hpp"
 #include "EM_functions.h"
-#include "EM_functions.hpp"
 #include "EM_algorithm.h"
+#include "EM_functions.hpp"
 #include "../utils/covariances.h"
+#include "../utils/symmetric_matr_vec.h"
 
-
-
+constexpr double LOWEST_DOUBLE = std::numeric_limits<double>::lowest();
 
 // -------------------- Unstructured Case --------------------- //
 // from Parameter estimation for linear dynamical systems.
 // Ghahramani, Z. & Hinton, G. E. Technical Report Technical Report CRG-TR-96-2,
 // University of Totronto, Dept. of Computer Science, 1996.
 template <typename CovStore>
-EMOutputUnstructured UnstructuredEM_cpp<CovStore>(EMInputUnstructured em_in){
+EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
 
   // ------------------ setup ------------- //
   int p = em_in.x0_in.n_rows; // state vector dimension

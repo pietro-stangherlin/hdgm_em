@@ -34,10 +34,10 @@ struct EMInput{
 
 
 struct EMOutputUnstructured{
-  const arma::mat& Phi; // transfer matrix
-  const arma::mat& A; // observation matrix
-  const arma::mat& Q; // state error covariance matrix
-  const arma::mat& R; // observation error covariance matrix
+  arma::mat Phi; // transfer matrix
+  arma::mat A; // observation matrix
+  arma::mat Q; // state error covariance matrix
+  arma::mat R; // observation error covariance matrix
 };
 
 
@@ -47,10 +47,11 @@ struct EMOutput{
 };
 
 // change return type
-EMOutput EMHDGM_cpp(EMInput);
+EMOutput EMHDGM_cpp(EMInput em_in);
 
-EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured);
+EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured& em_in);
 
+EMOutputUnstructured UnstructuredEM_cpp_mat(EMInputUnstructured& em_in);
 
 
 

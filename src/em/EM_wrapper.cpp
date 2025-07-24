@@ -1,6 +1,8 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
 #include "EM_algorithm.h"
+#include "EM_algorithm.hpp"
+#include "EM_algorithm_impl.hpp"
 
 
 // [[Rcpp::export]]
@@ -11,7 +13,8 @@ Rcpp::List UnstructuredEM( const arma::mat& y, // observation matrix (n x T) whe
                           const arma::mat& R_0, // initial value observation error covariance matrix
                           const arma::vec& x0_in, // initial state
                           const arma::mat& P0_in, // initial state covariance matrix
-                          int max_iter = 10){ // TO change + add tolerance
+                          int max_iter,
+                          bool bool_mat){ // TO change + add tolerance
 
   EMInputUnstructured em_in{
   .y = y,
@@ -24,7 +27,13 @@ Rcpp::List UnstructuredEM( const arma::mat& y, // observation matrix (n x T) whe
   .max_iter = max_iter
   };
 
-  EMOutputUnstructured res = UnstructuredEM_cpp(em_in);
+  EMOutputUnstructured res;
+
+  if(bool_mat == true){
+    res = UnstructuredEM_cpp_mat(em_in);
+  }else{
+    res = UnstructuredEM_cpp(em_in);
+  };
 
   return Rcpp::List::create(
     Rcpp::Named("Phi") = res.Phi,
