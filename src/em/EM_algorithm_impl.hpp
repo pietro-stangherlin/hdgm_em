@@ -72,6 +72,9 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
 
     llik_next = ksm_res.loglik;
 
+    //DEBUG
+    std::cout << "llik: " << llik_next << std::endl;
+
     if(llik_next < llik_prev){
       std::cout << "WARNING: Log Likelihood decreasing, returning" << std::endl;
       return EMOutputUnstructured{ .Phi = Phi, .A = A, .Q = Q, .R = R};

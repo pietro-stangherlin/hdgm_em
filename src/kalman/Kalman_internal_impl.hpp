@@ -186,7 +186,7 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
     // smoothed Cov(x_t, x_t-1 | y_{1:T}): Needed for EM
     if (t > 0) {
 
-      Jim_tr = GetCov(ksm_inp.Pf, t-1, p) * Phi_tr * arma::inv_sympd(GetCov(ksm_inp.Pp, t, p));
+      Jim_tr = arma::inv_sympd(GetCov(ksm_inp.Pp, t, p)) * Phi_tr * GetCov(ksm_inp.Pf, t-1, p);
       Plos_t = GetCov(ksm_inp.Pf,t, p) * Jim_tr +
         Ji * (GetCov(Plos, t+1, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, t, p)) * Jim_tr;
 
@@ -201,9 +201,9 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
 
   // Smoothing t = 0
   Pp = GetCov(ksm_inp.Pp, 0, p);
-  Jim_tr = ksm_inp.P_0 * Phi_tr * inv_sympd(Pp);
-  Plos_t = GetCov(ksm_inp.Pf, 0, p) * Jim_tr.t() +
-    Ji * (GetCov(Plos, 1, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, 0, p)) * Jim_tr.t();
+  Jim_tr = inv_sympd(Pp) * Phi_tr *  ksm_inp.P_0;
+  Plos_t = GetCov(ksm_inp.Pf, 0, p) * Jim_tr +
+    Ji * (GetCov(Plos, 1, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, 0, p)) * Jim_tr;
 
   if constexpr (std::is_same_v<CovStore, arma::cube>) {
     Plos.slice(0) = Plos_t;
