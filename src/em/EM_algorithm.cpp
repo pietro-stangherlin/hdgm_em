@@ -3,16 +3,10 @@
 #include <limits>
 
 #include "../kalman/Kalman_internal.h"
-#include "EM_functions.h"
 #include "EM_functions.hpp"
-#include "EM_algorithm.h"
 #include "EM_algorithm.hpp"
 #include "EM_functions_impl.hpp"
 #include "../utils/covariances.h"
-
-
-constexpr double LOWEST_DOUBLE = std::numeric_limits<double>::lowest();
-
 
 // -------------------- Unstructured Case --------------------- //
 // from Parameter estimation for linear dynamical systems.

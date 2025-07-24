@@ -6,7 +6,6 @@
 #include <iostream>
 #include <vector>
 
-#include "EM_functions.h"
 #include "EM_functions.hpp"
 #include "../utils/symmetric_matr_vec.h"
 #include "../utils/covariances.h"

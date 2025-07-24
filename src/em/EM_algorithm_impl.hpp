@@ -1,12 +1,15 @@
+#pragma once
+
+#include "EM_types.hpp"
+
 #include <RcppArmadillo.h>
 #include <stdio.h>
 #include <limits>
 
 #include "../kalman/Kalman_internal.h"
 #include "../kalman/Kalman_internal.hpp"
-#include "EM_functions.h"
-#include "EM_algorithm.h"
 #include "EM_functions.hpp"
+#include "EM_algorithm.hpp"
 #include "../utils/covariances.h"
 #include "../utils/symmetric_matr_vec.h"
 

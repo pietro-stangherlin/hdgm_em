@@ -1,6 +1,9 @@
+#pragma once
+
+#include "EM_types.hpp"
+
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
-#include "EM_algorithm.h"
 #include "EM_algorithm.hpp"
 #include "EM_algorithm_impl.hpp"
 

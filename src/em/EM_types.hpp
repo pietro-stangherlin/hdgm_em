@@ -1,17 +1,16 @@
-#include <RcppArmadillo.h>
-#include<optional>
 #pragma once
 
+#include <RcppArmadillo.h>
 
 struct EMInputUnstructured{
- const arma::mat& y; // observation matrix (n x T) where T = n. obs
- const arma::mat& Phi_0; // initial value transfer matrix
- const arma::mat& A_0; // initial value observation matrix
- const arma::mat& Q_0; // initial value state error covariance matrix
- const arma::mat& R_0; // initial value observation error covariance matrix
- arma::vec x0_in; // initial state
- arma::mat P0_in; // initial state covariance matrix
- int max_iter = 10; // TO change + add tolerance
+  const arma::mat& y; // observation matrix (n x T) where T = n. obs
+  const arma::mat& Phi_0; // initial value transfer matrix
+  const arma::mat& A_0; // initial value observation matrix
+  const arma::mat& Q_0; // initial value state error covariance matrix
+  const arma::mat& R_0; // initial value observation error covariance matrix
+  arma::vec x0_in; // initial state
+  arma::mat P0_in; // initial state covariance matrix
+  int max_iter = 10; // TO change + add tolerance
 };
 
 struct EMInput{
@@ -45,16 +44,3 @@ struct EMOutput{
   arma::mat par_history; // matrix (k x iter) each column is iter value of (alpha,theta,g, sigma2)^T
   arma::mat beta_history; // (p x iter) each column is a beta (fixed effect value)
 };
-
-// change return type
-EMOutput EMHDGM_cpp(EMInput em_in);
-
-EMOutputUnstructured UnstructuredEM_cpp(EMInputUnstructured& em_in);
-
-EMOutputUnstructured UnstructuredEM_cpp_mat(EMInputUnstructured& em_in);
-
-
-
-
-
-
