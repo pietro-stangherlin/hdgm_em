@@ -10,17 +10,6 @@
 #include "../utils/symmetric_matr_vec.h"
 
 
-// ----------------- helper ---------------------------//
-// Helper: get the t-th covariance matrix
-template <typename CovStore>
-inline arma::mat GetCov(const CovStore& store, int t, int mat_dim) {
-  if constexpr (std::is_same_v<CovStore, arma::cube>) {
-    return store.slice(t);
-  } else {
-    return FromVectorToSymMatrix(store.col(t), mat_dim);
-  }
-}
-
 // ---------------------  Kalman Filter ---------------------- //
 
 // template with options to use arma::cube or arma::mat (vectorized) (symmetric: half space)
@@ -197,7 +186,7 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
     // smoothed Cov(x_t, x_t-1 | y_{1:T}): Needed for EM
     if (t > 0) {
 
-      Jim_tr = GetCov(ksm_inp.Pf, t-1, p) * Phi_tr * inv_sympd(GetCov(ksm_inp.Pp, t, p));
+      Jim_tr = GetCov(ksm_inp.Pf, t-1, p) * Phi_tr * arma::inv_sympd(GetCov(ksm_inp.Pp, t, p));
       Plos_t = GetCov(ksm_inp.Pf,t, p) * Jim_tr +
         Ji * (GetCov(Plos, t+1, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, t, p)) * Jim_tr;
 
