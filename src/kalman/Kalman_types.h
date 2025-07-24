@@ -7,9 +7,6 @@
 
 // ---------------------- Input -------------------------- //
 
-// DOUBT: can I use the inputs passed as reference?
-// maybe I have to use pointers
-
 struct KalmanFilterInput {
   const arma::mat& Y; // matrix with observation: each observation is a column
   const arma::mat& Phi; // state transition matrix
@@ -61,7 +58,7 @@ template <typename PType>
 struct KalmanSmootherResultT {
   arma::mat x_smoothed;
   PType P_smoothed;
-  arma::cube Lag_one_cov_smoothed;
+  PType Lag_one_cov_smoothed;
   arma::colvec x0_smoothed;
   arma::mat P0_smoothed;
 };

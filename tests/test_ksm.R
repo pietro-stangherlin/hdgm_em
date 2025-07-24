@@ -52,7 +52,13 @@ original.skf.res <- dfms::SKF(X = X.t, A = A, C = C, Q = Q, R = R,
                               F_0 = F_0, P_0 = P_0)
 
 custom.skf.res <- SKF(Y = X, Phi = A, A = C, Q = Q, R = R,
-                x_0 = F_0, P_0 = P_0, retLL = TRUE)
+                x_0 = F_0, P_0 = P_0, retLL = TRUE,
+                vectorized_cov_matrices = FALSE)
+
+
+custom.skf.res.mat <- SKF(Y = X, Phi = A, A = C, Q = Q, R = R,
+                      x_0 = F_0, P_0 = P_0, retLL = TRUE,
+                      vectorized_cov_matrices = TRUE)
 
 
 plot(Z[1,], type = "l",
@@ -65,9 +71,25 @@ lines(original.skf.res$F[,1],
 lines(custom.skf.res$xf[1,],
       col = "blue")
 
+lines(custom.skf.res.mat$xf[1,],
+      col = "orange")
+
 # check equivalence
 custom.skf.res$xf[,1:5] == t(original.skf.res$F[1:5,])
 # benchmark
+
+# check covariances
+custom.skf.res$Pf[,,1]
+custom.skf.res.mat$Pf[,1]
+
+custom.skf.res$Pf[,,3]
+custom.skf.res.mat$Pf[,3]
+
+custom.skf.res$Pf[,,800]
+custom.skf.res.mat$Pf[,800]
+
+custom.skf.res$Pp[,,800]
+custom.skf.res.mat$Pp[,800]
 
 CustomFilterBench <- function(b){
   start = Sys.time()
@@ -103,6 +125,12 @@ B = 1000
 
 custom.skfs.res <- SKFS(Y = X, Phi = A, A = C, Q = Q, R = R,
                       x_0 = F_0, P_0 = P_0, retLL = TRUE)
+
+custom.skfs.res.mat <- SKFS_mat(Y = X, Phi = A, A = C, Q = Q, R = R,
+                        x_0 = F_0, P_0 = P_0, retLL = TRUE)
+
+original.skfs.res <- dfms::SKFS(X = t(X), A = A, C = C, Q = Q, R = R,
+                              F_0 = F_0, P_0 = P_0)
 
 original.skfs.res <- dfms::SKFS(X = t(X), A = A, C = C, Q = Q, R = R,
                               F_0 = F_0, P_0 = P_0)

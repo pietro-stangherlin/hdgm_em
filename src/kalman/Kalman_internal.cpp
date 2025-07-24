@@ -4,6 +4,7 @@
 #include <cstdlib> // For atoi
 
 #include "Kalman_internal.h"
+#include "Kalman_internal_impl.hpp"
 #include "../utils/symmetric_matr_vec.h"
 
 // This code is an adaptaion from Sebastian Krantz DFMS package.
@@ -165,6 +166,17 @@ KalmanFilterResult SKF_cpp(const KalmanFilterInput& kf_inp) {
   };
 }
 
+KalmanFilterResultMat SKF_cpp_mat(const KalmanFilterInput& kf_inp) {
+  int p = kf_inp.Phi.n_rows;
+  int T = kf_inp.Y.n_cols;
+  int sym_len = p * (p + 1) / 2;
+
+  arma::mat Pp(sym_len, T, arma::fill::zeros);
+  arma::mat Pf(sym_len, T, arma::fill::zeros);
+
+  return SKF_core<arma::mat>(kf_inp, Pp, Pf);
+};
+
 
 // Kalman Smoother
 // for parameters description see Kalman_types.h
@@ -236,6 +248,17 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
   };
 }
 
+KalmanSmootherResultMat FIS_cpp_mat(const KalmanSmootherInputMat& ksm_inp) {
+  int p = ksm_inp.Phi.n_rows;
+  int T = ksm_inp.xf.n_cols;
+  int sym_len = p * (p + 1) / 2;
+
+  arma::mat Ps(sym_len, T, arma::fill::zeros);
+  arma::mat Plos(sym_len, T, arma::fill::zeros);
+
+  return FIS_core<arma::mat>(ksm_inp, Ps, Plos);
+};
+
 // Kalman Filter and Smoother
 // Only Kalman Smoother ouptput is returned
 // for parameters description see Kalman_types.h
@@ -262,5 +285,28 @@ KalmanSmootherLlikResult SKFS_cpp(const KalmanFilterInput& kfsm_inp) {
   return KalmanSmootherLlikResult(ksmout, kf.loglik);
 }
 
+
+KalmanSmootherLlikResultMat SKFS_cpp_mat(const KalmanFilterInput& kfsm_inp) {
+
+  KalmanFilterResultMat kf = SKF_cpp_mat(kfsm_inp);
+
+  KalmanSmootherInputMat ksmin = {
+    .Phi = kfsm_inp.Phi,
+    .xf = kf.xf,
+    .xp = kf.xp,
+    .Pf = kf.Pf,
+    .Pp = kf.Pp,
+    .K_last = kf.K_last,
+    .A_last = kf.A_last,
+    .x_0 = kfsm_inp.x_0,
+    .P_0 = kfsm_inp.P_0,
+    .nc_last = kf.nc_last
+  };
+
+  KalmanSmootherResultMat ksmout = FIS_cpp_mat(ksmin);
+
+
+  return KalmanSmootherLlikResultMat(ksmout, kf.loglik);
+}
 
 
