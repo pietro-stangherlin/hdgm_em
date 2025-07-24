@@ -9,7 +9,8 @@ source("tests/test_helper.R")
 # NOT USED
 # Rcpp::sourceCpp("src/helper.cpp")
 
-Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp")
+Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp",
+                rebuild = TRUE)
 
 
 # generate some data -------------------
@@ -156,6 +157,12 @@ custom.skfs.res$xs[,1:5] == t(original.skfs.res$F_smooth[1:5,])
 
 # this should be different
 custom.skf.res$F[,1:5] == custom.skfs.res$F_smooth[,1:5]
+
+custom.skfs.res$P_smoothed[,,7]
+custom.skfs.res.mat$P_smoothed[,7]
+
+custom.skfs.res$Lag_one_cov_smoothed[,,21]
+custom.skfs.res.mat$Lag_one_cov_smoothed[,21]
 
 CustomSmootherBench <- function(b){
   start = Sys.time()

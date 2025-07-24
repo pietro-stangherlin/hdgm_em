@@ -47,7 +47,7 @@ arma::mat FromVectorToSymMatrix(const arma::vec& sym_vec, int mat_dim){
 
   // fill lower + diagonal
   for(int i = 0; i < mat_dim; ++i){
-    for(int j = 0; j <= i; ++j){
+    for(int j = i; j < mat_dim; ++j){
       res_mat(i,j) = sym_vec(index);
       res_mat(j,i) = sym_vec(index);
       ++index;

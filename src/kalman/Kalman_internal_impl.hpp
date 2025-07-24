@@ -30,8 +30,6 @@ inline arma::mat GetCov(const CovStore& store, int t, int mat_dim) {
 template <typename CovStore>
 KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore& Pp_store, CovStore& Pf_store) {
 
-  std::cout << "Inside SKF_cpp: Pp" << std::endl;
-
 
   const int q = kf_inp.Y.n_rows; // observation vector dimensions
   const int p = kf_inp.Phi.n_rows; // state vector dimensions
@@ -145,8 +143,6 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
 template <typename CovStore>
 KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& ksm_inp, CovStore& Ps, CovStore& Plos) {
 
-  // std::cout << "Inside FIS_cpp" << std::endl;
-
   const int T = ksm_inp.xf.n_cols;
   const int p = ksm_inp.Phi.n_rows;
 
@@ -185,9 +181,6 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
     arma::mat Pf = GetCov(ksm_inp.Pf, t, p);
     arma::mat Pp = GetCov(ksm_inp.Pp, t+1, p);
 
-    std::cout << "Inside FIS_core: Pp" << std::endl;
-    std::cout << Pp << std::endl;
-
     Ji = Pf * Phi_tr * inv_sympd(Pp);
 
     arma::mat Jim_tr = Ji.t();
@@ -196,9 +189,9 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
     Ps_t = Pf + Ji * (GetCov(Ps, t+1, p) - Pp) * Jim_tr;
 
     if constexpr (std::is_same_v<CovStore, arma::cube>) {
-      Ps.slice(T-1) = Ps_t;
+      Ps.slice(t) = Ps_t;
     } else {
-      Ps.col(T-1) = FromSymMatrixToVector(Ps_t);
+      Ps.col(t) = FromSymMatrixToVector(Ps_t);
     };
 
     // smoothed Cov(x_t, x_t-1 | y_{1:T}): Needed for EM
@@ -209,9 +202,9 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
         Ji * (GetCov(Plos, t+1, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, t, p)) * Jim_tr;
 
       if constexpr (std::is_same_v<CovStore, arma::cube>) {
-        Plos.slice(t-1) = Plos_t;
+        Plos.slice(t) = Plos_t;
       } else {
-        Plos.col(t-1) = FromSymMatrixToVector(Plos_t);
+        Plos.col(t) = FromSymMatrixToVector(Plos_t);
       };
 
     }
