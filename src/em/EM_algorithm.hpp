@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <limits>
 
-#include "../kalman/Kalman_internal.h"
+#include "../kalman/Kalman_internal.hpp"
 #include "EM_types.hpp"
 #include "EM_functions.hpp"
 #include "EM_algorithm_impl.hpp"
