@@ -36,14 +36,16 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
   xft = kf_inp.x_0;
   Pft = kf_inp.P_0;
 
+  // define once
+  arma::mat Phi_tr = kf_inp.Phi.t();
+
   arma::uvec nmiss, arow = arma::find_finite(kf_inp.Phi.row(0));
   int n_c = 0; // used to count number of missing observations at each time
   double loglik = kf_inp.retLL ? 0.0 : std::numeric_limits<double>::quiet_NaN();
-  double dn = 0.0;
 
   for (int t = 0; t < T; ++t) {
     xpt = kf_inp.Phi * xft;
-    Ppt = kf_inp.Phi * Pft * kf_inp.Phi.t() + kf_inp.Q;
+    Ppt = kf_inp.Phi * Pft * Phi_tr + kf_inp.Q;
     Ppt = 0.5 * (Ppt + Ppt.t()); // force symmetry
 
     yt = kf_inp.Y.col(t);
@@ -82,7 +84,7 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
         // once and then do inverse and det
         double log_det_val, det_sign;
         arma::log_det(log_det_val, det_sign, S);
-        if (det_sign > 0) loglik += log_det_val - arma::as_scalar(et.t() * S * et) - dn;
+        if (det_sign > 0) loglik += log_det_val - arma::as_scalar(et.t() * S * et);
       }
 
       // If all missing: just prediction.
@@ -208,9 +210,11 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
 
   // Smoothing t = 0
   Pp = GetCov(ksm_inp.Pp, 0, p);
-  Jim_tr = inv_sympd(Pp) * Phi_tr *  ksm_inp.P_0;
+  Jim_tr = inv_sympd(Pp) * ksm_inp.Phi *  ksm_inp.P_0;
   Plos_t = GetCov(ksm_inp.Pf, 0, p) * Jim_tr +
     Ji * (GetCov(Plos, 1, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, 0, p)) * Jim_tr;
+
+  // Ji = Pf * Phi_tr * inv_sympd(Pp);
 
   if constexpr (std::is_same_v<CovStore, arma::cube>) {
     Plos.slice(0) = Plos_t;
@@ -219,8 +223,13 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
   };
 
   // Initial smoothed values
-  arma::colvec x_0s = ksm_inp.x_0 + Jim_tr * (xs_vals.col(0) - ksm_inp.xp.col(0));
-  arma::mat P_0s = ksm_inp.P_0 + Jim_tr * (GetCov(Ps, 0, p) - Pp) * Jim_tr.t();
+  arma::colvec x_0s = ksm_inp.x_0 + Jim_tr.t() * (xs_vals.col(0) - ksm_inp.xp.col(0));
+  arma::mat P_0s = ksm_inp.P_0 + Jim_tr.t() * (GetCov(Ps, 0, p) - Pp) * Jim_tr;
+
+  // DEBUG
+  std::cout << "x_0s" << x_0s << std::endl;
+  std::cout << "P_0s" << std::endl;
+  std::cout << P_0s << std::endl;
 
 
   return KalmanSmootherResultT<CovStore>{

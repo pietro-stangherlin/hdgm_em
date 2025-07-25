@@ -229,13 +229,13 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
 
   // Smoothing t = 0
   Pp = ksm_inp.Pp.slice(0);
-  Jim_tr = ksm_inp.P_0 * Phi_tr * inv_sympd(Pp);
+  Jim_tr = ksm_inp.P_0 * ksm_inp.Phi * inv_sympd(Pp);
   Plos.slice(0) = ksm_inp.Pf.slice(0) * Jim_tr.t() +
     Ji * (Plos.slice(1) - ksm_inp.Phi * ksm_inp.Pf.slice(0)) * Jim_tr.t();
 
   // Initial smoothed values
-  arma::colvec x_0s = ksm_inp.x_0 + Jim_tr * (xs_vals.col(0) - ksm_inp.xp.col(0));
-  arma::mat P_0s = ksm_inp.P_0 + Jim_tr * (Ps.slice(0) - Pp) * Jim_tr.t();
+  arma::colvec x_0s = ksm_inp.x_0 + Jim_tr.t() * (xs_vals.col(0) - ksm_inp.xp.col(0));
+  arma::mat P_0s = ksm_inp.P_0 + Jim_tr.t() * (Ps.slice(0) - Pp) * Jim_tr;
 
 
   return KalmanSmootherResult{
