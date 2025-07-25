@@ -151,8 +151,16 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
   xs_vals.col(T-1) = ksm_inp.xf.col(T-1); // last smoothed state = filtered state
   K_times_A = (ksm_inp.nc_last == 0) ? arma::mat(p, p, arma::fill::zeros) : ksm_inp.K_last * ksm_inp.A_last;
 
+  // DEBUG
+  // std::cout << "ksm_inp.nc_last: " << ksm_inp.nc_last << std::endl;
+  // std::cout << "ksm_inp.K_last: " << std::endl;
+  // std::cout << ksm_inp.K_last << std::endl;
+  // std::cout << "K_times_A: " << std::endl;
+  // std::cout << K_times_A << std::endl;
+
 
   Ps_t = GetCov(ksm_inp.Pf, T-1, p); // last smoothed state cov = filtered state cov
+
 
   Plos_t = (arma::eye(p,p) - K_times_A) * ksm_inp.Phi * GetCov(ksm_inp.Pf, T-2, p);
 
