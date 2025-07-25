@@ -1,12 +1,11 @@
 #pragma once
 
 #include <RcppArmadillo.h>
-#include <optional>
 #include <type_traits>
 #include <iostream>
 #include <cstdlib> // For atoi
 
-#include "Kalman_internal.h"
+#include "Kalman_internal.hpp"
 #include "../utils/symmetric_matr_vec.h"
 
 
@@ -63,7 +62,7 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
 
       // Intermediate results
       VCt = Ppt * At.t();
-      S = arma::inv_sympd(At * VCt + Rt);
+      S = arma::inv(At * VCt + Rt);
 
       // Prediction error
       et = yt - At * xpt;

@@ -1,9 +1,8 @@
-#include <optional>
 #include <RcppArmadillo.h>
 #include <iostream>
 #include <cstdlib> // For atoi
 
-#include "Kalman_internal.h"
+#include "Kalman_internal.hpp"
 #include "Kalman_internal_impl.hpp"
 #include "../utils/symmetric_matr_vec.h"
 

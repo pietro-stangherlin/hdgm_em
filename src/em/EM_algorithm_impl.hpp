@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <limits>
 
-#include "../kalman/Kalman_internal.h"
 #include "../kalman/Kalman_internal.hpp"
 #include "EM_functions.hpp"
 #include "EM_algorithm.hpp"
@@ -95,6 +94,15 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
     arma::mat S11 = ComputeS11_core<CovStore>(ksm_res.x_smoothed, ksm_res.P_smoothed, S00, ksm_res.x0_smoothed, ksm_res.P0_smoothed);
     arma::mat S10 = ComputeS10_core<CovStore>(ksm_res.x_smoothed, ksm_res.Lag_one_cov_smoothed, ksm_res.x0_smoothed);
 
+
+    //DEBUG
+    std::cout << "S00 " << std::endl;
+    std::cout << S00 << std::endl;
+
+    std::cout << "S11 " << std::endl;
+    std::cout << S11 << std::endl;
+
+
     arma::mat sum_y_x_smooth(q, p, arma::fill::zeros);
     for(int t = 0; t < T; t++){
       sum_y_x_smooth += y.col(t) * ksm_res.x_smoothed.col(t).t();
@@ -102,9 +110,11 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
 
 
     A = sum_y_x_smooth * arma::inv(S11);
-    R = (sum_y_yT - A *  sum_y_x_smooth.t()) / T ;
+    R = (sum_y_yT - A *  sum_y_x_smooth.t() - sum_y_x_smooth * A.t() + A * S11 * A.t()) / T ;
+    R = (R + R.t()) * 0.5;
     Phi = S10 * arma::inv(S00);
     Q = (S11 - Phi * S10.t()) / T;
+    Q = (Q + Q.t()) * 0.5;
 
   }
 

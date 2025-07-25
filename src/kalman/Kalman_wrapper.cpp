@@ -1,6 +1,6 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
-#include "Kalman_internal.h"
+#include "Kalman_internal.hpp"
 
 
 // R version
