@@ -17,7 +17,7 @@ N <- 10000
 Y_LEN <- 5
 THETA <- 2
 G <- 0.8
-A <- 3
+A <- 1
 SIGMAY <- 0.1
 SIGMAZ <- 0.1
 
@@ -83,8 +83,8 @@ res_un_EM = UnstructuredEM(y = y.matr,
                            R_0 = SIGMAY^2 * diag(nrow = Y_LEN),
                            x0_in = rep(0, Y_LEN),
                            P0_in = 5 * diag(nrow = Y_LEN),
-                           max_iter = 50,
-                           bool_mat = TRUE)
+                           max_iter = 200,
+                           bool_mat = FALSE)
 
 res_un_EM$Phi
 res_un_EM$A
@@ -115,19 +115,20 @@ plot(res_EM_dist$par_history[3,])
 # unstrucured
 
 res_un_EM_dist = UnstructuredEM(y = y.matr,
-                           Phi_0 = G * diag(nrow = Y_LEN),
-                           A_0 = A * diag(nrow = Y_LEN) + 2,
-                           Q_0 = ETA_MATRIX ,
+                           Phi_0 = 2 * G * diag(nrow = Y_LEN),
+                           A_0 = A * diag(nrow = Y_LEN),
+                           Q_0 = ETA_MATRIX,
                            R_0 = SIGMAY^2 * diag(nrow = Y_LEN),
                            x0_in = rep(0, Y_LEN),
-                           P0_in = 50 * diag(nrow = Y_LEN),
-                           max_iter = 50,
-                           bool_mat = TRUE)
+                           P0_in = diag(nrow = Y_LEN),
+                           max_iter = 200,
+                           bool_mat = FALSE)
 
 res_un_EM_dist$Phi
 res_un_EM_dist$A
 res_un_EM_dist$Q
 res_un_EM_dist$R
+
 
 
 
