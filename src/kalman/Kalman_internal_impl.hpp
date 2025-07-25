@@ -146,7 +146,7 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
   arma::mat Ps_t;
   arma::mat Plos_t;
 
-  arma::mat Ji, Jim_tr;
+  arma::mat J_t, J_t_T;
   arma::mat Phi_tr = ksm_inp.Phi.t();
 
   // populate last smoothed values
@@ -168,10 +168,10 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
 
   if constexpr (std::is_same_v<CovStore, arma::cube>) {
     Ps.slice(T-1) = Ps_t;
-    Plos.slice(T-1) = Plos_t;
+    Plos.slice(T-2) = Plos_t;
   } else {
     Ps.col(T-1) = FromSymMatrixToVector(Ps_t);
-    Plos.col(T-1) = FromSymMatrixToVector(Plos_t);
+    Plos.col(T-2) = FromSymMatrixToVector(Plos_t);
   };
 
   // Smoothed state variable and covariance
@@ -179,12 +179,12 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
     arma::mat Pf = GetCov(ksm_inp.Pf, t, p);
     arma::mat Pp = GetCov(ksm_inp.Pp, t+1, p);
 
-    Ji = Pf * Phi_tr * inv_sympd(Pp);
+    J_t = Pf * Phi_tr * inv_sympd(Pp);
 
-    arma::mat Jim_tr = Ji.t();
+    arma::mat J_t_T = J_t.t();
 
-    xs_vals.col(t) = ksm_inp.xf.col(t) + Ji * (xs_vals.col(t+1) - ksm_inp.xp.col(t+1));
-    Ps_t = Pf + Ji * (GetCov(Ps, t+1, p) - Pp) * Jim_tr;
+    xs_vals.col(t) = ksm_inp.xf.col(t) + J_t * (xs_vals.col(t+1) - ksm_inp.xp.col(t+1));
+    Ps_t = Pf + J_t * (GetCov(Ps, t+1, p) - Pp) * J_t_T;
 
     if constexpr (std::is_same_v<CovStore, arma::cube>) {
       Ps.slice(t) = Ps_t;
@@ -193,28 +193,39 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
     };
 
     // smoothed Cov(x_t, x_t-1 | y_{1:T}): Needed for EM
-    if (t > 0) {
+    // NOTE: watch out about the different indexes (excluding zero states)
+    // between Filtered, Predicted and Smoothed Covariances: times = 1,..,T (array indexes from 0 to T-1)
+    // and Lag One Smoothed Covariances: times = 2,...,T (array indexes from 0 to T-2)
+    // since in C++ indexes starts from 0:
+    // T - 1,   T - 2,  T - 3,...,(array indexes other)
+    // T - 2,   T - 3,  T - 4,..., (array indexes Lag-one)
+    // (T, T-1), (T-1, T-2), () (actual times indexes Lag-one)
 
-      Jim_tr = arma::inv_sympd(GetCov(ksm_inp.Pp, t, p)) * Phi_tr * GetCov(ksm_inp.Pf, t-1, p);
-      Plos_t = GetCov(ksm_inp.Pf,t, p) * Jim_tr +
-        Ji * (GetCov(Plos, t+1, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, t, p)) * Jim_tr;
+
+    // so t = 1 array index here is used to store actual times (2,1) lag one smoother
+    // while t = 0 for (1, 0) (defined out of the loop)
+    if (t > 1) {
+
+      // here index t is referred to NOT lag one smoothed covariances
+
+      J_t_T = arma::inv_sympd(GetCov(ksm_inp.Pp, t-1, p)) * Phi_tr * GetCov(ksm_inp.Pf, t-2, p);
+      Plos_t = GetCov(ksm_inp.Pf,t, p) * J_t_T +
+        J_t * (GetCov(Plos, t, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, t, p)) * J_t_T;
 
       if constexpr (std::is_same_v<CovStore, arma::cube>) {
-        Plos.slice(t) = Plos_t;
+        Plos.slice(t-1) = Plos_t;
       } else {
-        Plos.col(t) = FromSymMatrixToVector(Plos_t);
+        Plos.col(t-1) = FromSymMatrixToVector(Plos_t);
       };
 
     }
   }
 
-  // Smoothing t = 0
+  // Smoothing t = 0 (array index) (actual time = 1)
   Pp = GetCov(ksm_inp.Pp, 0, p);
-  Jim_tr = inv_sympd(Pp) * ksm_inp.Phi *  ksm_inp.P_0;
-  Plos_t = GetCov(ksm_inp.Pf, 0, p) * Jim_tr +
-    Ji * (GetCov(Plos, 1, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, 0, p)) * Jim_tr;
-
-  // Ji = Pf * Phi_tr * inv_sympd(Pp);
+  J_t_T = inv_sympd(Pp) * ksm_inp.Phi *  ksm_inp.P_0;
+  Plos_t = GetCov(ksm_inp.Pf, 0, p) * J_t_T +
+    J_t * (GetCov(Plos, 1, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, 0, p)) * J_t_T;
 
   if constexpr (std::is_same_v<CovStore, arma::cube>) {
     Plos.slice(0) = Plos_t;
@@ -223,13 +234,8 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
   };
 
   // Initial smoothed values
-  arma::colvec x_0s = ksm_inp.x_0 + Jim_tr.t() * (xs_vals.col(0) - ksm_inp.xp.col(0));
-  arma::mat P_0s = ksm_inp.P_0 + Jim_tr.t() * (GetCov(Ps, 0, p) - Pp) * Jim_tr;
-
-  // DEBUG
-  std::cout << "x_0s" << x_0s << std::endl;
-  std::cout << "P_0s" << std::endl;
-  std::cout << P_0s << std::endl;
+  arma::colvec x_0s = ksm_inp.x_0 + J_t_T.t() * (xs_vals.col(0) - ksm_inp.xp.col(0));
+  arma::mat P_0s = ksm_inp.P_0 + J_t_T.t() * (GetCov(Ps, 0, p) - Pp) * J_t_T;
 
 
   return KalmanSmootherResultT<CovStore>{

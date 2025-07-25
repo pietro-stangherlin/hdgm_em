@@ -78,10 +78,12 @@ arma::mat ComputeS10_core(const arma::mat & smoothed_states,
   int T = smoothed_states.n_cols;
   int p = smoothed_states.n_rows;
 
-  arma::mat S10 = smoothed_states.col(0) * z0_smoothed.t() + GetCov(lagone_smoothed_covars, 0, p);
+  arma::mat S10 = smoothed_states.col(0) * z0_smoothed.t() +
+    smoothed_states.col(T-1) * smoothed_states.col(T-2).t() +
+    GetCov(lagone_smoothed_covars, 0, p);
 
   // all except the last time T
-  for(int t = 1; t <= T - 1; t++){
+  for(int t = 1; t <= T - 2; t++){
     S10 += smoothed_states.col(t) * smoothed_states.col(t-1).t() + GetCov(lagone_smoothed_covars, t, p);
   }
 

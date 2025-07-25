@@ -193,7 +193,7 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
   // allocate smoothed quantities
   arma::mat xs_vals(p, T, arma::fill::zeros);
   arma::cube Ps(p, p, T, arma::fill::zeros);
-  arma::cube Plos(p, p, T, arma::fill::zeros);
+  arma::cube Plos(p, p, T-1, arma::fill::zeros);
 
 
   // populate last smoothed values
@@ -253,7 +253,7 @@ KalmanSmootherResultMat FIS_cpp_mat(const KalmanSmootherInputMat& ksm_inp) {
   int sym_len = p * (p + 1) / 2;
 
   arma::mat Ps(sym_len, T, arma::fill::zeros);
-  arma::mat Plos(sym_len, T, arma::fill::zeros);
+  arma::mat Plos(sym_len, T - 1, arma::fill::zeros);
 
   return FIS_core<arma::mat>(ksm_inp, Ps, Plos);
 };
