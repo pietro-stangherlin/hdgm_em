@@ -66,10 +66,10 @@ SimulEMUn <- function(B,
                                 bool_mat = em_bool_mat,
                                 verbose = em_verbose)
 
-    Phi_hat_array[,,i] <- res_un_EM[["Phi"]]
-    A_hat_array[,,i] <- res_un_EM[["A"]]
-    Q_hat_array[,,i] <- res_un_EM[["Q"]]
-    R_hat_array[,,i] <- res_un_EM[["R"]]
+    Phi_hat_array[,,b] <- res_un_EM[["Phi"]]
+    A_hat_array[,,b] <- res_un_EM[["A"]]
+    Q_hat_array[,,b] <- res_un_EM[["Q"]]
+    R_hat_array[,,b] <- res_un_EM[["R"]]
 
   }
 
@@ -211,8 +211,11 @@ res_em_sim_true_start <- SimulEMUn(B = 300,
                                    em_bool_mat = TRUE,
                                    em_verbose = FALSE)
 
-res_em_sim_true_start$Phi[,,5]
 
+b = dim(res_em_sim_true_start$Phi)[3]
+
+plot(1:b, rep(A, b), type = "l")
+lines(res_em_sim_true_start$A[,,], col = "red")
 
 # Starting from not true values -------------------------
 
@@ -254,7 +257,42 @@ res_un_EM_dist$Q
 res_un_EM_dist$R
 
 
+res_em_sim_false_start <- SimulEMUn(B = 300,
+                                   n_times = N,
+                                   transMatr = G * diag(nrow = Y_LEN),
+                                   obsMatr = A * diag(nrow = Y_LEN),
+                                   stateCovMatr = ETA_MATRIX,
+                                   obsCovMatr = SIGMAY^2 * diag(nrow = Y_LEN),
+                                   zeroState = rep(0, Y_LEN),
+                                   em_transMatr = 2 * G * diag(nrow = Y_LEN),
+                                   em_obsMatr = 5 * A * diag(nrow = Y_LEN),
+                                   em_stateCovMatr = ETA_MATRIX,
+                                   em_obsCovMatr = SIGMAY^2 * diag(nrow = Y_LEN),
+                                   em_zeroState = rep(0, Y_LEN),
+                                   em_zeroStateCov = ETA_MATRIX,
+                                   em_max_iter = 50,
+                                   em_bool_mat = TRUE,
+                                   em_verbose = FALSE)
+
+b = dim(res_em_sim_false_start$Phi)[3]
+
+plot(1:b, rep(A, b), type = "l", ylim = c(A - 4, A + 4))
+lines(res_em_sim_false_start$A[1,1,], col = "red")
+lines(res_em_sim_false_start$A[2,2,], col = "red")
+lines(res_em_sim_false_start$A[3,3,], col = "red")
 
 
+plot(1:b, rep(G, b), type = "l", ylim = c(G - 4, G + 4))
+lines(res_em_sim_false_start$Phi[1,1,], col = "red")
+lines(res_em_sim_false_start$Phi[2,2,], col = "red")
+lines(res_em_sim_false_start$Phi[3,3,], col = "red")
+
+plot(1:b, rep(ETA_MATRIX[1,1], b), type = "l", ylim = c(G - 4, G + 4))
+lines(res_em_sim_false_start$Q[1,1,], col = "red")
+lines(res_em_sim_false_start$Q[1,1,], col = "red")
+
+plot(1:b, rep((SIGMAY^2 * diag(nrow = Y_LEN))[1,1], b), type = "l", ylim = c(G - 4, G + 4))
+lines(res_em_sim_false_start$R[1,1,], col = "red")
+lines(res_em_sim_false_start$R[1,1,], col = "red")
 
 
