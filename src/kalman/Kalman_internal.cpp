@@ -179,7 +179,7 @@ KalmanFilterResultMat SKF_cpp_mat(const KalmanFilterInput& kf_inp) {
 
 // Kalman Smoother
 // for parameters description see Kalman_types.h
-KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
+KalmanSmootherResult FIS_cpp_old(const KalmanSmootherInput& ksm_inp) {
 
   // std::cout << "Inside FIS_cpp" << std::endl;
 
@@ -246,6 +246,17 @@ KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
   .P0_smoothed = P_0s
   };
 }
+
+KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
+  int p = ksm_inp.Phi.n_rows;
+  int T = ksm_inp.xf.n_cols;
+  int sym_len = p * (p + 1) / 2;
+
+  arma::cube Ps(sym_len, sym_len, T, arma::fill::zeros);
+  arma::cube Plos(sym_len, sym_len, T - 1, arma::fill::zeros);
+
+  return FIS_core<arma::cube>(ksm_inp, Ps, Plos);
+};
 
 KalmanSmootherResultMat FIS_cpp_mat(const KalmanSmootherInputMat& ksm_inp) {
   int p = ksm_inp.Phi.n_rows;

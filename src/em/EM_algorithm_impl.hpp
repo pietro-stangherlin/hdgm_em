@@ -26,8 +26,8 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
   int q = em_in.y.n_rows; // observation vector dimension
   int T = em_in.y.n_cols; // number of observations
 
-  arma::mat y, Phi, A, Q, R, P0_smooth;
-  arma::vec x0_smooth;
+  arma::mat y, Phi, A, Q, R, P0_smoothed;
+  arma::vec x0_smoothed;
   double llik_prev, llik_next;
   llik_prev = LOWEST_DOUBLE;
 
@@ -40,8 +40,8 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
   Q = em_in.Q_0;
   R = em_in.R_0;
 
-  x0_smooth = em_in.x0_in;
-  P0_smooth = em_in.P0_in;
+  x0_smoothed = em_in.x0_in;
+  P0_smoothed = em_in.P0_in;
 
   // once for all
   arma::mat sum_y_yT(q, q, arma::fill::zeros);
@@ -65,8 +65,8 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
       .A = A,
       .Q = Q,
       .R = R,
-      .x_0 = x0_smooth,
-      .P_0 = P0_smooth,
+      .x_0 = x0_smoothed,
+      .P_0 = P0_smoothed,
       .retLL = true};
 
 
@@ -79,7 +79,8 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
 
     if(llik_next < llik_prev){
       std::cout << "WARNING: Log Likelihood decreasing, returning" << std::endl;
-      return EMOutputUnstructured{ .Phi = Phi, .A = A, .Q = Q, .R = R};
+      return EMOutputUnstructured{ .Phi = Phi, .A = A, .Q = Q, .R = R,
+                                   .x0_smoothed = x0_smoothed, .P0_smoothed = P0_smoothed};
 
     }
 
@@ -89,21 +90,13 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
     // EM parameters updates
     /////////////////////////
 
-    x0_smooth = ksm_res.x0_smoothed;
-    P0_smooth = ksm_res.P0_smoothed;
+    x0_smoothed = ksm_res.x0_smoothed;
+    P0_smoothed = ksm_res.P0_smoothed;
 
     // S matrices
-    arma::mat S00 = ComputeS00_core<CovStore>(ksm_res.x_smoothed, ksm_res.P_smoothed, ksm_res.x0_smoothed, ksm_res.P0_smoothed);
-    arma::mat S11 = ComputeS11_core<CovStore>(ksm_res.x_smoothed, ksm_res.P_smoothed, S00, ksm_res.x0_smoothed, ksm_res.P0_smoothed);
-    arma::mat S10 = ComputeS10_core<CovStore>(ksm_res.x_smoothed, ksm_res.Lag_one_cov_smoothed, ksm_res.x0_smoothed);
-
-
-    //DEBUG
-    // std::cout << "S00 " << std::endl;
-    // std::cout << S00 << std::endl;
-    //
-    // std::cout << "S11 " << std::endl;
-    // std::cout << S11 << std::endl;
+    arma::mat S00 = ComputeS00_core<CovStore>(ksm_res.x_smoothed, ksm_res.P_smoothed, x0_smoothed, P0_smoothed);
+    arma::mat S11 = ComputeS11_core<CovStore>(ksm_res.x_smoothed, ksm_res.P_smoothed, S00, x0_smoothed, P0_smoothed);
+    arma::mat S10 = ComputeS10_core<CovStore>(ksm_res.x_smoothed, ksm_res.Lag_one_cov_smoothed, x0_smoothed);
 
 
     arma::mat sum_y_x_smooth(q, p, arma::fill::zeros);
@@ -112,9 +105,9 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
     };
 
     // fix A to diagonal to ensure identificability
-    // A = sum_y_x_smooth * arma::inv(S11);
-    // diag_A = A.diag();
-    // A = arma::diagmat(diag_A);
+    A = sum_y_x_smooth * arma::inv(S11);
+    diag_A = A.diag();
+    A = arma::diagmat(diag_A);
 
     // fix R to diagonal to ensure identificability
     R = (sum_y_yT - A *  sum_y_x_smooth.t() - sum_y_x_smooth * A.t() + A * S11 * A.t()) / T ;
@@ -128,7 +121,8 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
   }
 
 
-  return EMOutputUnstructured{ .Phi = Phi, .A = A, .Q = Q, .R = R};
+  return EMOutputUnstructured{ .Phi = Phi, .A = A, .Q = Q, .R = R,
+                               .x0_smoothed = x0_smoothed, .P0_smoothed = P0_smoothed};
 
 
 };

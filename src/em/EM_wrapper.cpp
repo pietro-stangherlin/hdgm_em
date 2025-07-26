@@ -42,7 +42,9 @@ Rcpp::List UnstructuredEM( const arma::mat& y, // observation matrix (n x T) whe
     Rcpp::Named("Phi") = res.Phi,
     Rcpp::Named("A") = res.A,
     Rcpp::Named("Q") = res.Q,
-    Rcpp::Named("R") = res.R
+    Rcpp::Named("R") = res.R,
+    Rcpp::Named("x0_smoothed") = res.x0_smoothed,
+    Rcpp::Named("P0_smoothed") = res.P0_smoothed
   );
 
 }

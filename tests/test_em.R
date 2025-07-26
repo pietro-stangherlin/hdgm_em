@@ -8,6 +8,9 @@ Sys.setenv("PKG_CXXFLAGS"="-std=c++20")
 Rcpp::sourceCpp("src/em/EM_wrapper.cpp",
                 rebuild = TRUE)
 
+Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp",
+                rebuild = TRUE)
+
 source("tests/test_helper.R")
 
 # Simulation 1 -----------------------------------
@@ -44,15 +47,17 @@ COR_MATRIX <- ExpCor(mdist = DIST_MATRIX,
 
 ETA_MATRIX <- SIGMAZ^2 * COR_MATRIX # state covariance
 
-y.matr <- LinGauStateSpaceSim(n_times = N,
-                            obs_dim = Y_LEN,
-                            state_dim = Y_LEN,
-                            transMatr = G * diag(nrow = Y_LEN),
-                            obsMatr = A * diag(nrow = Y_LEN),
-                            stateCovMatr = ETA_MATRIX,
-                            obsCovMatr = SIGMAY^2 * diag(nrow = Y_LEN),
-                            zeroState = rep(0, Y_LEN))$observations
+StateSpaceRes <- LinGauStateSpaceSim(n_times = N,
+                                     obs_dim = Y_LEN,
+                                     state_dim = Y_LEN,
+                                     transMatr = G * diag(nrow = Y_LEN),
+                                     obsMatr = A * diag(nrow = Y_LEN),
+                                     stateCovMatr = ETA_MATRIX,
+                                     obsCovMatr = SIGMAY^2 * diag(nrow = Y_LEN),
+                                     zeroState = rep(0, Y_LEN))
 
+y.matr <- StateSpaceRes$observations
+x.matr <- StateSpaceRes$states
 
 # Testing ---------------------------------
 
@@ -90,6 +95,12 @@ res_un_EM$Phi
 res_un_EM$A
 res_un_EM$Q
 res_un_EM$R
+res_un_EM$x0_smoothed
+res_un_EM$P0_smoothed
+
+# diagnostic
+
+plot(x.matr[1,1:200], type = "l")
 
 # Starting from not true values -------------------------
 

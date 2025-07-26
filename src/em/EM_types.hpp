@@ -37,6 +37,8 @@ struct EMOutputUnstructured{
   arma::mat A; // observation matrix
   arma::mat Q; // state error covariance matrix
   arma::mat R; // observation error covariance matrix
+  arma::vec x0_smoothed; // smoothed first state value
+  arma::mat P0_smoothed; // smoothed first state covariance value
 };
 
 
