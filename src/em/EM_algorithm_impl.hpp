@@ -52,8 +52,9 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
 
   for(int iter = 1; iter < em_in.max_iter + 1; ++iter){
 
-    std::cout << "iter" << iter << std::endl;
-
+    if(em_in.verbose == true){
+      std::cout << "iter" << iter << std::endl;
+    };
 
     ///////////////////////
     // Kalman Smoother pass
@@ -75,7 +76,11 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
     llik_next = ksm_res.loglik;
 
     //DEBUG
-    std::cout << "llik: " << llik_next << std::endl;
+    if(em_in.verbose == true){
+      std::cout << "llik: " << llik_next << std::endl;
+    };
+
+
 
     if(llik_next < llik_prev){
       std::cout << "WARNING: Log Likelihood decreasing, returning" << std::endl;

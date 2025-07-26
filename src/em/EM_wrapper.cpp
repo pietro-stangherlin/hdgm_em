@@ -17,7 +17,8 @@ Rcpp::List UnstructuredEM( const arma::mat& y, // observation matrix (n x T) whe
                           const arma::vec& x0_in, // initial state
                           const arma::mat& P0_in, // initial state covariance matrix
                           int max_iter,
-                          bool bool_mat){ // TO change + add tolerance
+                          bool bool_mat,
+                          bool verbose = true){ // TO change + add tolerance
 
   EMInputUnstructured em_in{
   .y = y,
@@ -27,7 +28,8 @@ Rcpp::List UnstructuredEM( const arma::mat& y, // observation matrix (n x T) whe
   .R_0 = R_0,
   .x0_in = x0_in,
   .P0_in = P0_in,
-  .max_iter = max_iter
+  .max_iter = max_iter,
+  .verbose = verbose
   };
 
   EMOutputUnstructured res;

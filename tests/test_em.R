@@ -13,6 +13,74 @@ Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp",
 
 source("tests/test_helper.R")
 
+# Simulation function unstructured
+
+SimulEMUn <- function(B,
+                    n_times,
+                    transMatr, # true model parameters
+                    obsMatr,
+                    stateCovMatr,
+                    obsCovMatr,
+                    zeroState,
+                    em_transMatr, # starting EM values
+                    em_obsMatr,
+                    em_stateCovMatr,
+                    em_obsCovMatr,
+                    em_zeroState,
+                    em_zeroStateCov,
+                    em_max_iter = 50,
+                    em_bool_mat = TRUE,
+                    em_verbose = FALSE){
+
+  p = NROW(transMatr)
+  q = NROW(obsMatr)
+
+  Phi_hat_array <- array(NA, dim = c(p, p, B))
+  A_hat_array <- array(NA, dim = c(q, p, B))
+  Q_hat_array <- array(NA, dim = c(p, p, B))
+  R_hat_array <- array(NA, dim = c(q, q, B))
+  llik_hat_vec <- rep(NA, B)
+
+
+  for(b in 1:B){
+
+    if(b %% 50 == 0){
+      print(paste0("simulation iter: ", b, collapse = ""))
+    }
+
+    y.matr <- LinGauStateSpaceSim(n_times = n_times,
+                                  transMatr = transMatr,
+                                  obsMatr = obsMatr,
+                                  stateCovMatr = stateCovMatr,
+                                  obsCovMatr = obsCovMatr,
+                                  zeroState = zeroState)$observations
+
+    res_un_EM <- UnstructuredEM(y = y.matr,
+                                Phi_0 = em_transMatr,
+                                A_0 = em_obsMatr,
+                                Q_0 = em_stateCovMatr,
+                                R_0 = em_obsCovMatr,
+                                x0_in = em_zeroState,
+                                P0_in = em_zeroStateCov,
+                                max_iter = em_max_iter,
+                                bool_mat = em_bool_mat,
+                                verbose = em_verbose)
+
+    Phi_hat_array[,,i] <- res_un_EM[["Phi"]]
+    A_hat_array[,,i] <- res_un_EM[["A"]]
+    Q_hat_array[,,i] <- res_un_EM[["Q"]]
+    R_hat_array[,,i] <- res_un_EM[["R"]]
+
+  }
+
+  return(list("Phi" = Phi_hat_array,
+              "A" = A_hat_array,
+              "Q" = Q_hat_array,
+              "R" = R_hat_array))
+
+}
+
+
 # Simulation 1 -----------------------------------
 set.seed(123)
 
@@ -21,8 +89,8 @@ Y_LEN <- 5
 THETA <- 2
 G <- 0.8
 A <- 1
-SIGMAY <- 0.1
-SIGMAZ <- 0.1
+SIGMAY <- 1
+SIGMAZ <- 1
 
 # generate x coordinate
 # generate y coordinate
@@ -48,8 +116,6 @@ COR_MATRIX <- ExpCor(mdist = DIST_MATRIX,
 ETA_MATRIX <- SIGMAZ^2 * COR_MATRIX # state covariance
 
 StateSpaceRes <- LinGauStateSpaceSim(n_times = N,
-                                     obs_dim = Y_LEN,
-                                     state_dim = Y_LEN,
                                      transMatr = G * diag(nrow = Y_LEN),
                                      obsMatr = A * diag(nrow = Y_LEN),
                                      stateCovMatr = ETA_MATRIX,
@@ -89,7 +155,8 @@ res_un_EM = UnstructuredEM(y = y.matr,
                            x0_in = rep(0, Y_LEN),
                            P0_in = diag(nrow = Y_LEN),
                            max_iter = 200,
-                           bool_mat = TRUE)
+                           bool_mat = TRUE,
+                           verbose = TRUE)
 
 res_un_EM$Phi
 res_un_EM$A
@@ -100,7 +167,52 @@ res_un_EM$P0_smoothed
 
 # diagnostic
 
-plot(x.matr[1,1:200], type = "l")
+filter.res.mat <- SKF(Y = y.matr,
+                             Phi = res_un_EM$Phi,
+                             A = res_un_EM$A,
+                             Q = res_un_EM$Q,
+                             R = res_un_EM$R,
+                             x_0 = res_un_EM$x0_smoothed,
+                             P_0 = res_un_EM$P0_smoothed,
+                             retLL = TRUE,
+                      vectorized_cov_matrices = TRUE)
+
+smoother.res.mat <- SKFS_mat(Y = y.matr,
+                             Phi = res_un_EM$Phi,
+                             A = res_un_EM$A,
+                             Q = res_un_EM$Q,
+                             R = res_un_EM$R,
+                             x_0 = res_un_EM$x0_smoothed,
+                             P_0 = res_un_EM$P0_smoothed,
+                             retLL = TRUE)
+
+plot(x.matr[1,1:400], type = "l")
+lines(smoother.res.mat$x_smoothed[1,1:400], col = "red")
+
+plot(x.matr[2,1:400], type = "l")
+lines(smoother.res.mat$x_smoothed[2,1:400], col = "red")
+
+
+# simulation -------------------------------------------
+res_em_sim_true_start <- SimulEMUn(B = 300,
+                                   n_times = N,
+                                   transMatr = G * diag(nrow = Y_LEN),
+                                   obsMatr = A * diag(nrow = Y_LEN),
+                                   stateCovMatr = ETA_MATRIX,
+                                   obsCovMatr = SIGMAY^2 * diag(nrow = Y_LEN),
+                                   zeroState = rep(0, Y_LEN),
+                                   em_transMatr = G * diag(nrow = Y_LEN),
+                                   em_obsMatr = A * diag(nrow = Y_LEN),
+                                   em_stateCovMatr = ETA_MATRIX,
+                                   em_obsCovMatr = SIGMAY^2 * diag(nrow = Y_LEN),
+                                   em_zeroState = rep(0, Y_LEN),
+                                   em_zeroStateCov = ETA_MATRIX,
+                                   em_max_iter = 50,
+                                   em_bool_mat = TRUE,
+                                   em_verbose = FALSE)
+
+res_em_sim_true_start$Phi[,,5]
+
 
 # Starting from not true values -------------------------
 
@@ -127,13 +239,14 @@ plot(res_EM_dist$par_history[3,])
 
 res_un_EM_dist = UnstructuredEM(y = y.matr,
                            Phi_0 = 2 * G * diag(nrow = Y_LEN),
-                           A_0 = A * diag(nrow = Y_LEN),
+                           A_0 = 5 * A * diag(nrow = Y_LEN),
                            Q_0 = ETA_MATRIX,
                            R_0 = SIGMAY^2 * diag(nrow = Y_LEN),
                            x0_in = rep(0, Y_LEN),
                            P0_in = diag(nrow = Y_LEN),
-                           max_iter = 5,
-                           bool_mat = TRUE)
+                           max_iter = 50,
+                           bool_mat = TRUE,
+                           verbose = TRUE)
 
 res_un_EM_dist$Phi
 res_un_EM_dist$A

@@ -20,39 +20,46 @@ library(mvtnorm)
 
 
 LinGauStateSpaceSim <- function(n_times = 10^3,
-                          obs_dim = 5,
-                          state_dim = 3,
                           transMatr = diag(0.5, state_dim),
                           obsMatr = diag(1, state_dim),
                           stateCovMatr = diag(1, state_dim),
                           obsCovMatr = diag(0.1, obs_dim),
                           zeroState = rep(0, obs_dim)){
 
+  obs_dim = NROW(obsMatr)
+  state_dim = NROW(transMatr)
 
-  X <- matrix(NA, nrow = obs_dim, ncol = n_times) # data matrix
-  Z <- matrix(NA, nrow = state_dim, ncol = n_times + 1) # state matrix
+  Y <- matrix(NA, nrow = obs_dim, ncol = n_times) # data matrix
+  X <- matrix(NA, nrow = state_dim, ncol = n_times + 1) # state matrix
 
+
+  X_errs <- t(rmvnorm(n = n_times,
+                       mean = rep(0, state_dim),
+                       sigma = stateCovMatr))
+
+  Y_errs <- t(rmvnorm(n = n_times,
+                      mean = rep(0, obs_dim),
+                      sigma = obsCovMatr))
 
   # simulate process
-  Z[,1] <- transMatr %*% as.matrix(zeroState) + t(rmvnorm(n = 1,
+  X[,1] <- transMatr %*% as.matrix(zeroState) + t(rmvnorm(n = 1,
                                             mean = rep(0, state_dim),
                                             sigma = stateCovMatr))
 
+  # simulate
+
+
   for(i in 1:n_times){
     # generate state
-    Z[,i+1] <- transMatr %*% as.matrix(Z[,i]) + t(rmvnorm(n = 1,
-                                                  mean = rep(0, state_dim),
-                                                  sigma = stateCovMatr))
+    X[,i+1] <- transMatr %*% as.matrix(X[,i]) + X_errs[,i]
     # generate observation
-    X[,i] <- obsMatr %*% as.matrix(Z[,i]) + t(rmvnorm(n = 1,
-                                                mean = rep(0, obs_dim),
-                                                sigma = obsCovMatr))
+    Y[,i] <- obsMatr %*% as.matrix(X[,i]) + Y_errs[,i]
   }
 
 
 
-  return(list("states" =  Z,
-              "observations" = X))
+  return(list("states" =  X,
+              "observations" = Y))
 
 }
 

@@ -11,6 +11,7 @@ struct EMInputUnstructured{
   arma::vec x0_in; // initial state
   arma::mat P0_in; // initial state covariance matrix
   int max_iter = 10; // TO change + add tolerance
+  bool verbose = true;
 };
 
 struct EMInput{

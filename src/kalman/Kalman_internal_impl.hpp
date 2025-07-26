@@ -31,7 +31,7 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
   arma::vec xpt, xft, yt, et;
   arma::mat K, Ppt, Pft, S, VCt;
   arma::mat At, Rt;
-
+  arma::mat I(p, p, arma::fill::eye);
 
   xft = kf_inp.x_0;
   Pft = kf_inp.P_0;
@@ -75,9 +75,8 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
       // Updated state estimate
       xft = xpt + K * et;
       // Updated state covariance estimate
-      Pft = Ppt - K * At * Ppt;
-      Pft += Pft.t(); // Ensure symmetry
-      Pft *= 0.5;
+      Pft = (I - K * At) * Ppt;
+      Pft = (Pft + Pft.t()) * 0.5; // Ensure symmetry
 
       if (kf_inp.retLL) {
         //TO DO: Maybe convenient to compute one S decomposition
