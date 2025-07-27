@@ -96,6 +96,48 @@ arma::mat ComputeS10_core(const arma::mat & smoothed_states,
 
 // ---------------------- Structured -----------------------------//
 
+/**
+ * @description EM update for scale parameter of influence of state variables
+ * one observation vector (eq. 4)
+ * (common to each state)
+ *
+ * @param mY (matrix): (T x n) matrix of observed vector
+ * with fixed effects predictions subtracted, NA allowed (NOT allowed temporarely)
+ * (a sorting is assumed, example by spatial locations)
+ * @param mZ (matrix): (T x s) matrix of smoothed state vectors
+ * @param vbeta (vector) (p x 1) matrix (i.e. a vector) of fixed effects coef,
+ * does NOT change with time
+ * @param mXz (array) (s x s) non scaled transfer matrix (assumed constant in time
+ * (the complete transfer matrix is scaled by alpha)
+ * @param cPsm (array): (s x s x T) array of smoothed state variance matrices,
+ *  each of those is accessed by cPsm.slice(t)
+ */
+
+template <typename CovStore>
+double AlphaUpdate_core(const arma::mat & mY_fixed_res,
+                   const arma::mat & mZ,
+                   const arma::mat & mXz,
+                   const CovStore & cPsm){
+
+  int T = mY_fixed_res.n_cols;
+  int p = mXz.n_rows;
+
+  double num = 0.0;
+  double den = 0.0;
+
+  for(int t = 0; t < T; t++){
+    // NOTE: (mXz * mZ.col(t)) can be computed once and used also
+    // in other updates
+    num += arma::trace(mY_fixed_res.col(t) * (mXz * mZ.col(t)).t());
+    den += arma::trace(mXz *
+      (mZ.col(t) * mZ.col(t).t() + GetCov(cPsmt, t, p)) * mXz.t());
+  };
+
+  // TO DO: add error message if den == 0
+  return num / den;
+
+}
+
 // TO DO: Omega_t function in case there are some missing observations
 // Along with Permutation matrix D definition
 
@@ -108,7 +150,7 @@ template <typename CovStore>
 arma::mat OmegaSumUpdate_core(const arma::mat & mY_fixed_res,
                          const arma::mat & Zt,
                          const arma::mat & mXz,
-                         CovStore & cPsmt,
+                         const CovStore & cPsmt,
                          double alpha){
 
   int T = mY_fixed_res.n_cols;

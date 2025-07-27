@@ -24,11 +24,18 @@ arma::mat ComputeS10_core(const arma::mat & smoothed_states,
                           const arma::vec & z0_smoothed);
 
 template <typename CovStore>
+double AlphaUpdate_core(const arma::mat & mY_fixed_res,
+                        const arma::mat & mZ,
+                        const arma::mat & mXz,
+                        const CovStore & cPsm);
+
+template <typename CovStore>
 arma::mat OmegaSumUpdate_core(const arma::mat & mY_fixed_res,
                                          const arma::mat & Zt,
                                          const arma::mat & mXz,
-                                         CovStore & cPsmt,
+                                         const CovStore & cPsmt,
                                          double alpha);
+
 
 double AlphaUpdate(const arma::mat & mY_fixed_res,
                    const arma::mat & mZ,
