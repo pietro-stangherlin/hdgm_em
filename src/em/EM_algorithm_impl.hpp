@@ -108,10 +108,11 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
       sum_y_x_smooth += y.col(t) * ksm_res.x_smoothed.col(t).t();
     };
 
+    // fix A
+    // A = sum_y_x_smooth * arma::inv(S11);
     // fix A to diagonal
-    A = sum_y_x_smooth * arma::inv(S11);
-    diag_A = A.diag();
-    A = arma::diagmat(diag_A);
+    // diag_A = A.diag();
+    // A = arma::diagmat(diag_A);
 
     R = (sum_y_yT - A *  sum_y_x_smooth.t() - sum_y_x_smooth * A.t() + A * S11 * A.t()) / T ;
 
