@@ -145,7 +145,8 @@ res_EM <- EMHDGM(y = y.matr,
                  z0_in = NULL,
                  P0_in = NULL,
                  max_iter = 50, # increment
-                 verbose = TRUE)
+                 verbose = TRUE,
+                 bool_mat = FALSE)
 
 cbind(res_EM$par_history[,1], res_EM$par_history[,NCOL(res_EM$par_history)])
 
@@ -197,17 +198,18 @@ lines(res_em_sim_true_start$A[,,], col = "red")
 
 res_EM_dist <- EMHDGM(y = y.matr,
                  dist_matrix = DIST_MATRIX,
-                 alpha0 = A ,
+                 alpha0 = 4 * A ,
                  beta0 = rep(0, 2),
-                 theta0 = THETA,
-                 v0 = SIGMAZ^2,
+                 theta0 = 5 * THETA,
+                 v0 = 4 * SIGMAZ^2,
                  g0 = G, # assuming stationarity: this has to be in (-1,1)
-                 sigma20 = SIGMAY^2 + 1,
+                 sigma20 = 2 * SIGMAY^2,
                  Xbeta_in = NULL,
                  z0_in = NULL,
                  P0_in = NULL,
-                 max_iter = 300, # increment
-                 verbose = TRUE)
+                 max_iter = 100, # increment
+                 verbose = TRUE,
+                 bool_mat = FALSE)
 
 cbind(res_EM$par_history[,1], res_EM_dist$par_history[,NCOL(res_EM_dist$par_history)])
 

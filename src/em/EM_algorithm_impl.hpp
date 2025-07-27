@@ -165,8 +165,8 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
   beta_history.col(0) = beta_temp;
 
   // at first iteration this is not smoothed
-  arma::vec z0_smooth = em_in.z0_in.has_value() ? *em_in.z0_in : arma::vec(q, arma::fill::zeros);
-  arma::mat P0_smooth = em_in.P0_in.has_value() ? *em_in.P0_in : arma::eye(q, q);
+  arma::vec x0_smoothed = em_in.z0_in.has_value() ? *em_in.z0_in : arma::vec(q, arma::fill::zeros);
+  arma::mat P0_smoothed = em_in.P0_in.has_value() ? *em_in.P0_in : arma::eye(q, q);
   arma::mat Xz = arma::eye(q, q);  // unscaled transfer matrix
 
   // Precompute fixed-effects sum
@@ -227,8 +227,8 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
       .A = alpha_temp * arma::eye(q, q), // observation matrix
       .Q = Q_temp, // state covariance error matrix
       .R = sigma2_temp * arma::eye(q, q), // observation error covariance matrix
-      .x_0 = z0_smooth, // first state
-      .P_0 = P0_smooth, // first state covariance
+      .x_0 = x0_smoothed, // first state
+      .P_0 = P0_smoothed, // first state covariance
       .retLL = true};
 
     auto ksm_res = SKFS_cpp(kfin, std::type_identity<CovStore>{});

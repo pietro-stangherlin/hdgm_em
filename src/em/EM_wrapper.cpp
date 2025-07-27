@@ -62,6 +62,7 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
                     double v0, // initial state scale covariance parameter (exponential)
                     double g0, // initial state transition matrix scaling
                     double sigma20, // initial observations variance
+                    bool bool_mat,
                     Rcpp::Nullable<Rcpp::NumericVector> Xbeta_in = R_NilValue,
                     Rcpp::Nullable<arma::vec> z0_in = R_NilValue,
                     Rcpp::Nullable<arma::mat> P0_in = R_NilValue,
@@ -127,9 +128,15 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
     .verbose = verbose
   };
 
+  EMOutput res;
+
   std::cout << "After optional EMInput \n";
 
-  EMOutput res = EMHDGM_cpp(inp);
+  if(bool_mat == true){
+    res = EMHDGM_cpp_mat(inp);
+  }else{
+    res = EMHDGM_cpp(inp);
+  }
 
   std::cout << "After EMOutput \n";
 

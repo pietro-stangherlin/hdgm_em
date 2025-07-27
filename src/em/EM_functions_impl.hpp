@@ -130,7 +130,7 @@ double AlphaUpdate_core(const arma::mat & mY_fixed_res,
     // in other updates
     num += arma::trace(mY_fixed_res.col(t) * (mXz * mZ.col(t)).t());
     den += arma::trace(mXz *
-      (mZ.col(t) * mZ.col(t).t() + GetCov(cPsmt, t, p)) * mXz.t());
+      (mZ.col(t) * mZ.col(t).t() + GetCov(cPsm, t, p)) * mXz.t());
   };
 
   // TO DO: add error message if den == 0
