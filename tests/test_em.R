@@ -77,7 +77,9 @@ SimulEMUn <- function(B,
   return(list("Phi" = Phi_hat_array,
               "A" = A_hat_array,
               "Q" = Q_hat_array,
-              "R" = R_hat_array))
+              "R" = R_hat_array,
+              "x0_smoothed" = x0_hat_smooth,
+              "P0_smoothed" = P0_smooth_hat_array))
 
 }
 
@@ -233,7 +235,7 @@ res_un_EM_dist$R
 res_un_EM_dist$x0_smoothed
 
 
-res_em_sim_false_start <- SimulEMUn(B = 30,
+res_em_sim_false_start <- SimulEMUn(B = 50,
                                    n_times = N,
                                    transMatr = G * diag(nrow = Y_LEN),
                                    obsMatr = A * diag(nrow = Y_LEN),
@@ -274,5 +276,6 @@ lines(res_em_sim_false_start$Q[1,1,], col = "red")
 plot(1:b, rep((SIGMAY^2 * diag(nrow = Y_LEN))[1,1], b), type = "l", ylim = c(G - 4, G + 4))
 lines(res_em_sim_false_start$R[1,1,], col = "red")
 
-
-
+plot(1:b, res_em_sim_false_start$x0_smoothed[1,], type = "l")
+apply(res_em_sim_false_start$x0_smoothed, 1, mean)
+apply(res_em_sim_false_start$x0_smoothed, 1, sd)
