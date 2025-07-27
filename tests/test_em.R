@@ -150,6 +150,12 @@ res_EM <- EMHDGM(y = y.matr,
 
 cbind(res_EM$par_history[,1], res_EM$par_history[,NCOL(res_EM$par_history)])
 
+plot(res_EM$par_history[1,], type = "l")
+plot(res_EM$par_history[2,], type = "l")
+plot(res_EM$par_history[3,], type = "l")
+plot(res_EM$par_history[4,], type = "l")
+plot(res_EM$par_history[5,], type = "l")
+
 # unstructured EM
 res_un_EM = UnstructuredEM(y = y.matr,
                            Phi_0 = G * diag(nrow = Y_LEN),
@@ -198,23 +204,27 @@ lines(res_em_sim_true_start$A[,,], col = "red")
 
 res_EM_dist <- EMHDGM(y = y.matr,
                  dist_matrix = DIST_MATRIX,
-                 alpha0 = 4 * A ,
+                 alpha0 = A ,
                  beta0 = rep(0, 2),
                  theta0 = 5 * THETA,
                  v0 = 4 * SIGMAZ^2,
-                 g0 = G, # assuming stationarity: this has to be in (-1,1)
+                 g0 = 6 * G, # assuming stationarity: this has to be in (-1,1)
                  sigma20 = 2 * SIGMAY^2,
                  Xbeta_in = NULL,
-                 z0_in = NULL,
-                 P0_in = NULL,
-                 max_iter = 100, # increment
+                 z0_in = rep(0, Y_LEN),
+                 P0_in = 5 * diag(nrow = Y_LEN),
+                 max_iter = 50, # increment
                  verbose = TRUE,
                  bool_mat = FALSE)
 
-cbind(res_EM$par_history[,1], res_EM_dist$par_history[,NCOL(res_EM_dist$par_history)])
+# false starting values
+cbind(res_EM$par_history[,1], res_EM_dist$par_history[,1], res_EM_dist$par_history[,NCOL(res_EM_dist$par_history)])
 
-plot(res_EM_dist$par_history[1,])
-plot(res_EM_dist$par_history[3,])
+plot(res_EM_dist$par_history[1,], type = "l")
+plot(res_EM_dist$par_history[2,], type = "l")
+plot(res_EM_dist$par_history[3,], type = "l")
+plot(res_EM_dist$par_history[4,], type = "l")
+plot(res_EM_dist$par_history[5,], type = "l")
 
 # unstrucured
 
