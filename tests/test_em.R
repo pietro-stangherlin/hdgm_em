@@ -344,13 +344,13 @@ res_EM_dep_false <- EMHDGM(y = y.matr.with.fixed,
                      alpha0 = 3 * A,
                      beta0 = 5 * TRUE_FIXED_BETA,
                      theta0 = 4 * THETA,
-                     v0 = 3 *  SIGMAZ^2,
-                     g0 = 2*  G,
+                     v0 = 3 * SIGMAZ^2,
+                     g0 = 1e-2,
                      sigma20 = 4 * SIGMAY^2,
                      Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
                      z0_in = rep(0, Y_LEN),
-                     P0_in = diag(nrow = Y_LEN),
-                     max_iter = 60, # increment
+                     P0_in = 5 * diag(nrow = Y_LEN),
+                     max_iter = 100, # increment
                      verbose = TRUE,
                      bool_mat = FALSE)
 

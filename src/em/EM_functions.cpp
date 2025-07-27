@@ -13,83 +13,6 @@
 
 // General EM updates --------------------------------
 
-/**
- * @description compute the matrix S00
- * @param smoothed_states (matrix): matrix of smoothed states
- * @param smoothed_vars (array): array of smoothed sates variance matrices
- * @param z0 (matrix) z0: starting value m x 1 matrix (i.e. vector) containing the expected values of the initial states
- * @param P0 (matrix) P0: starting value m x m matrix containing the covariance matrix
- * of the nondiffuse part of the initial state vector.
- * @return (matrix) m x m
- */
-
-arma::mat ComputeS00(const arma::mat & smoothed_states,
-                     const arma::cube & smoothed_vars,
-                     const arma::vec & z0_smoothed,
-                     const arma::mat & P0_smoothed){
-
-  int T = smoothed_states.n_cols;
-
-  arma::mat S00 = z0_smoothed * z0_smoothed.t() + P0_smoothed;
-
-  // all except the last time T
-  for(int t = 0; t < (T - 1); t++){
-    S00 += smoothed_states.col(t) * smoothed_states.col(t).t() + smoothed_vars.slice(t);
-  }
-
-  return(S00);
-}
-
-
-/**
- * @description compute the matrix S11
- * @param smoothed_states (matrix): matrix of smoothed states
- * @param smoothed_vars (array): array of smoothed sates variance matrices
- * @param S00 (matrix) m x m as defined in the paper
- * @param z0 (matrix) z0: starting value m x 1 matrix (i.e. vector) containing the expected values of the initial states
- * @param P0 (matrix) P0: starting value m x m matrix containing the covariance matrix
- * of the nondiffuse part of the initial state vector.
- * @return (matrix) m x m
- */
-
-arma::mat ComputeS11(const arma::mat & smoothed_states,
-                     const arma::cube & smoothed_vars,
-                     const arma::mat & S00,
-                     const arma::vec & z0_smoothed,
-                     const arma::mat & P0_smoothed){
-  int T = smoothed_states.n_cols;
-
-  return(S00 - z0_smoothed * z0_smoothed.t() - P0_smoothed +
-         smoothed_states.col(T-1) * smoothed_states.col(T-1).t() + smoothed_vars.slice(T-1));
-}
-
-/**
- * @description compute the matrix S11
- * @param smoothed_states (matrix): matrix of smoothed states
- * @param lagone_smoothed_covars (array): array of lag one
- * smoothed states covariance matrices
- * @param z0 (matrix) z0: starting value m x 1 matrix (i.e. vector) containing the expected values of the initial states
- * @return (matrix) m x m
- */
-
-arma::mat ComputeS10(const arma::mat & smoothed_states,
-                     const arma::cube & lagone_smoothed_covars,
-                     const arma::vec & z0_smoothed){
-
-  int T = smoothed_states.n_cols;
-
-  arma::mat S10 = smoothed_states.col(0) * z0_smoothed.t() + lagone_smoothed_covars.slice(0);
-
-  // all except the last time T
-  for(int t = 1; t <= T - 1; t++){
-    S10 += smoothed_states.col(t) * smoothed_states.col(t-1).t() + lagone_smoothed_covars.slice(t);
-  }
-
-  return(S10);
-}
-
-
-
 // Unstructured EM updates ----------------------------
 
 // Structured EM updates -------------------------------
@@ -97,46 +20,6 @@ arma::mat ComputeS10(const arma::mat & smoothed_states,
 // covariance specification ----------------------------
 
 // assuming no missing observations and no matrix permutations
-
-/**
- * @description EM update for scale parameter of influence of state variables
- * one observation vector (eq. 4)
- * (common to each state)
- *
- * @param mY (matrix): (T x n) matrix of observed vector
- * with fixed effects predictions subtracted, NA allowed (NOT allowed temporarely)
- * (a sorting is assumed, example by spatial locations)
- * @param mZ (matrix): (T x s) matrix of smoothed state vectors
- * @param vbeta (vector) (p x 1) matrix (i.e. a vector) of fixed effects coef,
- * does NOT change with time
- * @param mXz (array) (s x s) non scaled transfer matrix (assumed constant in time
- * (the complete transfer matrix is scaled by alpha)
- * @param cPsm (array): (s x s x T) array of smoothed state variance matrices,
- *  each of those is accessed by cPsm.slice(t)
- */
-
-double AlphaUpdate(const arma::mat & mY_fixed_res,
-                   const arma::mat & mZ,
-                   const arma::mat & mXz,
-                   const arma::cube & cPsm){
-
-  int T = mY_fixed_res.n_cols;
-
-  double num = 0.0;
-  double den = 0.0;
-
-  for(int t = 0; t < T; t++){
-    // NOTE: (mXz * mZ.col(t)) can be computed once and used also
-    // in other updates
-    num += arma::trace(mY_fixed_res.col(t) * (mXz * mZ.col(t)).t());
-    den += arma::trace(mXz *
-      (mZ.col(t) * mZ.col(t).t() + cPsm.slice(t)) * mXz.t());
-  };
-
-  // TO DO: add error message if den == 0
-  return num / den;
-
-}
 
 
 // eq. (7)
@@ -191,37 +74,6 @@ arma::mat Omega_one_t(const arma::vec & vY_fixed_res_t,
 
 }
 
-// TO DO: Omega_t function in case there are some missing observations
-// Along with Permutation matrix D definition
-
-// here assuming NOT missing values
-// NOTE: maybe it's also possible to define it just as a matrix
-// considering only the elements in the diagonal
-// since then the trace is taken
-arma::mat OmegaSumUpdate(const arma::mat & mY_fixed_res,
-                        const arma::mat & Zt,
-                        const arma::mat & mXz,
-                        const arma::cube & cPsmt,
-                        double alpha){
-
-  int T = mY_fixed_res.n_cols;
-  int n = mY_fixed_res.n_rows;
-
-
-  arma::mat Omega_sum(n, n, arma::fill::zeros);
-
-  for(int t = 0; t < T; t++){
-    Omega_sum += Omega_one_t(mY_fixed_res.col(t),
-                             Zt.col(t),
-                             mXz,
-                             cPsmt.slice(t),
-                             alpha);
-  };
-
-  return(Omega_sum);
-
-
-};
 
 double Sigma2Update(const arma::mat& Omega_sum,
                     const int n, // dimension of observation vector

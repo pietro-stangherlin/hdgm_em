@@ -37,29 +37,6 @@ arma::mat OmegaSumUpdate_core(const arma::mat & mY_fixed_res,
                                          double alpha);
 
 
-double AlphaUpdate(const arma::mat & mY_fixed_res,
-                   const arma::mat & mZ,
-                   const arma::mat & mXz,
-                   const arma::cube & cPsm);
-
-arma::mat ComputeS00(const arma::mat & smoothed_states,
-                     const arma::cube & smoothed_vars,
-                     const arma::vec & z0_smoothed,
-                     const arma::mat & P0_smoothed);
-
-
-arma::mat ComputeS11(const arma::mat & smoothed_states,
-                     const arma::cube & smoothed_vars,
-                     const arma::mat & S00,
-                     const arma::vec & z0_smoothed,
-                     const arma::mat & P0_smoothed);
-
-
-
-arma::mat ComputeS10(const arma::mat & smoothed_states,
-                     const arma::cube & lagone_smoothed_covars,
-                     const arma::vec & z0_smoothed);
-
 
 
 double gUpdate(const arma::mat & S00,
@@ -70,14 +47,6 @@ arma::mat Omega_one_t(const arma::vec & vY_fixed_res_t,
                       const arma::mat & mXz,
                       const arma::mat & mPsmt,
                       double alpha);
-
-arma::mat OmegaSumUpdate(const arma::mat & mY_fixed_res,
-                         const arma::mat & Zt,
-                         const arma::mat & mXz,
-                         const arma::cube & cPsmt,
-                         double alpha);
-
-
 
 double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta_v,
                                            const arma::mat& dist_matrix,
@@ -95,7 +64,7 @@ std::array<double,2> ThetaVUpdate(const arma::mat& dist_matrix,
                                   const arma::mat& S11,
                                   const std::array<double,2>& theta_v0,
                                   const std::array<double,2>& theta_v_step = {0.01, 0.01},
-                                  const double& var_terminating_lim = 1e-10);
+                                  const double& var_terminating_lim = 1e-5);
 
 double Sigma2Update(const arma::mat& Omega_sum,
                     const int n,
