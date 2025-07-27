@@ -207,7 +207,7 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
 
       // here index t is referred to NOT lag one smoothed covariances
 
-      J_t_T = arma::inv_sympd(GetCov(ksm_inp.Pp, t-1, p)) * Phi_tr * GetCov(ksm_inp.Pf, t-2, p);
+      J_t_T = arma::inv_sympd(GetCov(ksm_inp.Pp, t-1, p)) * ksm_inp.Phi * GetCov(ksm_inp.Pf, t-2, p);
       Plos_t = GetCov(ksm_inp.Pf,t, p) * J_t_T +
         J_t * (GetCov(Plos, t, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, t, p)) * J_t_T;
 

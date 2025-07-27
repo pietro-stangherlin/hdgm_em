@@ -155,7 +155,7 @@ res_un_EM = UnstructuredEM(y = y.matr,
                            x0_in = rep(0, Y_LEN),
                            P0_in = diag(nrow = Y_LEN),
                            max_iter = 200,
-                           bool_mat = TRUE,
+                           bool_mat = FALSE,
                            verbose = TRUE)
 
 res_un_EM$Phi
@@ -247,8 +247,8 @@ res_un_EM_dist = UnstructuredEM(y = y.matr,
                            R_0 = SIGMAY^2 * diag(nrow = Y_LEN),
                            x0_in = rep(0, Y_LEN),
                            P0_in = diag(nrow = Y_LEN),
-                           max_iter = 50,
-                           bool_mat = TRUE,
+                           max_iter = 500,
+                           bool_mat = FALSE,
                            verbose = TRUE)
 
 res_un_EM_dist$Phi

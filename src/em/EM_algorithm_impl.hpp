@@ -31,8 +31,7 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
   double llik_prev, llik_next;
   llik_prev = LOWEST_DOUBLE;
 
-  arma::vec diag_A;
-  arma::vec diag_R;
+  arma::vec diag_A, diag_R, diag_Phi;
 
   y = em_in.y;
   Phi = em_in.Phi_0;
@@ -109,17 +108,15 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
       sum_y_x_smooth += y.col(t) * ksm_res.x_smoothed.col(t).t();
     };
 
-    // fix A to diagonal to ensure identificability
+    // fix A to diagonal
     A = sum_y_x_smooth * arma::inv(S11);
     diag_A = A.diag();
     A = arma::diagmat(diag_A);
 
-    // fix R to diagonal to ensure identificability
     R = (sum_y_yT - A *  sum_y_x_smooth.t() - sum_y_x_smooth * A.t() + A * S11 * A.t()) / T ;
-    diag_R = R.diag();
-    R = arma::diagmat(diag_R);
 
     Phi = S10 * arma::inv(S00);
+
     Q = (S11 - Phi * S10.t()) / T;
     Q = (Q + Q.t()) * 0.5;
 
