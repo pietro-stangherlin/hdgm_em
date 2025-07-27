@@ -8,9 +8,12 @@ Sys.setenv("PKG_CXXFLAGS"="-std=c++20")
 Rcpp::sourceCpp("src/em/EM_wrapper.cpp",
                 rebuild = TRUE)
 
+Rcpp::sourceCpp("src/utils/data_handling.cpp",
+                rebuild = TRUE)
+
 source("tests/test_helper.R")
 
-# Simulation function unstructured
+# Simulation function unstructured ----------------------------------------
 
 SimulEMUn <- function(B,
                     n_times,
@@ -132,7 +135,7 @@ x.matr <- StateSpaceRes$states
 
 # Starting from true values -------------------------
 
-# structured EM
+# structured EM --------------------------------
 res_EM <- EMHDGM(y = y.matr,
                  dist_matrix = DIST_MATRIX,
                  alpha0 = A,
@@ -156,7 +159,7 @@ plot(res_EM$par_history[3,], type = "l")
 plot(res_EM$par_history[4,], type = "l")
 plot(res_EM$par_history[5,], type = "l")
 
-# unstructured EM
+# unstructured EM -------------------------------------
 res_un_EM = UnstructuredEM(y = y.matr,
                            Phi_0 = G * diag(nrow = Y_LEN),
                            A_0 = A * diag(nrow = Y_LEN),
@@ -201,7 +204,7 @@ plot(1:b, rep(A, b), type = "l")
 lines(res_em_sim_true_start$A[,,], col = "red")
 
 # Starting from not true values -------------------------
-
+# structured -------------------------------------
 res_EM_dist <- EMHDGM(y = y.matr,
                  dist_matrix = DIST_MATRIX,
                  alpha0 = A ,
@@ -226,7 +229,7 @@ plot(res_EM_dist$par_history[3,], type = "l")
 plot(res_EM_dist$par_history[4,], type = "l")
 plot(res_EM_dist$par_history[5,], type = "l")
 
-# unstrucured
+# unstrucured ----------------------------------------------
 
 res_un_EM_dist = UnstructuredEM(y = y.matr,
                            Phi_0 = 2 * G * diag(nrow = Y_LEN),
@@ -291,3 +294,69 @@ lines(res_em_sim_false_start$R[1,1,], col = "red")
 plot(1:b, res_em_sim_false_start$x0_smoothed[1,], type = "l")
 apply(res_em_sim_false_start$x0_smoothed, 1, mean)
 apply(res_em_sim_false_start$x0_smoothed, 1, sd)
+
+
+# Covariates ------------------------------------------------------------
+
+TRUE_FIXED_BETA <- c(2, -1, 4)
+
+y.matr.with.fixed <- matrix(data = NA,
+                            nrow = Y_LEN, ncol = N)
+
+FIXED_EFFECTS_DESIGN_MATRIX <- array(data = NA,
+                                     dim = c(Y_LEN,
+                                             length(TRUE_FIXED_BETA),
+                                             N))
+
+for(i in 1:N){
+  FIXED_EFFECTS_DESIGN_MATRIX[,,i] <- matrix(rnorm(Y_LEN * length(TRUE_FIXED_BETA)),
+                                             nrow = Y_LEN, ncol = length(TRUE_FIXED_BETA))
+
+  y.matr.with.fixed[,i] <- y.matr[,i] + as.vector(FIXED_EFFECTS_DESIGN_MATRIX[,,i] %*%
+                                                as.matrix(TRUE_FIXED_BETA))
+
+}
+
+# starting from true values ----------------------
+
+res_EM_dep <- EMHDGM(y = y.matr.with.fixed,
+                 dist_matrix = DIST_MATRIX,
+                 alpha0 = A,
+                 beta0 = TRUE_FIXED_BETA,
+                 theta0 = THETA,
+                 v0 = SIGMAZ^2,
+                 g0 = G,
+                 sigma20 = SIGMAY^2,
+                 Xbeta_in =FIXED_EFFECTS_DESIGN_MATRIX,
+                 z0_in = rep(0, Y_LEN),
+                 P0_in = diag(nrow = Y_LEN),
+                 max_iter = 50, # increment
+                 verbose = TRUE,
+                 bool_mat = FALSE)
+
+res_EM_dep$beta_history
+
+
+# starting from NOT true values ----------------------
+
+res_EM_dep_false <- EMHDGM(y = y.matr.with.fixed,
+                     dist_matrix = DIST_MATRIX,
+                     alpha0 = 3 * A,
+                     beta0 = 5 * TRUE_FIXED_BETA,
+                     theta0 = 4 * THETA,
+                     v0 = 3 *  SIGMAZ^2,
+                     g0 = 2*  G,
+                     sigma20 = 4 * SIGMAY^2,
+                     Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
+                     z0_in = rep(0, Y_LEN),
+                     P0_in = diag(nrow = Y_LEN),
+                     max_iter = 60, # increment
+                     verbose = TRUE,
+                     bool_mat = FALSE)
+
+res_EM_dep_false$beta_history[,NCOL(res_EM_dep_false$beta_history)]
+cbind(res_EM_dep$par_history[,1],
+      res_EM_dep_false$par_history[,NCOL(res_EM_dep_false$par_history)])
+
+
+
