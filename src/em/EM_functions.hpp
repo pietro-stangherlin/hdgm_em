@@ -2,6 +2,7 @@
 
 #include <RcppArmadillo.h>
 #include "../utils/symmetric_matr_vec.h"
+#include "../optim/brent.hpp"
 
 template <typename CovStore>
 arma::mat ComputeS00_core(const arma::mat & smoothed_states,

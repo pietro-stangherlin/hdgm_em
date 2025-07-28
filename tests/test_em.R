@@ -8,8 +8,8 @@ Sys.setenv("PKG_CXXFLAGS"="-std=c++20")
 Rcpp::sourceCpp("src/em/EM_wrapper.cpp",
                 rebuild = TRUE)
 
-Rcpp::sourceCpp("src/utils/data_handling.cpp",
-                rebuild = TRUE)
+# Rcpp::sourceCpp("src/utils/data_handling.cpp",
+#                 rebuild = TRUE)
 
 source("tests/test_helper.R")
 
@@ -207,7 +207,7 @@ lines(res_em_sim_true_start$A[,,], col = "red")
 # structured -------------------------------------
 res_EM_dist <- EMHDGM(y = y.matr,
                  dist_matrix = DIST_MATRIX,
-                 alpha0 = A ,
+                 alpha0 = 5 * A ,
                  beta0 = rep(0, 2),
                  theta0 = 5 * THETA,
                  v0 = 4 * SIGMAZ^2,
@@ -216,9 +216,9 @@ res_EM_dist <- EMHDGM(y = y.matr,
                  Xbeta_in = NULL,
                  z0_in = rep(0, Y_LEN),
                  P0_in = 5 * diag(nrow = Y_LEN),
-                 max_iter = 50, # increment
+                 max_iter = 200, # increment
                  verbose = TRUE,
-                 bool_mat = FALSE)
+                 bool_mat = TRUE)
 
 # false starting values
 cbind(res_EM$par_history[,1], res_EM_dist$par_history[,1], res_EM_dist$par_history[,NCOL(res_EM_dist$par_history)])

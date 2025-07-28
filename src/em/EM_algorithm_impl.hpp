@@ -142,12 +142,13 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
   int q = em_in.y.n_rows; // observation and state vector length
   int T = em_in.y.n_cols;
+  int s = em_in.dist_matrix.n_rows;
 
   int p = em_in.beta0.n_elem; // fixed effect vector length
 
   double alpha_temp = em_in.alpha0;
 
-  std::array<double,2> theta_v_temp = {em_in.theta0, em_in.v0};
+  double theta_temp = em_in.theta0;
 
   double g_temp = em_in.g0;
   double sigma2_temp = em_in.sigma20;
@@ -157,10 +158,10 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
   // NOTE: parameter dimension has to be changed if the parameters space change
   // also, zero is not a perfect initialization value
-  arma::mat par_history = arma::mat(5, em_in.max_iter + 1);
+  arma::mat par_history = arma::mat(4, em_in.max_iter + 1);
   arma::mat beta_history = arma::mat(p, em_in.max_iter + 1);
 
-  par_history.col(0) = arma::vec({alpha_temp, theta_v_temp[0], theta_v_temp[1],
+  par_history.col(0) = arma::vec({alpha_temp, theta_temp,
                   g_temp, sigma2_temp});
   beta_history.col(0) = beta_temp;
 
@@ -211,11 +212,12 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
       }
     }
 
-    //std::cout << "[DEBUG] y_res (fixed effect done) " <<std::endl;
 
     // Update Q
-    arma::mat Q_temp = theta_v_temp[1] * ExpCor(em_in.dist_matrix, theta_v_temp[0]);
-    //std::cout << "[DEBUG] Q_temp matrix updated " << std::endl;
+    arma::mat Q_temp = ExpCor(em_in.dist_matrix, theta_temp);
+
+    // Update Phi
+    arma::mat Phi = g_temp * arma::eye(s,s);
 
     ///////////////////////
     // Kalman Smoother pass
@@ -291,17 +293,15 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
     }
 
     // Theta and V update (optimization)
-    theta_v_temp = ThetaVUpdate(em_in.dist_matrix, g_temp, T,
+    theta_temp = ThetaUpdate(em_in.dist_matrix, Phi,
                                 S00, S10, S11,
-                                theta_v_temp,
-                                em_in.theta_v_step,
-                                em_in.var_terminating_lim);
+                                T);
 
     // g update
     g_temp = gUpdate(S00, S10);
 
     // Update parameters history
-    par_history.col(iter) = arma::vec({alpha_temp, theta_v_temp[0], theta_v_temp[1],
+    par_history.col(iter) = arma::vec({alpha_temp, theta_temp,
                     g_temp, sigma2_temp});
     beta_history.col(iter) = beta_temp;
   }

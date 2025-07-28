@@ -9,6 +9,7 @@
 #include "EM_functions.hpp"
 #include "../utils/symmetric_matr_vec.h"
 #include "../utils/covariances.h"
+#include "../optim/brent.hpp"
 #include "../optim/nelder_mead.h"
 
 // General EM updates --------------------------------
@@ -112,14 +113,14 @@ double LogThetaNegativeToOptim(const double log_theta,
 
   arma::mat Sigma_eta = ExpCor(dist_matrix, exp(log_theta));
 
-  arma::log_det(logdet_val, sign, Sigma_eta);
+  arma::log_det(logdet_val, det_sign, Sigma_eta);
 
   arma::mat Sigma_eta_inv = arma::inv(Sigma_eta);
   arma::mat expr = S11 - S10 * Phi.t() - Phi * S10.t() + Phi * S00 * Phi.t();
 
   double trace_val = arma::trace(Sigma_eta_inv * expr);
 
-  return N * logdet_val + trace_val;
+  return T * logdet_val + trace_val;
 
 };
 
@@ -148,11 +149,11 @@ double ThetaUpdate(const arma::mat &dist_matrix,
   };
 
 
-  double result = brent_minimize(
+  double result = brent::brent_minimize(
     obj_fun,
     1e-05, 20, // min and max search interval
-    100, // max iter
-  );
+    100); // max iter
+
 
   return exp(result);
 }
