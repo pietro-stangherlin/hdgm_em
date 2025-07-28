@@ -33,8 +33,6 @@ P_0 <- diag(0.5, rp) # Initial state covariance (rp x rp)
 set.seed(123)
 
 sim_res <- LinGauStateSpaceSim(n_times = N,
-                                obs_dim = n,
-                                state_dim = rp,
                                 transMatr = A,
                                 obsMatr = C,
                                 stateCovMatr = Q,
@@ -192,12 +190,23 @@ B = 1000
 # OriginalSmootherBench(b = B)
 # CustomSmootherBench(b = B)
 
+# Missing Data ------------------------------
+X_missing <- X
+missing_indexes <- sample(1:N, size = 50)
+missing_vars = c(1,3)
+X_missing[missing_vars,missing_indexes] = NA
 
 
+custom.skf.res.missing <- SKF(Y = X_missing, Phi = A, A = C, Q = Q, R = R,
+                      x_0 = F_0, P_0 = P_0, retLL = TRUE,
+                      vectorized_cov_matrices = FALSE)
 
+plot(custom.skf.res.missing$xf[1,], type = "l")
+abline(v = missing_indexes, col = "red")
 
+custom.skfs.res.missing <- SKFS(Y = X_missing, Phi = A, A = C, Q = Q, R = R,
+                              x_0 = F_0, P_0 = P_0, retLL = TRUE)
 
-
-
-
+plot(custom.skfs.res.missing$x_smoothed[1,], type = "l")
+abline(v = missing_indexes, col = "red")
 
