@@ -83,6 +83,81 @@ double Sigma2Update(const arma::mat& Omega_sum,
   return (arma::trace(Omega_sum) / (T * n));
 };
 
+
+/**
+ * @brief Computes the negative expected complete-data log-likelihood
+ *        (up to a constant) for the HDGM model, to be minimized over theta.
+ *
+ * @param log_theta: log of the exponential spatila correlation matrix
+ * @param dist_matrix Distance matrix between spatial locations (p x p)
+ * @param S00 Smoothed second moment of x_{t-1} (p x p)
+ * @param S10 Smoothed cross-moment between x_t and x_{t-1} (p x p)
+ * @param S11 Smoothed second moment of x_t (p x p)
+ * @param Phi Autoregressive Transition Matrix
+ * @param T Number of time observations
+ * @return double The value of the negative objective function at given theta
+ */
+double LogThetaNegativeToOptim(const double log_theta,
+                             const arma::mat &dist_matrix,
+                             const arma::mat &S00,
+                             const arma::mat &S10,
+                             const arma::mat &S11,
+                             const arma::mat &Phi,
+                             const int &T){
+
+  int p = S00.n_cols;
+
+  double logdet_val = 0.0;
+  double det_sign = 0.0;
+
+  arma::mat Sigma_eta = ExpCor(dist_matrix, exp(log_theta));
+
+  arma::log_det(logdet_val, sign, Sigma_eta);
+
+  arma::mat Sigma_eta_inv = arma::inv(Sigma_eta);
+  arma::mat expr = S11 - S10 * Phi.t() - Phi * S10.t() + Phi * S00 * Phi.t();
+
+  double trace_val = arma::trace(Sigma_eta_inv * expr);
+
+  return N * logdet_val + trace_val;
+
+};
+
+/**
+ * @brief Performs the EM update of the spatial decay parameter theta
+ *        in the Hierarchical Dynamic Gaussian Model (HDGM).
+ *
+ * @param dist_matrix p x p distance matrix between spatial locations
+ * @param Phi Autoregressive transition matrix
+ * @param S00 Smoothed second moment of x_{t-1} over time (p x p)
+ * @param S10 Smoothed cross-moment of x_t and x_{t-1} over time (p x p)
+ * @param S11 Smoothed second moment of x_t over time (p x p)
+ * @param T Number of time points
+ * @return double Optimized value of theta that minimizes the objective
+ */
+double ThetaUpdate(const arma::mat &dist_matrix,
+                   const arma::mat &Phi,
+                  const arma::mat& S00,
+                  const arma::mat& S10,
+                  const arma::mat& S11,
+                  int &T){
+
+
+  auto obj_fun = [&](const double &log_theta) {
+    return LogThetaNegativeToOptim(log_theta, dist_matrix, S00, S10, S11, Phi, T);
+  };
+
+
+  double result = brent_minimize(
+    obj_fun,
+    1e-05, 20, // min and max search interval
+    100, // max iter
+  );
+
+  return exp(result);
+}
+
+
 /**
  * @brief Computes the negative expected complete-data log-likelihood
  *        (up to a constant) for the HDGM model, to be minimized over theta.
@@ -101,11 +176,11 @@ double Sigma2Update(const arma::mat& Omega_sum,
  */
 
 double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta_v,
-                         const arma::mat& dist_matrix,
-                         const arma::mat& S00,
-                         const arma::mat& S10,
-                         const arma::mat& S11,
-                         const double& g,
+                         const arma::mat &dist_matrix,
+                         const arma::mat &S00,
+                         const arma::mat &S10,
+                         const arma::mat &S11,
+                         const double & g,
                          const int& N) {
 
   int p;

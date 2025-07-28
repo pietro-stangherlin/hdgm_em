@@ -48,6 +48,21 @@ arma::mat Omega_one_t(const arma::vec & vY_fixed_res_t,
                       const arma::mat & mPsmt,
                       double alpha);
 
+double LogThetaNegativeToOptim(const double log_theta,
+                               const arma::mat &dist_matrix,
+                               const arma::mat &S00,
+                               const arma::mat &S10,
+                               const arma::mat &S11,
+                               const arma::mat &Phi,
+                               const int &T);
+
+double ThetaUpdate(const arma::mat &dist_matrix,
+                   const arma::mat &Phi,
+                   const arma::mat& S00,
+                   const arma::mat& S10,
+                   const arma::mat& S11,
+                   int &T);
+
 double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta_v,
                                            const arma::mat& dist_matrix,
                                            const arma::mat& S00,
