@@ -62,7 +62,10 @@ double ThetaUpdate(const arma::mat &dist_matrix,
                    const arma::mat& S00,
                    const arma::mat& S10,
                    const arma::mat& S11,
-                   int &T);
+                   int &T,
+                   double theta_lower = 1e-05,
+                   double theta_upper = 20,
+                   int brent_max_iter = 100);
 
 double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta_v,
                                            const arma::mat& dist_matrix,

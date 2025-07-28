@@ -141,7 +141,10 @@ double ThetaUpdate(const arma::mat &dist_matrix,
                   const arma::mat& S00,
                   const arma::mat& S10,
                   const arma::mat& S11,
-                  int &T){
+                  int &T,
+                  double theta_lower,
+                  double theta_upper,
+                  int brent_max_iter){
 
 
   auto obj_fun = [&](const double &log_theta) {
@@ -151,9 +154,10 @@ double ThetaUpdate(const arma::mat &dist_matrix,
 
   double result = brent::brent_minimize(
     obj_fun,
-    1e-05, 20, // min and max search interval
-    100); // max iter
+    theta_lower, theta_upper, // min and max search interval
+    brent_max_iter); // max iter
 
+  // add checks if result is on the border of its parameter space
 
   return exp(result);
 }
