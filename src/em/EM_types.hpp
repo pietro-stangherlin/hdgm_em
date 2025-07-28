@@ -20,14 +20,14 @@ struct EMInput{
   double alpha0; // initial observation matrix scaling
   const arma::vec beta0; // initial fixed effect
   double theta0; // initial state covariance parameter (exponential)
-  double v0; // initial state scale covariance parameter (exponential)
   double g0; // initial state transition matrix scaling
   double sigma20; // initial observations variance
+  const arma::vec x0_in;
+  const arma::mat P0_in;
   std::optional<arma::cube> Xbeta = std::nullopt;
-  std::optional<arma::vec> z0_in = std::nullopt;
-  std::optional<arma::mat> P0_in = std::nullopt;
-  const std::array<double,2> theta_v_step = {0.01, 0.01}; // step for each variable nelder-mead step
-  const double var_terminating_lim = 1.0e-10; // stopping criterion for nelder-mead method: variance of values
+  const double rel_llik_tol = 1.0e-5; // stopping criterion: relative incremente log likelihood
+  const double theta_lower = 1e-05; // minimum theta value
+  const double theta_upper = 20; // maximum theta value -> this can be incremented but a warning is given
   int max_iter = 10; // TO change + add tolerance
   bool verbose = true;
 };
@@ -40,10 +40,14 @@ struct EMOutputUnstructured{
   arma::mat R; // observation error covariance matrix
   arma::vec x0_smoothed; // smoothed first state value
   arma::mat P0_smoothed; // smoothed first state covariance value
+  double llik;
+  int niter;
 };
 
 
 struct EMOutput{
   arma::mat par_history; // matrix (k x iter) each column is iter value of (alpha,theta,g, sigma2)^T
   arma::mat beta_history; // (p x iter) each column is a beta (fixed effect value)
+  double llik;
+  int niter;
 };

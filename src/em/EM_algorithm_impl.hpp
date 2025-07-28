@@ -5,6 +5,7 @@
 #include <RcppArmadillo.h>
 #include <stdio.h>
 #include <limits>
+#include <cmath>
 
 #include "../kalman/Kalman_internal.hpp"
 #include "EM_functions.hpp"
@@ -48,7 +49,7 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
     sum_y_yT += y.col(t) * y.col(t).t();
   };
 
-
+  int last_iter;
   for(int iter = 1; iter < em_in.max_iter + 1; ++iter){
 
     if(em_in.verbose == true){
@@ -84,9 +85,11 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
     if(llik_next < llik_prev){
       std::cout << "WARNING: Log Likelihood decreasing, returning" << std::endl;
       return EMOutputUnstructured{ .Phi = Phi, .A = A, .Q = Q, .R = R,
-                                   .x0_smoothed = x0_smoothed, .P0_smoothed = P0_smoothed};
+                                   .x0_smoothed = x0_smoothed, .P0_smoothed = P0_smoothed,
+                                   .llik = llik_prev, .niter = iter};
 
-    }
+    };
+
 
     llik_prev = llik_next;
 
@@ -121,11 +124,14 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
     Q = (S11 - Phi * S10.t()) / T;
     Q = (Q + Q.t()) * 0.5;
 
+    last_iter = iter;
+
   }
 
 
   return EMOutputUnstructured{ .Phi = Phi, .A = A, .Q = Q, .R = R,
-                               .x0_smoothed = x0_smoothed, .P0_smoothed = P0_smoothed};
+                               .x0_smoothed = x0_smoothed, .P0_smoothed = P0_smoothed,
+                               .llik = llik_next, .niter = last_iter};
 
 
 };
@@ -134,6 +140,7 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
 
 
 // assuming no missing observations and no matrix permutations
+// assuming state vector has same dimension of observation vector
 template <typename CovStore>
 EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
@@ -142,19 +149,14 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
   int q = em_in.y.n_rows; // observation and state vector length
   int T = em_in.y.n_cols;
-  int s = em_in.dist_matrix.n_rows;
-
   int p = em_in.beta0.n_elem; // fixed effect vector length
 
   double alpha_temp = em_in.alpha0;
-
   double theta_temp = em_in.theta0;
-
   double g_temp = em_in.g0;
   double sigma2_temp = em_in.sigma20;
 
   arma::vec beta_temp = em_in.beta0;
-
 
   // NOTE: parameter dimension has to be changed if the parameters space change
   // also, zero is not a perfect initialization value
@@ -165,14 +167,21 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
                   g_temp, sigma2_temp});
   beta_history.col(0) = beta_temp;
 
-  // at first iteration this is not smoothed
-  arma::vec x0_smoothed = em_in.z0_in.has_value() ? *em_in.z0_in : arma::vec(q, arma::fill::zeros);
-  arma::mat P0_smoothed = em_in.P0_in.has_value() ? *em_in.P0_in : arma::eye(q, q);
-  arma::mat Xz = arma::eye(q, q);  // unscaled transfer matrix
+  // Identity helper matrices
+  arma::mat Iqq(q,q,arma::fill::eye);
+  arma::mat Ipp(p,p,arma::fill::eye);
+
+  arma::vec x0_smoothed = em_in.x0_in;
+  arma::mat P0_smoothed = em_in.P0_in;
+  arma::mat Xz = Iqq;  // unscaled transfer matrix
+
+  // state space matrices
+  arma::mat A_temp; // observation matrix
+  arma::mat Phi_temp; // transition matrix
+  arma::mat Q_temp; //state error covariance matrix
+  arma::mat R_temp; // observation error covariance matrix
 
   // Precompute fixed-effects sum
-
-  // allocate here as a temp scope fix
   arma::mat mXbeta_sum(p, p, arma::fill::zeros);
   arma::mat m_inv_mXbeta_sum;
 
@@ -189,7 +198,10 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
   llik_prev = LOWEST_DOUBLE;
 
+  double llik_relative_diff;
+
   // EM iterations
+  int last_iter = 1;
   for (int iter = 1; iter < em_in.max_iter + 1; ++iter) {
 
     if (em_in.verbose){
@@ -212,44 +224,50 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
       }
     }
 
-
-    // Update Q
-    arma::mat Q_temp = ExpCor(em_in.dist_matrix, theta_temp);
-
-    // Update Phi
-    arma::mat Phi = g_temp * arma::eye(s,s);
+    // update state space matrices
+    A_temp = alpha_temp * Iqq;
+    Phi_temp = g_temp * Iqq;
+    Q_temp = ExpCor(em_in.dist_matrix, theta_temp);
+    R_temp = sigma2_temp * Iqq;
 
     ///////////////////////
     // Kalman Smoother pass
     ///////////////////////
 
     KalmanFilterInput kfin{
-      .Y = y_res, // observations matrix
-      .Phi = g_temp * arma::eye(q, q), // Transition matrix
-      .A = alpha_temp * arma::eye(q, q), // observation matrix
-      .Q = Q_temp, // state covariance error matrix
-      .R = sigma2_temp * arma::eye(q, q), // observation error covariance matrix
-      .x_0 = x0_smoothed, // first state
-      .P_0 = P0_smoothed, // first state covariance
+      .Y = y_res,
+      .Phi = Phi_temp,
+      .A = A_temp,
+      .Q = Q_temp,
+      .R = R_temp,
+      .x_0 = x0_smoothed,
+      .P_0 = P0_smoothed,
       .retLL = true};
 
     auto ksm_res = SKFS_cpp(kfin, std::type_identity<CovStore>{});
 
     llik_next = ksm_res.loglik;
 
-    //DEBUG
     if(em_in.verbose == true){
       std::cout << "llik: " << llik_next << std::endl;
     };
 
+    llik_relative_diff = (llik_next - llik_prev) / abs(llik_prev);
+
+    if(llik_relative_diff < em_in.rel_llik_tol)  {
+      std::cout << "Relative Log Likelihood non increasing, returning" << std::endl;
 
 
-    if(llik_next < llik_prev){
-      std::cout << "WARNING: Log Likelihood decreasing, returning" << std::endl;
+      if(llik_relative_diff < 0){
+        std::cout << "WARNING: Log Likelihood decreasing, returning" << std::endl;
+
+      };
+
       return EMOutput{.par_history = par_history,
-                      .beta_history = beta_history};
+                      .beta_history = beta_history,
+                      .llik = llik_prev, .niter = iter};
+    };
 
-    }
 
     llik_prev = llik_next;
 
@@ -293,7 +311,7 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
     }
 
     // Theta and V update (optimization)
-    theta_temp = ThetaUpdate(em_in.dist_matrix, Phi,
+    theta_temp = ThetaUpdate(em_in.dist_matrix, Phi_temp,
                                 S00, S10, S11,
                                 T);
 
@@ -306,8 +324,11 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
     beta_history.col(iter) = beta_temp;
   }
 
+  std::cout << "WARNING: maximum number of iterations reached" << std::endl;
+
   return EMOutput{.par_history = par_history,
-                  .beta_history = beta_history};
+                  .beta_history = beta_history,
+                  .llik = llik_next, .niter = last_iter};
 };
 
 

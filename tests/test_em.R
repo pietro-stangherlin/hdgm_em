@@ -91,7 +91,7 @@ SimulEMUn <- function(B,
 set.seed(123)
 
 N <- 10000
-Y_LEN <- 5
+Y_LEN <- 10
 THETA <- 2
 G <- 0.8
 A <- 1
@@ -141,17 +141,16 @@ res_EM <- EMHDGM(y = y.matr,
                  alpha0 = A,
                  beta0 = rep(0, 2),
                  theta0 = THETA,
-                 v0 = SIGMAZ^2,
                  g0 = G,
                  sigma20 = SIGMAY^2,
                  Xbeta_in = NULL,
-                 z0_in = NULL,
-                 P0_in = NULL,
+                 x0_in = rep(0, Y_LEN),
+                 P0_in = diag(1, nrow = Y_LEN),
                  max_iter = 50, # increment
                  verbose = TRUE,
                  bool_mat = FALSE)
 
-cbind(res_EM$par_history[,1], res_EM$par_history[,NCOL(res_EM$par_history)])
+cbind(res_EM$par_history[,1], res_EM$par_history[,res_EM$niter])
 
 plot(res_EM$par_history[1,], type = "l")
 plot(res_EM$par_history[2,], type = "l")
@@ -210,24 +209,22 @@ res_EM_dist <- EMHDGM(y = y.matr,
                  alpha0 = 5 * A ,
                  beta0 = rep(0, 2),
                  theta0 = 5 * THETA,
-                 v0 = 4 * SIGMAZ^2,
                  g0 = 6 * G, # assuming stationarity: this has to be in (-1,1)
                  sigma20 = 2 * SIGMAY^2,
                  Xbeta_in = NULL,
-                 z0_in = rep(0, Y_LEN),
+                 x0_in = rep(0, Y_LEN),
                  P0_in = 5 * diag(nrow = Y_LEN),
                  max_iter = 200, # increment
                  verbose = TRUE,
                  bool_mat = TRUE)
 
 # false starting values
-cbind(res_EM$par_history[,1], res_EM_dist$par_history[,1], res_EM_dist$par_history[,NCOL(res_EM_dist$par_history)])
+cbind(res_EM$par_history[,1], res_EM_dist$par_history[,1], res_EM_dist$par_history[,res_EM_dist$niter])
 
-plot(res_EM_dist$par_history[1,], type = "l")
-plot(res_EM_dist$par_history[2,], type = "l")
-plot(res_EM_dist$par_history[3,], type = "l")
-plot(res_EM_dist$par_history[4,], type = "l")
-plot(res_EM_dist$par_history[5,], type = "l")
+plot(res_EM_dist$par_history[1,1:res_EM_dist$niter], type = "l")
+plot(res_EM_dist$par_history[2,1:res_EM_dist$niter], type = "l")
+plot(res_EM_dist$par_history[3,1:res_EM_dist$niter], type = "l")
+plot(res_EM_dist$par_history[4,1:res_EM_dist$niter], type = "l")
 
 # unstrucured ----------------------------------------------
 
@@ -324,39 +321,43 @@ res_EM_dep <- EMHDGM(y = y.matr.with.fixed,
                  alpha0 = A,
                  beta0 = TRUE_FIXED_BETA,
                  theta0 = THETA,
-                 v0 = SIGMAZ^2,
                  g0 = G,
                  sigma20 = SIGMAY^2,
                  Xbeta_in =FIXED_EFFECTS_DESIGN_MATRIX,
-                 z0_in = rep(0, Y_LEN),
+                 x0_in = rep(0, Y_LEN),
                  P0_in = diag(nrow = Y_LEN),
                  max_iter = 50, # increment
                  verbose = TRUE,
                  bool_mat = FALSE)
 
 res_EM_dep$beta_history
-
+res_EM_dep$llik
 
 # starting from NOT true values ----------------------
 
 res_EM_dep_false <- EMHDGM(y = y.matr.with.fixed,
                      dist_matrix = DIST_MATRIX,
                      alpha0 = 3 * A,
+                     g0 = G,
                      beta0 = 5 * TRUE_FIXED_BETA,
                      theta0 = 4 * THETA,
-                     v0 = 3 * SIGMAZ^2,
-                     g0 = 1e-2,
                      sigma20 = 4 * SIGMAY^2,
                      Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
-                     z0_in = rep(0, Y_LEN),
+                     x0_in = rep(0, Y_LEN),
                      P0_in = 5 * diag(nrow = Y_LEN),
                      max_iter = 100, # increment
                      verbose = TRUE,
                      bool_mat = FALSE)
 
-res_EM_dep_false$beta_history[,NCOL(res_EM_dep_false$beta_history)]
+res_EM_dep_false$beta_history[,res_EM_dep_false$niter]
 cbind(res_EM_dep$par_history[,1],
-      res_EM_dep_false$par_history[,NCOL(res_EM_dep_false$par_history)])
+      res_EM_dep_false$par_history[,res_EM_dep_false$niter])
 
+plot(res_EM_dep_false$par_history[1,1:res_EM_dep_false$niter], type = "l")
+plot(res_EM_dep_false$par_history[2,1:res_EM_dep_false$niter], type = "l")
+plot(res_EM_dep_false$par_history[3,1:res_EM_dep_false$niter], type = "l")
+plot(res_EM_dep_false$par_history[4,1:res_EM_dep_false$niter], type = "l")
+
+res_EM_dep_false$llik
 
 
