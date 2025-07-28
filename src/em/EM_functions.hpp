@@ -94,5 +94,6 @@ arma::vec BetaUpdate(const arma::cube& Xbeta,
                      const arma::mat& z,
                      double alpha,
                      const arma::mat& Xz,
-                     const arma::mat& inv_mXbeta_sum);
+                     const arma::mat& inv_mXbeta_summ,
+                     const arma::uvec &missing_indicator);
 

@@ -131,6 +131,27 @@ StateSpaceRes <- LinGauStateSpaceSim(n_times = N,
 y.matr <- StateSpaceRes$observations
 x.matr <- StateSpaceRes$states
 
+# Covariates ------------------------------------------------------------
+
+TRUE_FIXED_BETA <- c(2, -1, 4)
+
+y.matr.with.fixed <- matrix(data = NA,
+                            nrow = Y_LEN, ncol = N)
+
+FIXED_EFFECTS_DESIGN_MATRIX <- array(data = NA,
+                                     dim = c(Y_LEN,
+                                             length(TRUE_FIXED_BETA),
+                                             N))
+
+for(i in 1:N){
+  FIXED_EFFECTS_DESIGN_MATRIX[,,i] <- matrix(rnorm(Y_LEN * length(TRUE_FIXED_BETA)),
+                                             nrow = Y_LEN, ncol = length(TRUE_FIXED_BETA))
+
+  y.matr.with.fixed[,i] <- y.matr[,i] + as.vector(FIXED_EFFECTS_DESIGN_MATRIX[,,i] %*%
+                                                    as.matrix(TRUE_FIXED_BETA))
+
+}
+
 # Testing ---------------------------------
 
 # Starting from true values -------------------------
@@ -143,12 +164,13 @@ res_EM <- EMHDGM(y = y.matr,
                  theta0 = THETA,
                  g0 = G,
                  sigma20 = SIGMAY^2,
-                 Xbeta_in = NULL,
+                 Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
                  x0_in = rep(0, Y_LEN),
                  P0_in = diag(1, nrow = Y_LEN),
                  max_iter = 50, # increment
                  verbose = TRUE,
-                 bool_mat = FALSE)
+                 bool_mat = FALSE,
+                 is_fixed_effects = FALSE)
 
 cbind(res_EM$par_history[,1], res_EM$par_history[,res_EM$niter])
 
@@ -211,12 +233,13 @@ res_EM_dist <- EMHDGM(y = y.matr,
                  theta0 = 5 * THETA,
                  g0 = 6 * G, # assuming stationarity: this has to be in (-1,1)
                  sigma20 = 2 * SIGMAY^2,
-                 Xbeta_in = NULL,
+                 Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
                  x0_in = rep(0, Y_LEN),
                  P0_in = 5 * diag(nrow = Y_LEN),
                  max_iter = 200, # increment
                  verbose = TRUE,
-                 bool_mat = TRUE)
+                 bool_mat = TRUE,
+                 is_fixed_effects = FALSE)
 
 # false starting values
 cbind(res_EM$par_history[,1], res_EM_dist$par_history[,1], res_EM_dist$par_history[,res_EM_dist$niter])
@@ -307,28 +330,7 @@ plot(1:b, res_em_sim_false_start$x0_smoothed[1,], type = "l")
 apply(res_em_sim_false_start$x0_smoothed, 1, mean)
 apply(res_em_sim_false_start$x0_smoothed, 1, sd)
 
-
-# Covariates ------------------------------------------------------------
-
-TRUE_FIXED_BETA <- c(2, -1, 4)
-
-y.matr.with.fixed <- matrix(data = NA,
-                            nrow = Y_LEN, ncol = N)
-
-FIXED_EFFECTS_DESIGN_MATRIX <- array(data = NA,
-                                     dim = c(Y_LEN,
-                                             length(TRUE_FIXED_BETA),
-                                             N))
-
-for(i in 1:N){
-  FIXED_EFFECTS_DESIGN_MATRIX[,,i] <- matrix(rnorm(Y_LEN * length(TRUE_FIXED_BETA)),
-                                             nrow = Y_LEN, ncol = length(TRUE_FIXED_BETA))
-
-  y.matr.with.fixed[,i] <- y.matr[,i] + as.vector(FIXED_EFFECTS_DESIGN_MATRIX[,,i] %*%
-                                                as.matrix(TRUE_FIXED_BETA))
-
-}
-
+# Covariates ---------------------------
 # starting from true values ----------------------
 
 res_EM_dep <- EMHDGM(y = y.matr.with.fixed,
@@ -343,7 +345,8 @@ res_EM_dep <- EMHDGM(y = y.matr.with.fixed,
                  P0_in = diag(nrow = Y_LEN),
                  max_iter = 50, # increment
                  verbose = TRUE,
-                 bool_mat = FALSE)
+                 bool_mat = FALSE,
+                 is_fixed_effects = TRUE)
 
 res_EM_dep$beta_history
 res_EM_dep$llik
@@ -362,7 +365,8 @@ res_EM_dep_false <- EMHDGM(y = y.matr.with.fixed,
                      P0_in = 5 * diag(nrow = Y_LEN),
                      max_iter = 100, # increment
                      verbose = TRUE,
-                     bool_mat = FALSE)
+                     bool_mat = FALSE,
+                     is_fixed_effects = TRUE)
 
 res_EM_dep_false$beta_history[,res_EM_dep_false$niter]
 cbind(res_EM_dep$par_history[,1],

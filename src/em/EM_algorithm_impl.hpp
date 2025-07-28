@@ -144,9 +144,6 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
 template <typename CovStore>
 EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
-  // Setup
-  bool is_fixed_effect = em_in.Xbeta.has_value();
-
   int q = em_in.y.n_rows; // observation and state vector length
   int T = em_in.y.n_cols;
   int p = em_in.beta0.n_elem; // fixed effect vector length
@@ -185,10 +182,41 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
   arma::mat mXbeta_sum(p, p, arma::fill::zeros);
   arma::mat m_inv_mXbeta_sum;
 
-  if (is_fixed_effect) {
+  // Make vector of 0 and 1 for each time
+  // if 0 there's no missing observation at time
+  // else there 1
+
+  arma::uvec missing_indicator;
+  arma::uvec index_not_miss; // temp, changed at each time
+  arma::uvec t_index;
+
+  arma::vec y_t;
+  arma::mat X_t;
+
+  // NOTE: this is inefficient, a possible work around
+  // is to give each X matrix in input as transposed
+  // then select the non missing columns (rows in the traditional format)
+  // and transpose again.
+  if (em_in.is_fixed_effect) {
 
     for (int t = 0; t < T; ++t) {
-      mXbeta_sum += (*em_in.Xbeta).slice(t).t() * (*em_in.Xbeta).slice(t);
+      y_t = em_in.y.col(t);
+      X_t = em_in.Xbeta.slice(t);
+
+      index_not_miss = arma::find_finite(y_t);
+
+      if(index_not_miss.size() < p){
+        // some missings found
+        missing_indicator[t] = 1;
+        mXbeta_sum += X_t.rows(index_not_miss).t() *
+          X_t.rows(index_not_miss);
+
+      }else{
+        missing_indicator[t] = 0;
+        mXbeta_sum += X_t.t() * X_t;
+      }
+
+
     }
     m_inv_mXbeta_sum = arma::inv_sympd(mXbeta_sum);
   }
@@ -199,6 +227,8 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
   llik_prev = LOWEST_DOUBLE;
 
   double llik_relative_diff;
+
+  arma::mat y_res;
 
   // EM iterations
   int last_iter = 1;
@@ -216,12 +246,24 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
 
     // Subtract fixed effects
-    arma::mat y_res = em_in.y;
+    y_res = em_in.y;
 
-    if (is_fixed_effect) {
+    if (em_in.is_fixed_effect) {
       for (int t = 0; t < T; ++t) {
-        y_res.col(t) -= (*em_in.Xbeta).slice(t) * beta_temp;
+        y_t = y_res.col(t);
+        X_t = em_in.Xbeta.slice(t);
+
+        t_index[0] = t;
+
+        if(missing_indicator[t] == 0){
+        y_res.col(t) -= X_t * beta_temp;
+        }
+      else{
+        index_not_miss = arma::find_finite(y_t);
+        y_t -=  X_t.rows(index_not_miss) * beta_temp;
+        y_res.submat(index_not_miss,t_index) = y_t;
       }
+    }
     }
 
     // update state space matrices
@@ -299,14 +341,14 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
     alpha_temp = AlphaUpdate_core<CovStore>(em_in.y, ksm_res.x_smoothed, Xz, ksm_res.P_smoothed);
 
     // Beta update
-    if (is_fixed_effect) {
-      const arma::cube& Xbeta_val = *(em_in.Xbeta);
-      beta_temp = BetaUpdate(Xbeta_val,
+    if (em_in.is_fixed_effect) {
+      beta_temp = BetaUpdate(em_in.Xbeta,
                              em_in.y,
                              ksm_res.x_smoothed,
                              alpha_temp,
                              Xz,
-                             m_inv_mXbeta_sum);
+                             m_inv_mXbeta_sum,
+                             missing_indicator);
 
     }
 

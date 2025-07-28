@@ -312,15 +312,25 @@ arma::vec BetaUpdate(const arma::cube& Xbeta,  // T elements of (q x p)
                      const arma::mat& z,                    // (s x T)
                      double alpha,
                      const arma::mat& Xz,                   // (q x s)
-                     const arma::mat& inv_mXbeta_sum)       // (p x p)
+                     const arma::mat& inv_mXbeta_sum, // (p x p)
+                     const arma::uvec &missing_indicator)
 {
   int p = inv_mXbeta_sum.n_rows;
   arma::vec right_term = arma::zeros(p);
+  arma::uvec index_not_miss;
+  arma::uvec t_index;
 
   int T = y.n_cols;
 
   for (int t = 0; t < T; ++t) {
-    right_term += Xbeta.slice(t).t() * (y.col(t) - alpha * Xz * z.col(t)); // (p)
+    t_index[0] = t;
+    if(missing_indicator[t] == 0){
+    right_term += Xbeta.slice(t).t() * (y.col(t) - alpha * Xz * z.col(t));} // (p)
+  else{
+    index_not_miss = arma::find_finite(y.col(t));
+    right_term += Xbeta.slice(t).rows(index_not_miss).t() *
+      (y.submat(index_not_miss, t_index) - alpha * Xz.rows(index_not_miss) * z.submat(index_not_miss, t_index));
+  }
   }
 
   return inv_mXbeta_sum * right_term;
