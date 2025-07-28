@@ -221,10 +221,25 @@ res_EM_dist <- EMHDGM(y = y.matr,
 # false starting values
 cbind(res_EM$par_history[,1], res_EM_dist$par_history[,1], res_EM_dist$par_history[,res_EM_dist$niter])
 
-plot(res_EM_dist$par_history[1,1:res_EM_dist$niter], type = "l")
-plot(res_EM_dist$par_history[2,1:res_EM_dist$niter], type = "l")
-plot(res_EM_dist$par_history[3,1:res_EM_dist$niter], type = "l")
-plot(res_EM_dist$par_history[4,1:res_EM_dist$niter], type = "l")
+
+par(mfrow = c(2,2))
+plot(res_EM_dist$par_history[1,1:res_EM_dist$niter], type = "l",
+     xlab = "iter",
+     ylab = "A")
+abline(h = A, col = "red")
+plot(res_EM_dist$par_history[2,1:res_EM_dist$niter], type = "l",
+     xlab = "iter",
+     ylab = "Theta")
+abline(h = THETA, col = "red")
+plot(res_EM_dist$par_history[3,1:res_EM_dist$niter], type = "l",
+     xlab = "iter",
+     ylab = "G")
+abline(h = G, col = "red")
+plot(res_EM_dist$par_history[4,1:res_EM_dist$niter], type = "l",
+     xlab = "iter",
+     ylab = "SIGMAY^2")
+abline(h = SIGMAY^2, col = "red")
+par(mfrow = c(1,1))
 
 # unstrucured ----------------------------------------------
 
@@ -353,10 +368,12 @@ res_EM_dep_false$beta_history[,res_EM_dep_false$niter]
 cbind(res_EM_dep$par_history[,1],
       res_EM_dep_false$par_history[,res_EM_dep_false$niter])
 
+par(mfrow = c(2,2))
 plot(res_EM_dep_false$par_history[1,1:res_EM_dep_false$niter], type = "l")
 plot(res_EM_dep_false$par_history[2,1:res_EM_dep_false$niter], type = "l")
 plot(res_EM_dep_false$par_history[3,1:res_EM_dep_false$niter], type = "l")
 plot(res_EM_dep_false$par_history[4,1:res_EM_dep_false$niter], type = "l")
+par(mfrow = c(1,1))
 
 res_EM_dep_false$llik
 
