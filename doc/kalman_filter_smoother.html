@@ -117,7 +117,10 @@ window.Quarto = {
 <p><span id="eq-state-space"><span class="math display">\[
 \begin{align}
 x_{t} &amp;= \Phi_t x_{t-1} + \Upsilon_t u_t + w_t \\
-y_t &amp;= A_t x_t + \Gamma_t u_t + v_t
+y_t &amp;= A_t x_t + \Gamma_t u_t + v_t \\
+w_t &amp; \sim N(0, Q_t) \quad \text{i.i.d} \\
+v_t &amp; \sim N(0, R_t) \quad \text{i.i.d} \\
+w_{t_i} &amp; \perp v_{t_j} \quad \forall \quad t_i, t_j
 \end{align}
 \tag{1}\]</span></span></p>
 <p>where</p>
@@ -127,11 +130,6 @@ y_t &amp;= A_t x_t + \Gamma_t u_t + v_t
 <li><p><span class="math inline">\(x_t\)</span> : state vector (p x 1)</p></li>
 <li><p><span class="math inline">\(y_t\)</span> : observation vector (q x 1)</p></li>
 <li><p><span class="math inline">\(u_t\)</span> : exogenous input vector (r x 1)</p></li>
-</ul></li>
-<li><p>Erros</p>
-<ul>
-<li><p><span class="math inline">\(w_t \sim N(0, Q_t)\)</span> i.i.d</p></li>
-<li><p><span class="math inline">\(v_t \sim N(0, R_t)\)</span> i.i.d</p></li>
 </ul></li>
 </ul>
 </section>
@@ -143,6 +141,7 @@ x^{s}_t = E(x_t|y_{1:s})
 <p><span id="eq-conditional-covariance"><span class="math display">\[
 P^{s}_{t1,t2} = E\{(x_{t_1} - x^s_{t_1})(x_{t_2} - x^s_{t_2})^\top|y_{1:s}\}
 \tag{3}\]</span></span></p>
+<p>where for ease of notation <span class="math inline">\(P^{s}_{t} := P^{s}_{t,t}\)</span>.</p>
 </section>
 <section id="kalman-filter" class="level2">
 <h2 class="anchored" data-anchor-id="kalman-filter">Kalman Filter</h2>
@@ -169,7 +168,7 @@ K_t = P^{t-1}_t A^\top_t(A_t P^{t-1}_t A^{\top}_t + R_t)^{-1}
 \epsilon_t = y_t - E(y_t|y_{1:(t-1)}) = y_t - A_t x^{t-1}_t - \Gamma u_t
 \tag{8}\]</span></span></p>
 <p><span id="eq-innovations-covariance"><span class="math display">\[
-\Gamma_t = \text{var}(\epsilon_t) = \text{var}\{A_t(x_t - x^{t-1}_t) + v_t\} = A_t P^{t-1}_t A^\top_t
+\Gamma_t = \text{var}(\epsilon_t) = \text{var}\{A_t(x_t - x^{t-1}_t) + v_t\} = A_t P^{t-1}_t A^\top_t + R_t
 \tag{9}\]</span></span></p>
 </section>
 </section>
@@ -196,14 +195,25 @@ P^T_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
 \tag{14}\]</span></span></p>
 </section>
 </section>
-<section id="complete-data-likelihood" class="level2">
-<h2 class="anchored" data-anchor-id="complete-data-likelihood">Complete Data Likelihood</h2>
-<p>The “complete data” likelihood including the states is without considering the external inputs</p>
-<p><span id="eq-complete_llik"><span class="math display">\[
-\begin{align}Q\left( \Theta \mid \Theta^{(j-1)} \right) = \ln \left| \Sigma_0 \right| + \text{tr} \left\{ \Sigma_0^{-1} \left[ P_0^T + \left( x_0^T - \mu_0 \right) \left( x_0^T - \mu_0 \right)^\top \right] \right\} \\
-+ \sum^T_{t=1} \ln \left| Q_t \right| + \text{tr} \left\{ Q^{-1} \left[ S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top \right] \right\} \\
-+ \sum^T_{t=1} \ln \left| R_t \right| + \text{tr} \left\{ R^{-1} \sum_{t=1}^{n} \left[ \left( y_t - A_t x_t^T \right) \left( y_t - A_t x_t^T \right)^\top + A_t P_t^T A_t^\top \right] \right\}\end{align}
+<section id="likelihood" class="level2">
+<h2 class="anchored" data-anchor-id="likelihood">Likelihood</h2>
+<section id="complete-data-likelihood" class="level3">
+<h3 class="anchored" data-anchor-id="complete-data-likelihood">Complete Data Likelihood</h3>
+<p>The two times the negative “complete data” likelihood is: <span id="eq-complete-nllik"><span class="math display">\[
+\begin{aligned}
+-2 \ln L_{X,Y}(\Theta) &amp;= \ln |\Sigma_0| + (x_0 - \mu_0)^\top \Sigma_0^{-1} (x_0 - \mu_0) \\
+&amp;\quad + \sum^{T}_{t=1}\ln |Q_t| + \sum_{t=1}^{T} (x_t - \Phi x_{t-1} - \Upsilon_t u_t)^\top Q^{-1}_t (x_t - \Phi x_{t-1} - \Upsilon_t u_t) \\
+&amp;\quad + \sum^{T}_{t=1}\ln |R_t| + \sum_{t=1}^{T} (y_t - A_t x_t -  \Gamma_t u_t)^\top R^{-1}_t (y_t - A_t x_t -  \Gamma_t u_t)
+\end{aligned}
 \tag{15}\]</span></span></p>
+</section>
+<section id="marginal-likelihood" class="level3">
+<h3 class="anchored" data-anchor-id="marginal-likelihood">Marginal Likelihood</h3>
+<p>Defining with <span class="math inline">\(\Theta\)</span> the vector of all unknown parameters, using \ref{#eq-innovations} and \ref{#eq-innovations-covariance} as a function of <span class="math inline">\(\Theta\)</span> the two times negative marginal likelihood for <span class="math inline">\(y\)</span> is:</p>
+<p><span id="eq-marginal-nllik"><span class="math display">\[
+-2 \log L_Y(\Theta) = \sum^{T}_{t = 1}\log |\Sigma_t(\Theta)| + \sum^{T}_{t=1} \epsilon^\top_t (\Theta) \Sigma^{-1}_t(\Theta) \epsilon_t (\Theta)
+\tag{16}\]</span></span></p>
+</section>
 </section>
 <section id="constant-terms-model" class="level2">
 <h2 class="anchored" data-anchor-id="constant-terms-model">Constant terms model</h2>
@@ -213,12 +223,15 @@ P^T_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
 x_{t} &amp;= \Phi x_{t-1} + w_t \\
 y_t &amp;= A x_t + \Gamma_t u + v_t
 \end{align}
-\tag{16}\]</span></span></p>
+\tag{17}\]</span></span></p>
 <p>The exception is that <span class="math inline">\(\Gamma_t\)</span> is time varying but considered known while <span class="math inline">\(u\)</span> is fixed but unknown.</p>
+</section>
+<section id="expectation-maximization" class="level2 unnumbered">
+
 
 </section>
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">Expectation Maximization</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-ShumwayStoffer" class="csl-entry" role="listitem">
 Shumway, Robert H., and David S. Stoffer. 2005. <em>Time Series Analysis and Its Applications (Springer Texts in Statistics)</em>. Berlin, Heidelberg: Springer-Verlag.
 </div>

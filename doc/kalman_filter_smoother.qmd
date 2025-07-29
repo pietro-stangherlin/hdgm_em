@@ -12,7 +12,10 @@ We will use the notation and follow chapter 6 of [@ShumwayStoffer].
 $$
 \begin{align}
 x_{t} &= \Phi_t x_{t-1} + \Upsilon_t u_t + w_t \\
-y_t &= A_t x_t + \Gamma_t u_t + v_t
+y_t &= A_t x_t + \Gamma_t u_t + v_t \\
+w_t & \sim N(0, Q_t) \quad \text{i.i.d} \\
+v_t & \sim N(0, R_t) \quad \text{i.i.d} \\
+w_{t_i} & \perp v_{t_j} \quad \forall \quad t_i, t_j
 \end{align}
 $$ {#eq-state-space}
 
@@ -26,12 +29,6 @@ where
 
     -   $u_t$ : exogenous input vector (r x 1)
 
--   Erros
-
-    -   $w_t \sim N(0, Q_t)$ i.i.d
-
-    -   $v_t \sim N(0, R_t)$ i.i.d
-
 ## Notation
 
 $$
@@ -41,6 +38,8 @@ $$ {#eq-conditional-mean}
 $$
 P^{s}_{t1,t2} = E\{(x_{t_1} - x^s_{t_1})(x_{t_2} - x^s_{t_2})^\top|y_{1:s}\}
 $$ {#eq-conditional-covariance}
+
+where for ease of notation $P^{s}_{t} := P^{s}_{t,t}$.
 
 ## Kalman Filter
 
@@ -75,7 +74,7 @@ $$
 $$ {#eq-innovations}
 
 $$
-\Gamma_t = \text{var}(\epsilon_t) = \text{var}\{A_t(x_t - x^{t-1}_t) + v_t\} = A_t P^{t-1}_t A^\top_t
+\Gamma_t = \text{var}(\epsilon_t) = \text{var}\{A_t(x_t - x^{t-1}_t) + v_t\} = A_t P^{t-1}_t A^\top_t + R_t
 $$ {#eq-innovations-covariance}
 
 ## Kalman Smoother
@@ -106,15 +105,25 @@ $$
 P^T_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
 $$ {#eq-lagone-covariance-smoother-initialization}
 
-## Complete Data Likelihood
+## Likelihood
 
-The "complete data" likelihood including the states is without considering the external inputs
+### Complete Data Likelihood
+
+The two times the negative "complete data" likelihood is: $$
+\begin{aligned}
+-2 \ln L_{X,Y}(\Theta) &= \ln |\Sigma_0| + (x_0 - \mu_0)^\top \Sigma_0^{-1} (x_0 - \mu_0) \\
+&\quad + \sum^{T}_{t=1}\ln |Q_t| + \sum_{t=1}^{T} (x_t - \Phi x_{t-1} - \Upsilon_t u_t)^\top Q^{-1}_t (x_t - \Phi x_{t-1} - \Upsilon_t u_t) \\
+&\quad + \sum^{T}_{t=1}\ln |R_t| + \sum_{t=1}^{T} (y_t - A_t x_t -  \Gamma_t u_t)^\top R^{-1}_t (y_t - A_t x_t -  \Gamma_t u_t)
+\end{aligned}
+$$ {#eq-complete-nllik}
+
+### Marginal Likelihood
+
+Defining with $\Theta$ the vector of all unknown parameters, using \\ref{#eq-innovations} and \\ref{#eq-innovations-covariance} as a function of $\Theta$ the two times negative marginal likelihood for $y$ is:
 
 $$
-\begin{align}Q\left( \Theta \mid \Theta^{(j-1)} \right) = \ln \left| \Sigma_0 \right| + \text{tr} \left\{ \Sigma_0^{-1} \left[ P_0^T + \left( x_0^T - \mu_0 \right) \left( x_0^T - \mu_0 \right)^\top \right] \right\} \\
-+ \sum^T_{t=1} \ln \left| Q_t \right| + \text{tr} \left\{ Q^{-1} \left[ S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top \right] \right\} \\
-+ \sum^T_{t=1} \ln \left| R_t \right| + \text{tr} \left\{ R^{-1} \sum_{t=1}^{n} \left[ \left( y_t - A_t x_t^T \right) \left( y_t - A_t x_t^T \right)^\top + A_t P_t^T A_t^\top \right] \right\}\end{align}
-$$ {#eq-complete_llik}
+-2 \log L_Y(\Theta) = \sum^{T}_{t = 1}\log |\Sigma_t(\Theta)| + \sum^{T}_{t=1} \epsilon^\top_t (\Theta) \Sigma^{-1}_t(\Theta) \epsilon_t (\Theta)
+$$ {#eq-marginal-nllik}
 
 ## Constant terms model
 
@@ -128,3 +137,5 @@ y_t &= A x_t + \Gamma_t u + v_t
 $$ {#eq-state-space-time-fixed}
 
 The exception is that $\Gamma_t$ is time varying but considered known while $u$ is fixed but unknown.
+
+## Expectation Maximization
