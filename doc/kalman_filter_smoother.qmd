@@ -119,23 +119,91 @@ $$ {#eq-complete-nllik}
 
 ### Marginal Likelihood
 
-Defining with $\Theta$ the vector of all unknown parameters, using \\ref{#eq-innovations} and \\ref{#eq-innovations-covariance} as a function of $\Theta$ the two times negative marginal likelihood for $y$ is:
+Defining with $\Theta$ the vector of all unknown parameters, using @eq-innovations and @eq-innovations-covariance as a function of $\Theta$ the two times negative marginal likelihood for $y$ is:
 
 $$
 -2 \log L_Y(\Theta) = \sum^{T}_{t = 1}\log |\Sigma_t(\Theta)| + \sum^{T}_{t=1} \epsilon^\top_t (\Theta) \Sigma^{-1}_t(\Theta) \epsilon_t (\Theta)
 $$ {#eq-marginal-nllik}
 
-## Constant terms model
+## Model Restrictions
 
-In this application we consider a simpler model without time varying parameters and external inputs only in the observation equation
+Before proceeding to estimation we focuse on a restricted subset of models.
+
+### Constant matrices and covariances
+
+A possible but still quite general model restriction is
 
 $$
 \begin{align}
 x_{t} &= \Phi x_{t-1} + w_t \\
-y_t &= A x_t + \Gamma_t u + v_t
+y_t &= A x_t + \Gamma_t u + v_t \\
+w_t & \sim N(0, Q) \quad \text{i.i.d} \\
+v_t & \sim N(0, R) \quad \text{i.i.d}
 \end{align}
 $$ {#eq-state-space-time-fixed}
 
-The exception is that $\Gamma_t$ is time varying but considered known while $u$ is fixed but unknown.
+with complete twice negative log likelihood:
 
-## Expectation Maximization
+$$
+\begin{aligned}
+-2 \ln L_{X,Y}(\Theta) &= \ln |\Sigma_0| + (x_0 - \mu_0)^\top \Sigma_0^{-1} (x_0 - \mu_0) \\
+&\quad + T \ln |Q| + \sum_{t=1}^{T} (x_t - \Phi x_{t-1})^\top Q^{-1}_t (x_t - \Phi x_{t-1}) \\
+&\quad + T \ln |R| + \sum_{t=1}^{T} (y_t - A x_t -  \Gamma_t u)^\top R^{-1}_t (y_t - A x_t -  \Gamma_t u)
+\end{aligned}
+$$ {#eq-complete-nllik-reduced}
+
+## Parameters estimation
+
+In the following we assume $\Gamma_t$ time varying but known while $u$ is fixed but unknown. The zero state mean $\mu_0$ and zero state covariance matrix $\Sigma_0$ will be treated as unknown parameters. Note that there's a vast literature about the diffuse initialization of the Kalman Filter (see for example chapter 5 of [@DurbinKoopman]) but here is not taken into consideration due to time limitations.
+
+Since all the distribution are assumed known a natural way to estimate the parameters is to maximize the likelihood, there are many possibile methods: among others the usually employed ones are the Netwon-Raphson (NR) or the Expectation Maximization (EM).
+
+The NR requires evaluation of Gradient and Hessian, which in some cases have to be computed numerically, while the EM doesn't. It is a common strategy to start the procedure with EM and after switch to NR, here only the EM will be considered.
+
+### Expectation Maximization
+
+Following [@ShumwayStoffer], with the slight differences of the inclusion of the exogenous term $u$; to ensure identifiability, we initally consider known the matrix $A$ so $\Theta$ holds all elements of $\{\Phi,Q,R,u\}$. We report the EM relative to this problem. The iteration $j^{\text{th}}$ of EM consists in the update $$
+\Theta^{j} = \text{argmin}_{\Theta} \{ Q(\Theta|\Theta^{j-1}) \} = \text{argmin}_{\Theta} \{E[-2 \log L_{X,Y}(\Theta) | y_{1:T}, \Theta^{j-1}] \}
+$$ {#eq-em-general-update}
+
+In the scenario considered and using trace property: $$
+\begin{aligned}
+Q(\Theta|\Theta^{j-1}) &= \ln |\Sigma_0| + \text{tr} \left\{ \Sigma_0^{-1} [ P^T_0  + (x^T_0 - \mu_0) (x^T_0 - \mu_0)^\top] \right\}   \\
+&\quad + T \ln |Q| + \text{tr} \left\{ Q^{-1}[S_{11} - S_{10} \Phi^{\top} - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top ]  \right\} \\
+&\quad + T \ln |R| +  \text{tr} \left\{R^{-1} \left[  \left( \sum_{t=1}^{T} \psi_t \psi^\top_t \right) - A \left( \sum_{t=1}^{T} x^T_t \psi^\top_t \right) - \left( \sum_{t=1}^{T} x^T_t \psi^\top_t \right)^\top A^\top + A S_{11} A^\top \right] \right\}
+\end{aligned}
+$$ {#eq-em-conditional-complete-nllik}
+
+where
+
+$$
+\begin{align}
+S_{00} &= \sum^{T}_{t = 1} x^T_{t-1} (x^T_{t-1})^\top + P^T_{t-1} \\
+S_{10} &= \sum^{T}_{t = 1} x^T_t (x^T_{t-1})^\top + P^T_{t,t-1} \\
+S_{11} &= \sum^{T}_{t = 1} x^T_t (x^T_{t})^\top + P^T_{t,t}
+\end{align}
+$$ {#eq-em-moments}
+
+and
+
+$$
+\psi_t = y_t - \Gamma_t u
+$$ {#eq-fixed-eff-error}
+
+The EM fully analytical updates are then
+
+$$
+\Phi^j = S_{10} S_{11}^{-1}
+$$ {#eq-Phi-update}
+
+$$
+Q^j = T^{-1}(S_{11} - S_{10} S^{-1}_{00} S^\top_{10}) 
+$$ {#eq-Q-update}
+
+$$
+R^j = T^{-1} \left[ \left( \sum_{t=1}^{T} \psi_t \psi^\top_t \right) - A \left( \sum_{t=1}^{T} x^T_t \psi^\top_t \right) - \left( \sum_{t=1}^{T} x^T_t \psi^\top_t \right)^\top A^\top + A S_{11} A^\top \right]
+$$ {#eq-R-update}
+
+$$
+u^j = \left[\sum^T_{t=1} \Gamma^\top_t \Gamma_t \right]^{-1} \left[ \sum^T_{t=1} \Gamma^\top_t \psi_t \right]
+$$ {#eq-fixed-effect-update}

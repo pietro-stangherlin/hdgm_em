@@ -209,29 +209,86 @@ P^T_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
 </section>
 <section id="marginal-likelihood" class="level3">
 <h3 class="anchored" data-anchor-id="marginal-likelihood">Marginal Likelihood</h3>
-<p>Defining with <span class="math inline">\(\Theta\)</span> the vector of all unknown parameters, using \ref{#eq-innovations} and \ref{#eq-innovations-covariance} as a function of <span class="math inline">\(\Theta\)</span> the two times negative marginal likelihood for <span class="math inline">\(y\)</span> is:</p>
+<p>Defining with <span class="math inline">\(\Theta\)</span> the vector of all unknown parameters, using <a href="#eq-innovations" class="quarto-xref">Equation&nbsp;8</a> and <a href="#eq-innovations-covariance" class="quarto-xref">Equation&nbsp;9</a> as a function of <span class="math inline">\(\Theta\)</span> the two times negative marginal likelihood for <span class="math inline">\(y\)</span> is:</p>
 <p><span id="eq-marginal-nllik"><span class="math display">\[
 -2 \log L_Y(\Theta) = \sum^{T}_{t = 1}\log |\Sigma_t(\Theta)| + \sum^{T}_{t=1} \epsilon^\top_t (\Theta) \Sigma^{-1}_t(\Theta) \epsilon_t (\Theta)
 \tag{16}\]</span></span></p>
 </section>
 </section>
-<section id="constant-terms-model" class="level2">
-<h2 class="anchored" data-anchor-id="constant-terms-model">Constant terms model</h2>
-<p>In this application we consider a simpler model without time varying parameters and external inputs only in the observation equation</p>
+<section id="model-restrictions" class="level2">
+<h2 class="anchored" data-anchor-id="model-restrictions">Model Restrictions</h2>
+<p>Before proceeding to estimation we focuse on a restricted subset of models.</p>
+<section id="constant-matrices-and-covariances" class="level3">
+<h3 class="anchored" data-anchor-id="constant-matrices-and-covariances">Constant matrices and covariances</h3>
+<p>A possible but still quite general model restriction is</p>
 <p><span id="eq-state-space-time-fixed"><span class="math display">\[
 \begin{align}
 x_{t} &amp;= \Phi x_{t-1} + w_t \\
-y_t &amp;= A x_t + \Gamma_t u + v_t
+y_t &amp;= A x_t + \Gamma_t u + v_t \\
+w_t &amp; \sim N(0, Q) \quad \text{i.i.d} \\
+v_t &amp; \sim N(0, R) \quad \text{i.i.d}
 \end{align}
 \tag{17}\]</span></span></p>
-<p>The exception is that <span class="math inline">\(\Gamma_t\)</span> is time varying but considered known while <span class="math inline">\(u\)</span> is fixed but unknown.</p>
+<p>with complete twice negative log likelihood:</p>
+<p><span id="eq-complete-nllik-reduced"><span class="math display">\[
+\begin{aligned}
+-2 \ln L_{X,Y}(\Theta) &amp;= \ln |\Sigma_0| + (x_0 - \mu_0)^\top \Sigma_0^{-1} (x_0 - \mu_0) \\
+&amp;\quad + T \ln |Q| + \sum_{t=1}^{T} (x_t - \Phi x_{t-1})^\top Q^{-1}_t (x_t - \Phi x_{t-1}) \\
+&amp;\quad + T \ln |R| + \sum_{t=1}^{T} (y_t - A x_t -  \Gamma_t u)^\top R^{-1}_t (y_t - A x_t -  \Gamma_t u)
+\end{aligned}
+\tag{18}\]</span></span></p>
 </section>
-<section id="expectation-maximization" class="level2 unnumbered">
-
+</section>
+<section id="parameters-estimation" class="level2">
+<h2 class="anchored" data-anchor-id="parameters-estimation">Parameters estimation</h2>
+<p>In the following we assume <span class="math inline">\(\Gamma_t\)</span> time varying but known while <span class="math inline">\(u\)</span> is fixed but unknown. The zero state mean <span class="math inline">\(\mu_0\)</span> and zero state covariance matrix <span class="math inline">\(\Sigma_0\)</span> will be treated as unknown parameters. Note that there’s a vast literature about the diffuse initialization of the Kalman Filter (see for example chapter 5 of <span class="citation" data-cites="DurbinKoopman">(<a href="#ref-DurbinKoopman" role="doc-biblioref">Durbin and Koopman 2012</a>)</span>) but here is not taken into consideration due to time limitations.</p>
+<p>Since all the distribution are assumed known a natural way to estimate the parameters is to maximize the likelihood, there are many possibile methods: among others the usually employed ones are the Netwon-Raphson (NR) or the Expectation Maximization (EM).</p>
+<p>The NR requires evaluation of Gradient and Hessian, which in some cases have to be computed numerically, while the EM doesn’t. It is a common strategy to start the procedure with EM and after switch to NR, here only the EM will be considered.</p>
+<section id="expectation-maximization" class="level3">
+<h3 class="anchored" data-anchor-id="expectation-maximization">Expectation Maximization</h3>
+<p>Following <span class="citation" data-cites="ShumwayStoffer">(<a href="#ref-ShumwayStoffer" role="doc-biblioref">Shumway and Stoffer 2005</a>)</span>, with the slight differences of the inclusion of the exogenous term <span class="math inline">\(u\)</span>; to ensure identifiability, we initally consider known the matrix <span class="math inline">\(A\)</span> so <span class="math inline">\(\Theta\)</span> holds all elements of <span class="math inline">\(\{\Phi,Q,R,u\}\)</span>. We report the EM relative to this problem. The iteration <span class="math inline">\(j^{\text{th}}\)</span> of EM consists in the update <span id="eq-em-general-update"><span class="math display">\[
+\Theta^{j} = \text{argmin}_{\Theta} \{ Q(\Theta|\Theta^{j-1}) \} = \text{argmin}_{\Theta} \{E[-2 \log L_{X,Y}(\Theta) | y_{1:T}, \Theta^{j-1}] \}
+\tag{19}\]</span></span></p>
+<p>In the scenario considered and using trace property: <span id="eq-em-conditional-complete-nllik"><span class="math display">\[
+\begin{aligned}
+Q(\Theta|\Theta^{j-1}) &amp;= \ln |\Sigma_0| + \text{tr} \left\{ \Sigma_0^{-1} [ P^T_0  + (x^T_0 - \mu_0) (x^T_0 - \mu_0)^\top] \right\}   \\
+&amp;\quad + T \ln |Q| + \text{tr} \left\{ Q^{-1}[S_{11} - S_{10} \Phi^{\top} - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top ]  \right\} \\
+&amp;\quad + T \ln |R| +  \text{tr} \left\{R^{-1} \left[  \left( \sum_{t=1}^{T} \psi_t \psi^\top_t \right) - A \left( \sum_{t=1}^{T} x^T_t \psi^\top_t \right) - \left( \sum_{t=1}^{T} x^T_t \psi^\top_t \right)^\top A^\top + A S_{11} A^\top \right] \right\}
+\end{aligned}
+\tag{20}\]</span></span></p>
+<p>where</p>
+<p><span id="eq-em-moments"><span class="math display">\[
+\begin{align}
+S_{00} &amp;= \sum^{T}_{t = 1} x^T_{t-1} (x^T_{t-1})^\top + P^T_{t-1} \\
+S_{10} &amp;= \sum^{T}_{t = 1} x^T_t (x^T_{t-1})^\top + P^T_{t,t-1} \\
+S_{11} &amp;= \sum^{T}_{t = 1} x^T_t (x^T_{t})^\top + P^T_{t,t}
+\end{align}
+\tag{21}\]</span></span></p>
+<p>and</p>
+<p><span id="eq-fixed-eff-error"><span class="math display">\[
+\psi_t = y_t - \Gamma_t u
+\tag{22}\]</span></span></p>
+<p>The EM fully analytical updates are then</p>
+<p><span id="eq-Phi-update"><span class="math display">\[
+\Phi^j = S_{10} S_{11}^{-1}
+\tag{23}\]</span></span></p>
+<p><span id="eq-Q-update"><span class="math display">\[
+Q^j = T^{-1}(S_{11} - S_{10} S^{-1}_{00} S^\top_{10})
+\tag{24}\]</span></span></p>
+<p><span id="eq-R-update"><span class="math display">\[
+R^j = T^{-1} \left[ \left( \sum_{t=1}^{T} \psi_t \psi^\top_t \right) - A \left( \sum_{t=1}^{T} x^T_t \psi^\top_t \right) - \left( \sum_{t=1}^{T} x^T_t \psi^\top_t \right)^\top A^\top + A S_{11} A^\top \right]
+\tag{25}\]</span></span></p>
+<p><span id="eq-fixed-effect-update"><span class="math display">\[
+u^j = \left[\sum^T_{t=1} \Gamma^\top_t \Gamma_t \right]^{-1} \left[ \sum^T_{t=1} \Gamma^\top_t \psi_t \right]
+\tag{26}\]</span></span></p>
 
 </section>
+</section>
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">Expectation Maximization</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-DurbinKoopman" class="csl-entry" role="listitem">
+Durbin, and Koopman. 2012. <span>“Time Series Analysis by State Space Methods.”</span>
+</div>
 <div id="ref-ShumwayStoffer" class="csl-entry" role="listitem">
 Shumway, Robert H., and David S. Stoffer. 2005. <em>Time Series Analysis and Its Applications (Springer Texts in Statistics)</em>. Berlin, Heidelberg: Springer-Verlag.
 </div>
