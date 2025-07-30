@@ -291,6 +291,7 @@ u^j = \left[\sum^T_{t=1} \Gamma^\top_t \Gamma_t \right]^{-1} \left[ \sum^T_{t=1}
 </section>
 <section id="missing-data" class="level3">
 <h3 class="anchored" data-anchor-id="missing-data">Missing Data</h3>
+<p>In case of missing data the Kalman Filter and Smoother updates won’t change much since it’s sufficient to predict the missing value. In the EM we partition the observation vector <span class="math inline">\(y_t\)</span> in <span class="math inline">\(\tilde{y_t} = \left(\left(y^{(1)}_t \right)^\top, \left(y^{(2)} _t \right)^\top \right)^\top\)</span> where <span class="math inline">\(y^{(1)}_t\)</span> is the non missing set and <span class="math inline">\(y^{(2)}_t\)</span> is the missing set at time <span class="math inline">\(t\)</span>; with an opportune permutation matrix <span class="math inline">\(D_t\)</span> we have <span class="math inline">\(y_t = D_t \tilde{y}_t\)</span>.</p>
 </section>
 </section>
 <section id="inference" class="level2">
@@ -336,10 +337,10 @@ Q_{ij} = \exp (-|| y_{t,i} - y_{t,j} ||_2 / \theta)
 <h3 class="anchored" data-anchor-id="em">EM</h3>
 <p>The EM updates follow the previously given ones with some changes. The ones reported are from <span class="citation" data-cites="Calculli2015">Calculli et al. (<a href="#ref-Calculli2015" role="doc-biblioref">2015</a>)</span>, where missing data updates are present and a more general multivariate response structure is considered.</p>
 <p>The update for <span class="math inline">\(g\)</span> is the univariate version of the update for <span class="math inline">\(\Phi\)</span> so the trace is taken: <span class="math inline">\(g^j = \frac{\text{tr}(S_{10})}{\text{tr}(S_{11})}\)</span>.</p>
-<p>The <span class="math inline">\(\sigma^2_Y\)</span> update is <span class="math inline">\((\sigma^2_Y)^j = \frac{1}{qT} \text{tr} \left( \sum^{T}_{t=1} \Omega_t \right)\)</span> where <span class="math inline">\(\Omega_t = y_t - \Gamma_t u - Ax_t + \alpha^2 P^T_t\)</span>.</p>
+<p>The <span class="math inline">\(\sigma^2_Y\)</span> update is <span class="math inline">\((\sigma^2_Y)^j = \frac{1}{qT} \text{tr} \left( \sum^{T}_{t=1} \Omega_t \right)\)</span> where <span class="math inline">\(\Omega_t = y_t - \Gamma_t u - Ax_t + A P^T_t A^\top\)</span>.</p>
 <p>Since the scaling is given by <span class="math inline">\(\alpha\)</span>, it can’t be assumed known (unless in this parameterization) its update is <span class="math inline">\(\alpha^j = \frac{\sum^T_{t=1}\text{tr}\left(\psi_t x^\top_t \right)}{\text{tr} \left( S_{11} \right)}\)</span></p>
 <p>The exponential correlation parameter <span class="math inline">\(\theta\)</span> is updated via numerical optimization:</p>
-<p><span class="math inline">\(\theta^j = \text{argmin}_{\theta} \quad T\log|Q| + \text{tr} \left[Q^{-1} \left(S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi\top \right) \right]\)</span>.</p>
+<p><span class="math inline">\(\theta^j = \text{argmin}_{\theta} \quad T\log|Q| + \text{tr} \left[Q^{-1} \left(S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top \right) \right]\)</span>.</p>
 <p>Since this is a univariat optimization problem Brent method is used, the <span class="math inline">\(\theta\)</span> dimension increases other methods should be employed such Nelder-Mead.</p>
 </section>
 </section>

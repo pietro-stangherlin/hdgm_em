@@ -218,6 +218,8 @@ $$ {#eq-initial-param-updates}
 
 ### Missing Data
 
+In case of missing data the Kalman Filter and Smoother updates won't change much since it's sufficient to predict the missing value. In the EM we partition the observation vector $y_t$ in $\tilde{y_t} = \left(\left(y^{(1)}_t \right)^\top, \left(y^{(2)} _t \right)^\top \right)^\top$ where $y^{(1)}_t$ is the non missing set and $y^{(2)}_t$ is the missing set at time $t$; with an opportune permutation matrix $D_t$ we have $y_t = D_t \tilde{y}_t$.
+
 ## Inference
 
 ### Numerical Hessian and standard errors
@@ -260,13 +262,13 @@ The EM updates follow the previously given ones with some changes. The ones repo
 
 The update for $g$ is the univariate version of the update for $\Phi$ so the trace is taken: $g^j = \frac{\text{tr}(S_{10})}{\text{tr}(S_{11})}$.
 
-The $\sigma^2_Y$ update is $(\sigma^2_Y)^j = \frac{1}{qT} \text{tr} \left( \sum^{T}_{t=1} \Omega_t \right)$ where $\Omega_t = y_t - \Gamma_t u - Ax_t + \alpha^2 P^T_t$.
+The $\sigma^2_Y$ update is $(\sigma^2_Y)^j = \frac{1}{qT} \text{tr} \left( \sum^{T}_{t=1} \Omega_t \right)$ where $\Omega_t = y_t - \Gamma_t u - Ax_t + A P^T_t A^\top$.
 
 Since the scaling is given by $\alpha$, it can't be assumed known (unless in this parameterization) its update is $\alpha^j = \frac{\sum^T_{t=1}\text{tr}\left(\psi_t x^\top_t \right)}{\text{tr} \left( S_{11} \right)}$
 
 The exponential correlation parameter $\theta$ is updated via numerical optimization:
 
-$\theta^j = \text{argmin}_{\theta} \quad T\log|Q| + \text{tr} \left[Q^{-1} \left(S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi\top \right) \right]$.
+$\theta^j = \text{argmin}_{\theta} \quad T\log|Q| + \text{tr} \left[Q^{-1} \left(S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top \right) \right]$.
 
 Since this is a univariat optimization problem Brent method is used, the $\theta$ dimension increases other methods should be employed such Nelder-Mead.
 
