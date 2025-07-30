@@ -1,5 +1,5 @@
 ---
-title: "Kalman Filter and Smoother Derivations"
+title: "Linear Gaussian State Space"
 format: html
 editor: visual
 bibliography: bibliography.bib
@@ -41,11 +41,15 @@ $$ {#eq-conditional-covariance}
 
 where for ease of notation $P^{s}_{t} := P^{s}_{t,t}$.
 
-## Kalman Filter
+$y_{t,i}$ is the $i^{th}$ component of $y_t$.
+
+## Kalman Filter and Smoother
+
+### Kalman Filter
 
 Assuming known initial conditions $x^0_0$ and $P^0_0$ we have
 
-### Filtering
+#### Prediction
 
 $$
 x^{t-1}_t = \Phi_t x^{t-1}_{t-1} + \Upsilon_t u_t 
@@ -55,7 +59,7 @@ $$
 P^{t-1}_t = \Phi_t P^{t-1}_{t-1} \Phi^{\top}_{t} + Q_t
 $$ {#eq-filter-covariance}
 
-### Prediction
+#### Filtering
 
 $$ x^{t}_t = x^{t-1}_{t} + K_t (y_t - A_t x^{t-1}_{t} - \Gamma u_t) $$ {#eq-predicted-state}
 
@@ -77,7 +81,7 @@ $$
 \Gamma_t = \text{var}(\epsilon_t) = \text{var}\{A_t(x_t - x^{t-1}_t) + v_t\} = A_t P^{t-1}_t A^\top_t + R_t
 $$ {#eq-innovations-covariance}
 
-## Kalman Smoother
+### Kalman Smoother
 
 $$
 x^T_{t-1} = x^{t-1}_{t-1} + J_{t-1} (x^T_{t} - x^{t-1}_t)
@@ -93,7 +97,7 @@ $$
 J_{t-1} = P^{t-1}_{t-1} \Phi_t (P^{t-1}_{t})^{-1}
 $$ {#eq-smoother-gain}
 
-### Lag-One Covariance Smoother
+#### Lag-One Covariance Smoother
 
 $$
 P^T_{t-1, t-2} = P^{t-1}_{t-1} J^\top_{t-2} + J_{t-1}(P^T_{t,t-1} - \Phi_t P^{t-1}_{t-1}) J^\top_{t-2}
@@ -205,5 +209,65 @@ R^j = T^{-1} \left[ \left( \sum_{t=1}^{T} \psi_t \psi^\top_t \right) - A \left( 
 $$ {#eq-R-update}
 
 $$
-u^j = \left[\sum^T_{t=1} \Gamma^\top_t \Gamma_t \right]^{-1} \left[ \sum^T_{t=1} \Gamma^\top_t \psi_t \right]
+u^j = \left[\sum^T_{t=1} \Gamma^\top_t \Gamma_t \right]^{-1} \left[ \sum^T_{t=1} \Gamma^\top_t (y_t - A x_t) \right]
 $$ {#eq-fixed-effect-update}
+
+$$
+\mu_0 = x^T_0; \quad \Sigma_0 = P^T_0
+$$ {#eq-initial-param-updates}
+
+### Missing Data
+
+## Inference
+
+### Numerical Hessian and standard errors
+
+### Bootstrap
+
+### Bayesian Inference
+
+## Parameters selection
+
+### Information Criteria
+
+### Cross - Validation
+
+-   Sliding window
+
+-   Leave one station out (only for certain models)
+
+## HDGM
+
+### Model
+
+Following @Otto2023 the Hidden Dynamic Geostatistical Model (HDGM) is obtnaied imposing the following restrictions on model from @eq-state-space-time-fixed
+
+$$
+A = \alpha I, \quad \Phi = g I, \quad R = \sigma^2_Y I
+$$ {#eq-hdgm-const}
+
+$$
+Q_{ij} = \exp (-|| y_{t,i} - y_{t,j} ||_2 / \theta)
+$$ {#eq-exp-cor-el}
+
+with scalars $\alpha$, $|g|<1$ (implied stationary state autoregression structure), $\sigma^2_{Y}, \theta > 0$.
+
+The state innovation covariance has unitary variance and exponential correlation.
+
+### EM
+
+The EM updates follow the previously given ones with some changes. The ones reported are from @Calculli2015, where missing data updates are present and a more general multivariate response structure is considered.
+
+The update for $g$ is the univariate version of the update for $\Phi$ so the trace is taken: $g^j = \frac{\text{tr}(S_{10})}{\text{tr}(S_{11})}$.
+
+The $\sigma^2_Y$ update is $(\sigma^2_Y)^j = \frac{1}{qT} \text{tr} \left( \sum^{T}_{t=1} \Omega_t \right)$ where $\Omega_t = y_t - \Gamma_t u - Ax_t + \alpha^2 P^T_t$.
+
+Since the scaling is given by $\alpha$, it can't be assumed known (unless in this parameterization) its update is $\alpha^j = \frac{\sum^T_{t=1}\text{tr}\left(\psi_t x^\top_t \right)}{\text{tr} \left( S_{11} \right)}$
+
+The exponential correlation parameter $\theta$ is updated via numerical optimization:
+
+$\theta^j = \text{argmin}_{\theta} \quad T\log|Q| + \text{tr} \left[Q^{-1} \left(S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi\top \right) \right]$.
+
+Since this is a univariat optimization problem Brent method is used, the $\theta$ dimension increases other methods should be employed such Nelder-Mead.
+
+## References

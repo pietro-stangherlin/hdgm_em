@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Kalman Filter and Smoother Derivations</title>
+<title>Linear Gaussian State Space</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -43,16 +43,16 @@ div.csl-indent {
 }</style>
 
 
-<script src="kalman_filter_smoother_files/libs/clipboard/clipboard.min.js"></script>
-<script src="kalman_filter_smoother_files/libs/quarto-html/quarto.js"></script>
-<script src="kalman_filter_smoother_files/libs/quarto-html/popper.min.js"></script>
-<script src="kalman_filter_smoother_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="kalman_filter_smoother_files/libs/quarto-html/anchor.min.js"></script>
-<link href="kalman_filter_smoother_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="kalman_filter_smoother_files/libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="kalman_filter_smoother_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="kalman_filter_smoother_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="kalman_filter_smoother_files/libs/bootstrap/bootstrap-1bc8a17f135ab3d594c857e9f48e611b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="gaussian_linear_state_space_files/libs/clipboard/clipboard.min.js"></script>
+<script src="gaussian_linear_state_space_files/libs/quarto-html/quarto.js"></script>
+<script src="gaussian_linear_state_space_files/libs/quarto-html/popper.min.js"></script>
+<script src="gaussian_linear_state_space_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="gaussian_linear_state_space_files/libs/quarto-html/anchor.min.js"></script>
+<link href="gaussian_linear_state_space_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="gaussian_linear_state_space_files/libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="gaussian_linear_state_space_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="gaussian_linear_state_space_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="gaussian_linear_state_space_files/libs/bootstrap/bootstrap-1bc8a17f135ab3d594c857e9f48e611b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -94,7 +94,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Kalman Filter and Smoother Derivations</h1>
+<h1 class="title">Linear Gaussian State Space</h1>
 </div>
 
 
@@ -142,12 +142,15 @@ x^{s}_t = E(x_t|y_{1:s})
 P^{s}_{t1,t2} = E\{(x_{t_1} - x^s_{t_1})(x_{t_2} - x^s_{t_2})^\top|y_{1:s}\}
 \tag{3}\]</span></span></p>
 <p>where for ease of notation <span class="math inline">\(P^{s}_{t} := P^{s}_{t,t}\)</span>.</p>
+<p><span class="math inline">\(y_{t,i}\)</span> is the <span class="math inline">\(i^{th}\)</span> component of <span class="math inline">\(y_t\)</span>.</p>
 </section>
-<section id="kalman-filter" class="level2">
-<h2 class="anchored" data-anchor-id="kalman-filter">Kalman Filter</h2>
+<section id="kalman-filter-and-smoother" class="level2">
+<h2 class="anchored" data-anchor-id="kalman-filter-and-smoother">Kalman Filter and Smoother</h2>
+<section id="kalman-filter" class="level3">
+<h3 class="anchored" data-anchor-id="kalman-filter">Kalman Filter</h3>
 <p>Assuming known initial conditions <span class="math inline">\(x^0_0\)</span> and <span class="math inline">\(P^0_0\)</span> we have</p>
-<section id="filtering" class="level3">
-<h3 class="anchored" data-anchor-id="filtering">Filtering</h3>
+<section id="prediction" class="level4">
+<h4 class="anchored" data-anchor-id="prediction">Prediction</h4>
 <p><span id="eq-filter-state"><span class="math display">\[
 x^{t-1}_t = \Phi_t x^{t-1}_{t-1} + \Upsilon_t u_t
 \tag{4}\]</span></span></p>
@@ -155,8 +158,8 @@ x^{t-1}_t = \Phi_t x^{t-1}_{t-1} + \Upsilon_t u_t
 P^{t-1}_t = \Phi_t P^{t-1}_{t-1} \Phi^{\top}_{t} + Q_t
 \tag{5}\]</span></span></p>
 </section>
-<section id="prediction" class="level3">
-<h3 class="anchored" data-anchor-id="prediction">Prediction</h3>
+<section id="filtering" class="level4">
+<h4 class="anchored" data-anchor-id="filtering">Filtering</h4>
 <p><span id="eq-predicted-state"><span class="math display">\[ x^{t}_t = x^{t-1}_{t} + K_t (y_t - A_t x^{t-1}_{t} - \Gamma u_t)  \tag{6}\]</span></span></p>
 <p><span id="eq-predicted-covariance"><span class="math display">\[ P^{t}_t = (I - K_t A_t)P^{t-1}_t  \tag{7}\]</span></span></p>
 <p>Where the Kalman gain is</p>
@@ -172,8 +175,8 @@ K_t = P^{t-1}_t A^\top_t(A_t P^{t-1}_t A^{\top}_t + R_t)^{-1}
 \tag{9}\]</span></span></p>
 </section>
 </section>
-<section id="kalman-smoother" class="level2">
-<h2 class="anchored" data-anchor-id="kalman-smoother">Kalman Smoother</h2>
+<section id="kalman-smoother" class="level3">
+<h3 class="anchored" data-anchor-id="kalman-smoother">Kalman Smoother</h3>
 <p><span id="eq-smoothed-state"><span class="math display">\[
 x^T_{t-1} = x^{t-1}_{t-1} + J_{t-1} (x^T_{t} - x^{t-1}_t)
 \tag{10}\]</span></span></p>
@@ -184,8 +187,8 @@ P^T_{t-1} = P^{t-1}_{t-1} + J_{t-1}(P^T_{t} - P^{t-1}_t) J^\top_{t-1}
 <p><span id="eq-smoother-gain"><span class="math display">\[
 J_{t-1} = P^{t-1}_{t-1} \Phi_t (P^{t-1}_{t})^{-1}
 \tag{12}\]</span></span></p>
-<section id="lag-one-covariance-smoother" class="level3">
-<h3 class="anchored" data-anchor-id="lag-one-covariance-smoother">Lag-One Covariance Smoother</h3>
+<section id="lag-one-covariance-smoother" class="level4">
+<h4 class="anchored" data-anchor-id="lag-one-covariance-smoother">Lag-One Covariance Smoother</h4>
 <p><span id="eq-lagone-covariance-smoother-recursion"><span class="math display">\[
 P^T_{t-1, t-2} = P^{t-1}_{t-1} J^\top_{t-2} + J_{t-1}(P^T_{t,t-1} - \Phi_t P^{t-1}_{t-1}) J^\top_{t-2}
 \tag{13}\]</span></span></p>
@@ -193,6 +196,7 @@ P^T_{t-1, t-2} = P^{t-1}_{t-1} J^\top_{t-2} + J_{t-1}(P^T_{t,t-1} - \Phi_t P^{t-
 <p><span id="eq-lagone-covariance-smoother-initialization"><span class="math display">\[
 P^T_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
 \tag{14}\]</span></span></p>
+</section>
 </section>
 </section>
 <section id="likelihood" class="level2">
@@ -279,15 +283,80 @@ Q^j = T^{-1}(S_{11} - S_{10} S^{-1}_{00} S^\top_{10})
 R^j = T^{-1} \left[ \left( \sum_{t=1}^{T} \psi_t \psi^\top_t \right) - A \left( \sum_{t=1}^{T} x^T_t \psi^\top_t \right) - \left( \sum_{t=1}^{T} x^T_t \psi^\top_t \right)^\top A^\top + A S_{11} A^\top \right]
 \tag{25}\]</span></span></p>
 <p><span id="eq-fixed-effect-update"><span class="math display">\[
-u^j = \left[\sum^T_{t=1} \Gamma^\top_t \Gamma_t \right]^{-1} \left[ \sum^T_{t=1} \Gamma^\top_t \psi_t \right]
+u^j = \left[\sum^T_{t=1} \Gamma^\top_t \Gamma_t \right]^{-1} \left[ \sum^T_{t=1} \Gamma^\top_t (y_t - A x_t) \right]
 \tag{26}\]</span></span></p>
-
+<p><span id="eq-initial-param-updates"><span class="math display">\[
+\mu_0 = x^T_0; \quad \Sigma_0 = P^T_0
+\tag{27}\]</span></span></p>
 </section>
+<section id="missing-data" class="level3">
+<h3 class="anchored" data-anchor-id="missing-data">Missing Data</h3>
+</section>
+</section>
+<section id="inference" class="level2">
+<h2 class="anchored" data-anchor-id="inference">Inference</h2>
+<section id="numerical-hessian-and-standard-errors" class="level3">
+<h3 class="anchored" data-anchor-id="numerical-hessian-and-standard-errors">Numerical Hessian and standard errors</h3>
+</section>
+<section id="bootstrap" class="level3">
+<h3 class="anchored" data-anchor-id="bootstrap">Bootstrap</h3>
+</section>
+<section id="bayesian-inference" class="level3">
+<h3 class="anchored" data-anchor-id="bayesian-inference">Bayesian Inference</h3>
+</section>
+</section>
+<section id="parameters-selection" class="level2">
+<h2 class="anchored" data-anchor-id="parameters-selection">Parameters selection</h2>
+<section id="information-criteria" class="level3">
+<h3 class="anchored" data-anchor-id="information-criteria">Information Criteria</h3>
+</section>
+<section id="cross---validation" class="level3">
+<h3 class="anchored" data-anchor-id="cross---validation">Cross - Validation</h3>
+<ul>
+<li><p>Sliding window</p></li>
+<li><p>Leave one station out (only for certain models)</p></li>
+</ul>
+</section>
+</section>
+<section id="hdgm" class="level2">
+<h2 class="anchored" data-anchor-id="hdgm">HDGM</h2>
+<section id="model" class="level3">
+<h3 class="anchored" data-anchor-id="model">Model</h3>
+<p>Following <span class="citation" data-cites="Otto2023">Otto et al. (<a href="#ref-Otto2023" role="doc-biblioref">2023</a>)</span> the Hidden Dynamic Geostatistical Model (HDGM) is obtnaied imposing the following restrictions on model from <a href="#eq-state-space-time-fixed" class="quarto-xref">Equation&nbsp;17</a></p>
+<p><span id="eq-hdgm-const"><span class="math display">\[
+A = \alpha I, \quad \Phi = g I, \quad R = \sigma^2_Y I
+\tag{28}\]</span></span></p>
+<p><span id="eq-exp-cor-el"><span class="math display">\[
+Q_{ij} = \exp (-|| y_{t,i} - y_{t,j} ||_2 / \theta)
+\tag{29}\]</span></span></p>
+<p>with scalars <span class="math inline">\(\alpha\)</span>, <span class="math inline">\(|g|&lt;1\)</span> (implied stationary state autoregression structure), <span class="math inline">\(\sigma^2_{Y}, \theta &gt; 0\)</span>.</p>
+<p>The state innovation covariance has unitary variance and exponential correlation.</p>
+</section>
+<section id="em" class="level3">
+<h3 class="anchored" data-anchor-id="em">EM</h3>
+<p>The EM updates follow the previously given ones with some changes. The ones reported are from <span class="citation" data-cites="Calculli2015">Calculli et al. (<a href="#ref-Calculli2015" role="doc-biblioref">2015</a>)</span>, where missing data updates are present and a more general multivariate response structure is considered.</p>
+<p>The update for <span class="math inline">\(g\)</span> is the univariate version of the update for <span class="math inline">\(\Phi\)</span> so the trace is taken: <span class="math inline">\(g^j = \frac{\text{tr}(S_{10})}{\text{tr}(S_{11})}\)</span>.</p>
+<p>The <span class="math inline">\(\sigma^2_Y\)</span> update is <span class="math inline">\((\sigma^2_Y)^j = \frac{1}{qT} \text{tr} \left( \sum^{T}_{t=1} \Omega_t \right)\)</span> where <span class="math inline">\(\Omega_t = y_t - \Gamma_t u - Ax_t + \alpha^2 P^T_t\)</span>.</p>
+<p>Since the scaling is given by <span class="math inline">\(\alpha\)</span>, it can’t be assumed known (unless in this parameterization) its update is <span class="math inline">\(\alpha^j = \frac{\sum^T_{t=1}\text{tr}\left(\psi_t x^\top_t \right)}{\text{tr} \left( S_{11} \right)}\)</span></p>
+<p>The exponential correlation parameter <span class="math inline">\(\theta\)</span> is updated via numerical optimization:</p>
+<p><span class="math inline">\(\theta^j = \text{argmin}_{\theta} \quad T\log|Q| + \text{tr} \left[Q^{-1} \left(S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi\top \right) \right]\)</span>.</p>
+<p>Since this is a univariat optimization problem Brent method is used, the <span class="math inline">\(\theta\)</span> dimension increases other methods should be employed such Nelder-Mead.</p>
+</section>
+</section>
+<section id="references" class="level2 unnumbered">
+
+
 </section>
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Calculli2015" class="csl-entry" role="listitem">
+Calculli, Crescenza, Alessandro Fassò, Francesco Finazzi, Alessio Pollice, and Annarita Turnone. 2015. <span>“Maximum Likelihood Estimation of the Multivariate Hidden Dynamic Geostatistical Model with Application to Air Quality in Apulia, Italy.”</span> <em>Environmetrics</em> 26 (6): 406–17. https://doi.org/<a href="https://doi.org/10.1002/env.2345">https://doi.org/10.1002/env.2345</a>.
+</div>
 <div id="ref-DurbinKoopman" class="csl-entry" role="listitem">
 Durbin, and Koopman. 2012. <span>“Time Series Analysis by State Space Methods.”</span>
+</div>
+<div id="ref-Otto2023" class="csl-entry" role="listitem">
+Otto, Philipp, Alessandro Moro, Jacopo Rodeschini, Qendrim Shaboviq, Rosalba Ignaccolo, N. Golini, Michela Cameletti, Paolo Maranzano, Francesco Finazzi, and Alessandro Fassò. 2023. <span>“Spatiotemporal Modelling of PM 2.5 Concentrations in Lombardy (Italy) -a Comparative Study.”</span> <a href="https://doi.org/10.48550/arXiv.2309.07285">https://doi.org/10.48550/arXiv.2309.07285</a>.
 </div>
 <div id="ref-ShumwayStoffer" class="csl-entry" role="listitem">
 Shumway, Robert H., and David S. Stoffer. 2005. <em>Time Series Analysis and Its Applications (Springer Texts in Statistics)</em>. Berlin, Heidelberg: Springer-Verlag.
