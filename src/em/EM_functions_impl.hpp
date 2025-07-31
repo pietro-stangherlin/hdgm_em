@@ -172,21 +172,32 @@ arma::mat OmegaSumUpdate_core(const arma::mat & mY_fixed_res,
                          const arma::mat & Zt,
                          const arma::mat & mXz,
                          const CovStore & cPsmt,
-                         double alpha){
+                         double alpha,
+                         const arma::uvec &missing_indicator,
+                         const double previous_sigma2y){
 
   int T = mY_fixed_res.n_cols;
   int q = mY_fixed_res.n_rows;
   int p = Zt.n_rows;
 
+  bool some_missing = false;
+
 
   arma::mat Omega_sum(q, q, arma::fill::zeros);
 
   for(int t = 0; t < T; t++){
-    Omega_sum += Omega_one_t(mY_fixed_res.col(t),
-                             Zt.col(t),
-                             mXz,
-                             GetCov(cPsmt, t, p),
-                             alpha);
+      if(missing_indicator[t] == 1){
+        some_missing = true;
+      }
+      Omega_sum += Omega_one_t(mY_fixed_res.col(t),
+                               Zt.col(t),
+                               mXz,
+                               GetCov(cPsmt, t, p),
+                               alpha,
+                               some_missing,
+                               previous_sigma2y);
+
+      some_missing = false;
   };
 
   return(Omega_sum);

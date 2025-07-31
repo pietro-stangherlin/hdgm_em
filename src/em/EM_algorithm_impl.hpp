@@ -332,7 +332,9 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
                                               ksm_res.x_smoothed,
                                               Xz,
                                               ksm_res.P_smoothed,
-                                              alpha_temp);
+                                              alpha_temp,
+                                              missing_indicator,
+                                              sigma2_temp);
 
 
     // Sigma2 update

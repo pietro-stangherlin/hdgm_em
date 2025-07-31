@@ -36,7 +36,9 @@ arma::mat OmegaSumUpdate_core(const arma::mat & mY_fixed_res,
                                          const arma::mat & Zt,
                                          const arma::mat & mXz,
                                          const CovStore & cPsmt,
-                                         double alpha);
+                                         double alpha,
+                                         const arma::uvec &missing_indicator,
+                                         const double previous_sigma2y);
 
 
 
@@ -44,11 +46,13 @@ arma::mat OmegaSumUpdate_core(const arma::mat & mY_fixed_res,
 double gUpdate(const arma::mat & S00,
                const arma::mat & S10);
 
-arma::mat Omega_one_t(const arma::vec & vY_fixed_res_t,
-                      const arma::vec & vZt,
-                      const arma::mat & mXz,
-                      const arma::mat & mPsmt,
-                      double alpha);
+arma::mat Omega_one_t(const arma::vec vY_fixed_res_t,
+                      const arma::vec vZt,
+                      const arma::mat mXz,
+                      const arma::mat mPsmt,
+                      double alpha,
+                      const bool some_missing,
+                      const double previous_sigma2y);
 
 double LogThetaNegativeToOptim(const double log_theta,
                                const arma::mat &dist_matrix,
@@ -76,6 +80,8 @@ double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta
                                            const double& g,
                                            const int& N);
 
+// NOT Currently used
+// Nelder Mead optimization for multiparameter state non differentiable innovation covariance
 std::array<double,2> ThetaVUpdate(const arma::mat& dist_matrix,
                                   double& g,
                                   int& N,
@@ -97,4 +103,6 @@ arma::vec BetaUpdate(const arma::cube& Xbeta,
                      const arma::mat& Xz,
                      const arma::mat& inv_mXbeta_summ,
                      const arma::uvec &missing_indicator);
+
+arma::mat MakePermutMatrix(const arma::uvec perm_indexes);
 

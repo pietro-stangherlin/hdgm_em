@@ -384,3 +384,29 @@ par(mfrow = c(1,1))
 res_EM_dep_false$llik
 
 
+# MISSING Y --------------------------------------------
+y.miss = y.matr
+
+
+for(i in 1:N){
+  for(j in 1:Y_LEN){
+      if(runif(1) < 0.01){
+        y.miss[j, i] = NaN
+      }
+  }
+}
+
+res_un_EM_miss = UnstructuredEM(y = y.miss,
+                           Phi_0 = G * diag(nrow = Y_LEN),
+                           A_0 = A * diag(nrow = Y_LEN),
+                           Q_0 = ETA_MATRIX,
+                           R_0 = SIGMAY^2 * diag(nrow = Y_LEN),
+                           x0_in = rep(0, Y_LEN),
+                           P0_in = ETA_MATRIX,
+                           max_iter = 200,
+                           bool_mat = FALSE,
+                           verbose = TRUE)
+
+
+
+
