@@ -28,7 +28,8 @@ template <typename CovStore>
 double AlphaUpdate_core(const arma::mat & mY_fixed_res,
                         const arma::mat & mZ,
                         const arma::mat & mXz,
-                        const CovStore & cPsm);
+                        const CovStore & cPsm,
+                        const arma::uvec &missing_indicator);
 
 template <typename CovStore>
 arma::mat OmegaSumUpdate_core(const arma::mat & mY_fixed_res,

@@ -339,7 +339,9 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
     sigma2_temp = Sigma2Update(omega_sum_temp, q, T);
 
     // Alpha update
-    alpha_temp = AlphaUpdate_core<CovStore>(em_in.y, ksm_res.x_smoothed, Xz, ksm_res.P_smoothed);
+    alpha_temp = AlphaUpdate_core<CovStore>(em_in.y, ksm_res.x_smoothed,
+                                            Xz, ksm_res.P_smoothed,
+                                            missing_indicator);
 
     // Beta update
     if (em_in.is_fixed_effect) {
