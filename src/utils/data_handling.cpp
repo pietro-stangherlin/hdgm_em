@@ -4,7 +4,7 @@
 #include <RcppArmadillo.h>
 
 // [[Rcpp::export]]
-arma::cube ArrayToCube(Rcpp::NumericVector arr) {
+arma::cube ArrayToCube(Rcpp::NumericVector &arr) {
   Rcpp::IntegerVector dims = arr.attr("dim");
   if (dims.size() != 3) {
     Rcpp::stop("Input must be a 3D array.");
@@ -18,6 +18,7 @@ arma::cube ArrayToCube(Rcpp::NumericVector arr) {
 
   return result;
 }
+
 
 // NOT Implemented yet due to too much memory usage
 // possible alternatives are storing a vector of consecutive indexes
@@ -34,6 +35,3 @@ arma::cube ArrayToCube(Rcpp::NumericVector arr) {
  * (0,3,0,0,0,1) since the at index 0 we have 1, at index 3 we have two and we stop reading
  * indexes in the new matrix after index 1
  */
-arma::mat GetNotNullIndexes(const arma::mat &in_mat){
-  return arma::mat A(5,5,arma::fill::eye);
-}

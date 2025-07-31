@@ -186,9 +186,9 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
   // if 0 there's no missing observation at time
   // else there 1
 
-  arma::uvec missing_indicator;
+  arma::uvec missing_indicator(T, arma::fill::zeros);
   arma::uvec index_not_miss; // temp, changed at each time
-  arma::uvec t_index;
+  arma::uvec t_index(1, arma::fill::zeros);
 
   arma::vec y_t;
   arma::mat X_t;
@@ -205,15 +205,16 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
       index_not_miss = arma::find_finite(y_t);
 
-      if(index_not_miss.size() < p){
+      if(index_not_miss.size() == q){
+        missing_indicator[t] = 0;
+        mXbeta_sum += X_t.t() * X_t;
+
+      }
+      else{
         // some missings found
         missing_indicator[t] = 1;
         mXbeta_sum += X_t.rows(index_not_miss).t() *
           X_t.rows(index_not_miss);
-
-      }else{
-        missing_indicator[t] = 0;
-        mXbeta_sum += X_t.t() * X_t;
       }
 
 

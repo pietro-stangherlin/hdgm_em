@@ -5,13 +5,15 @@ library(RcppArmadillo)
 
 Sys.setenv("PKG_CXXFLAGS"="-std=c++20")
 
+source("tests/test_helper.R")
+
 Rcpp::sourceCpp("src/em/EM_wrapper.cpp",
                 rebuild = TRUE)
 
 # Rcpp::sourceCpp("src/utils/data_handling.cpp",
 #                 rebuild = TRUE)
 
-source("tests/test_helper.R")
+
 
 # Simulation function unstructured ----------------------------------------
 

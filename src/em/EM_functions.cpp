@@ -318,7 +318,7 @@ arma::vec BetaUpdate(const arma::cube& Xbeta,  // T elements of (q x p)
   int p = inv_mXbeta_sum.n_rows;
   arma::vec right_term = arma::zeros(p);
   arma::uvec index_not_miss;
-  arma::uvec t_index;
+  arma::uvec t_index(1, arma::fill::zeros);
 
   int T = y.n_cols;
 
