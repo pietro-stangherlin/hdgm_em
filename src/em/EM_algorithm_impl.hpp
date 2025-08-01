@@ -144,9 +144,6 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
 template <typename CovStore>
 EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
-  // Setup
-  bool is_fixed_effect = em_in.Xbeta.has_value();
-
   int q = em_in.y.n_rows; // observation and state vector length
   int T = em_in.y.n_cols;
   int p = em_in.beta0.n_elem; // fixed effect vector length
@@ -185,10 +182,54 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
   arma::mat mXbeta_sum(p, p, arma::fill::zeros);
   arma::mat m_inv_mXbeta_sum;
 
-  if (is_fixed_effect) {
+  // Make vector of 0 and 1 for each time
+  // if 0 there's no missing observation at time
+  // else there 1
+
+  arma::uvec missing_indicator(T, arma::fill::zeros);
+  arma::uvec index_not_miss; // temp, changed at each time
+  arma::uvec t_index(1, arma::fill::zeros);
+
+  arma::vec y_t;
+  arma::mat X_t;
+
+  // first mark which observations contain at least one missing
+  for(int t = 0; t < T; ++t){
+
+    index_not_miss = arma::find_finite(em_in.y.col(t));
+
+    if(index_not_miss.n_elem < q){
+      missing_indicator[t] = 1;
+    }
+
+
+  }
+
+  // DEBUG
+  // std::cout << "missing_indicator" << std::endl;
+  // std::cout << missing_indicator << std::endl;
+
+  // NOTE: this is inefficient, a possible work around
+  // is to give each X matrix in input as transposed
+  // then select the non missing columns (rows in the traditional format)
+  // and transpose again.
+
+  if (em_in.is_fixed_effect == true) {
 
     for (int t = 0; t < T; ++t) {
-      mXbeta_sum += (*em_in.Xbeta).slice(t).t() * (*em_in.Xbeta).slice(t);
+      y_t = em_in.y.col(t);
+      X_t = em_in.Xbeta.slice(t);
+
+      if(missing_indicator[t] == 0){
+        mXbeta_sum += X_t.t() * X_t;
+      }
+      else{
+        // some missings found
+        index_not_miss = arma::find_finite(y_t);
+        mXbeta_sum += X_t.rows(index_not_miss).t() *
+          X_t.rows(index_not_miss);
+      }
+
     }
     m_inv_mXbeta_sum = arma::inv_sympd(mXbeta_sum);
   }
@@ -199,6 +240,8 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
   llik_prev = LOWEST_DOUBLE;
 
   double llik_relative_diff;
+
+  arma::mat y_res;
 
   // EM iterations
   int last_iter = 1;
@@ -216,12 +259,25 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
 
     // Subtract fixed effects
-    arma::mat y_res = em_in.y;
+    y_res = em_in.y;
 
-    if (is_fixed_effect) {
+    if (em_in.is_fixed_effect == true) {
       for (int t = 0; t < T; ++t) {
-        y_res.col(t) -= (*em_in.Xbeta).slice(t) * beta_temp;
+        y_t = y_res.col(t);
+        X_t = em_in.Xbeta.slice(t);
+
+        t_index[0] = t;
+
+        if(missing_indicator[t] == 0){
+        y_res.col(t) -= X_t * beta_temp;
+        }
+      else{
+        index_not_miss = arma::find_finite(y_t);
+        y_t = y_t.elem(index_not_miss);
+        y_t -=  X_t.rows(index_not_miss) * beta_temp;
+        y_res.submat(index_not_miss,t_index) = y_t;
       }
+    }
     }
 
     // update state space matrices
@@ -229,6 +285,25 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
     Phi_temp = g_temp * Iqq;
     Q_temp = ExpCor(em_in.dist_matrix, theta_temp);
     R_temp = sigma2_temp * Iqq;
+
+
+    // DEBUG
+
+    // std::cout << "A_temp" << std::endl;
+    // std::cout << A_temp << std::endl;
+    //
+    // std::cout << "Phi_temp" << std::endl;
+    // std::cout << Phi_temp << std::endl;
+    //
+    // std::cout << "Q_temp" << std::endl;
+    // std::cout << Q_temp << std::endl;
+    //
+    // std::cout << "R_temp" << std::endl;
+    // std::cout << R_temp << std::endl;
+
+
+    // std::cout << "y_res" << std::endl;
+    // std::cout << y_res << std::endl;
 
     ///////////////////////
     // Kalman Smoother pass
@@ -284,29 +359,36 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
     arma::mat S10 = ComputeS10_core<CovStore>(ksm_res.x_smoothed, ksm_res.Lag_one_cov_smoothed, x0_smoothed);
 
 
+    //std::cout << "before OmegaSumUpdate_core" << std::endl;
     // Omega Update
     arma::mat omega_sum_temp = OmegaSumUpdate_core<CovStore>(y_res, // residual minus fixed effect
                                               ksm_res.x_smoothed,
                                               Xz,
                                               ksm_res.P_smoothed,
-                                              alpha_temp);
+                                              alpha_temp,
+                                              missing_indicator,
+                                              sigma2_temp);
 
 
     // Sigma2 update
     sigma2_temp = Sigma2Update(omega_sum_temp, q, T);
 
+    //std::cout << "before AlphaUpdate_core" << std::endl;
+
     // Alpha update
-    alpha_temp = AlphaUpdate_core<CovStore>(em_in.y, ksm_res.x_smoothed, Xz, ksm_res.P_smoothed);
+    alpha_temp = AlphaUpdate_core<CovStore>(y_res, ksm_res.x_smoothed,
+                                            Xz, ksm_res.P_smoothed,
+                                            missing_indicator);
 
     // Beta update
-    if (is_fixed_effect) {
-      const arma::cube& Xbeta_val = *(em_in.Xbeta);
-      beta_temp = BetaUpdate(Xbeta_val,
+    if (em_in.is_fixed_effect == true) {
+      beta_temp = BetaUpdate(em_in.Xbeta,
                              em_in.y,
                              ksm_res.x_smoothed,
                              alpha_temp,
                              Xz,
-                             m_inv_mXbeta_sum);
+                             m_inv_mXbeta_sum,
+                             missing_indicator);
 
     }
 

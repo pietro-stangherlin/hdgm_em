@@ -62,16 +62,63 @@ double gUpdate(const arma::mat & S00,
 * @param Pt (matrix): (s x s) matrix of smoothed state variance at time t
 */
 
-arma::mat Omega_one_t(const arma::vec & vY_fixed_res_t,
-                      const arma::vec & vZt,
-                      const arma::mat & mXz,
-                      const arma::mat & mPsmt,
-                      double alpha){
+arma::mat Omega_one_t(const arma::vec vY_fixed_res_t,
+                      const arma::vec vZt,
+                      const arma::mat mXz,
+                      const arma::mat mPsmt,
+                      double alpha,
+                      const bool some_missing,
+                      const double previous_sigma2y){
 
-  arma::vec res = vY_fixed_res_t - alpha * mXz * vZt;
+  int q = vY_fixed_res_t.size();
+  arma::vec temp_vec;
+  arma::mat res_mat(q, q, arma::fill::eye);
 
-    return (res * res.t() +
-            alpha * alpha * mXz * mPsmt * mXz.t());
+  // std::cout << "some_missing" << std::endl;
+  // std::cout << some_missing << std::endl;
+
+  if(some_missing == false){
+    temp_vec = vY_fixed_res_t - alpha * mXz * vZt;
+    res_mat = temp_vec * temp_vec.t() +
+      alpha * alpha * mXz * mPsmt * mXz.t();
+  }
+  else{
+    // used to define the permutation matrix
+    arma::uvec finite_idx = arma::find_finite(vY_fixed_res_t);
+    int len_finite = finite_idx.n_elem;
+    arma::uvec nonfinite_idx = arma::find_nonfinite(vY_fixed_res_t);
+    int len_nonfinite = nonfinite_idx.n_elem;
+
+    // DEBUG
+    // std::cout << "finite_idx" << std::endl;
+    // std::cout << finite_idx << std::endl;
+    //
+    // std::cout << "nonfinite_idx" << std::endl;
+    // std::cout << nonfinite_idx << std::endl;
+
+    arma::uvec combined = arma::join_vert(finite_idx, nonfinite_idx);
+
+    // std::cout << "combined" << std::endl;
+    // std::cout << combined << std::endl;
+
+    arma::mat perm_matr = MakePermutMatrix(combined);
+
+    // compute submatrix quantities
+    temp_vec = vY_fixed_res_t.elem(finite_idx) - alpha * mXz.submat(finite_idx, finite_idx) * vZt.elem(finite_idx);
+    arma::mat omega_mat = temp_vec * temp_vec.t() +
+      alpha * alpha * mXz.submat(finite_idx,finite_idx) *
+      mPsmt.submat(finite_idx,finite_idx) * mXz.submat(finite_idx,finite_idx).t();
+
+    arma::mat R22(len_nonfinite, len_nonfinite, arma::fill::eye);
+
+    res_mat.submat(0, 0, len_finite - 1, len_finite - 1) = omega_mat;
+    res_mat.submat(len_finite, len_finite, q - 1, q - 1) = previous_sigma2y * R22;
+
+    res_mat = perm_matr * res_mat * perm_matr.t();
+  }
+
+
+    return res_mat;
 
 }
 
@@ -312,16 +359,60 @@ arma::vec BetaUpdate(const arma::cube& Xbeta,  // T elements of (q x p)
                      const arma::mat& z,                    // (s x T)
                      double alpha,
                      const arma::mat& Xz,                   // (q x s)
-                     const arma::mat& inv_mXbeta_sum)       // (p x p)
+                     const arma::mat& inv_mXbeta_sum, // (p x p)
+                     const arma::uvec &missing_indicator)
 {
   int p = inv_mXbeta_sum.n_rows;
   arma::vec right_term = arma::zeros(p);
+  arma::uvec index_not_miss;
+  arma::uvec t_index(1, arma::fill::zeros);
+
+  arma::vec temp_res;
 
   int T = y.n_cols;
 
   for (int t = 0; t < T; ++t) {
-    right_term += Xbeta.slice(t).t() * (y.col(t) - alpha * Xz * z.col(t)); // (p)
+    temp_res = alpha * Xz * z.col(t);
+    if(missing_indicator[t] == 0){
+    right_term += Xbeta.slice(t).t() * (y.col(t) - temp_res);} // (p)
+  else{
+    t_index[0] = t;
+    index_not_miss = arma::find_finite(y.col(t));
+    right_term += Xbeta.slice(t).rows(index_not_miss).t() *
+      (y.submat(index_not_miss, t_index) - temp_res.elem(index_not_miss));
+  }
   }
 
   return inv_mXbeta_sum * right_term;
 }
+
+/*
+ * Given a vector of indexes permutations
+ * return a (square) permutation matrix of the same dimension
+ * supposed to bring back the elements to their original position
+ * Example: perm_indexs = (2,1,0,3)
+ * in order to get back to correct order (0, 1, 2, 3)
+ * we need the permutation matrix D =
+ * |0, 0, 1, 0|
+ * |0, 1, 0, 0|
+ * |1, 0, 0, 0|
+ * |0, 0, 0, 1|
+ * so that D * (2,1,0,3)^\top = (0, 1, 2, 3)^\top
+ * where \top stands for transposition
+ */
+arma::mat MakePermutMatrix(const arma::uvec perm_indexes){
+  int L = perm_indexes.n_elem;
+  arma::mat D(L, L, arma::fill::eye);
+
+  for(int l = 0; l < L; ++l){
+    // remove 1 from diagonal
+    D(l,l) = 0;
+    // insert new one out of diagonal
+    D(perm_indexes[l], l) = 1;
+  }
+
+  return D;
+
+
+}
+

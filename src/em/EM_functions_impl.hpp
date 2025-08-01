@@ -117,20 +117,41 @@ template <typename CovStore>
 double AlphaUpdate_core(const arma::mat & mY_fixed_res,
                    const arma::mat & mZ,
                    const arma::mat & mXz,
-                   const CovStore & cPsm){
+                   const CovStore & cPsm,
+                   const arma::uvec &missing_indicator){
 
   int T = mY_fixed_res.n_cols;
   int p = mXz.n_rows;
+  arma::uvec index_not_miss;
+  arma::uvec t_index(1, arma::fill::zeros);
+
+  arma::mat temp_state_moment;
 
   double num = 0.0;
   double den = 0.0;
 
+
   for(int t = 0; t < T; t++){
-    // NOTE: (mXz * mZ.col(t)) can be computed once and used also
-    // in other updates
-    num += arma::trace(mY_fixed_res.col(t) * (mXz * mZ.col(t)).t());
-    den += arma::trace(mXz *
-      (mZ.col(t) * mZ.col(t).t() + GetCov(cPsm, t, p)) * mXz.t());
+    temp_state_moment = mZ.col(t) * mZ.col(t).t() + GetCov(cPsm, t, p);
+
+    if(missing_indicator[t] == 0){
+      // NOTE: (mXz * mZ.col(t)) can be computed once and used also
+      // in other updates
+      num += arma::trace(mY_fixed_res.col(t) * (mXz * mZ.col(t)).t());
+      den += arma::trace(mXz * temp_state_moment * mXz.t());
+
+    }
+    else{
+      t_index[0] = t;
+      index_not_miss = arma::find_finite(mY_fixed_res.col(t));
+
+      num += arma::trace(mY_fixed_res.submat(index_not_miss, t_index) *
+        (mXz.submat(index_not_miss, index_not_miss) * mZ.submat(index_not_miss, t_index)).t());
+      den += arma::trace(mXz.submat(index_not_miss, index_not_miss) *
+        temp_state_moment.submat(index_not_miss, index_not_miss) * mXz.submat(index_not_miss, index_not_miss).t());
+
+    }
+
   };
 
   // TO DO: add error message if den == 0
@@ -151,21 +172,32 @@ arma::mat OmegaSumUpdate_core(const arma::mat & mY_fixed_res,
                          const arma::mat & Zt,
                          const arma::mat & mXz,
                          const CovStore & cPsmt,
-                         double alpha){
+                         double alpha,
+                         const arma::uvec &missing_indicator,
+                         const double previous_sigma2y){
 
   int T = mY_fixed_res.n_cols;
   int q = mY_fixed_res.n_rows;
   int p = Zt.n_rows;
 
+  bool some_missing = false;
+
 
   arma::mat Omega_sum(q, q, arma::fill::zeros);
 
   for(int t = 0; t < T; t++){
-    Omega_sum += Omega_one_t(mY_fixed_res.col(t),
-                             Zt.col(t),
-                             mXz,
-                             GetCov(cPsmt, t, p),
-                             alpha);
+      if(missing_indicator[t] == 1){
+        some_missing = true;
+      }
+      Omega_sum += Omega_one_t(mY_fixed_res.col(t),
+                               Zt.col(t),
+                               mXz,
+                               GetCov(cPsmt, t, p),
+                               alpha,
+                               some_missing,
+                               previous_sigma2y);
+
+      some_missing = false;
   };
 
   return(Omega_sum);

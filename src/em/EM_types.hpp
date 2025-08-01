@@ -24,11 +24,12 @@ struct EMInput{
   double sigma20; // initial observations variance
   const arma::vec x0_in;
   const arma::mat P0_in;
-  std::optional<arma::cube> Xbeta = std::nullopt;
+  const arma::cube &Xbeta;
   const double rel_llik_tol = 1.0e-5; // stopping criterion: relative incremente log likelihood
   const double theta_lower = 1e-05; // minimum theta value
   const double theta_upper = 20; // maximum theta value -> this can be incremented but a warning is given
   int max_iter = 10; // TO change + add tolerance
+  bool is_fixed_effect = false;
   bool verbose = true;
 };
 

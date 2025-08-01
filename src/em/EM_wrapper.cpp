@@ -64,33 +64,32 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
                     bool bool_mat,
                     const arma::vec x0_in,
                     const arma::mat P0_in,
-                    Rcpp::Nullable<Rcpp::NumericVector> Xbeta_in = R_NilValue,
+                    const Rcpp::NumericVector& Xbeta_in,
                     const double rel_llik_tol = 1.0e-5, // stopping criterion: relative incremente log likelihood
                     const double theta_lower = 1e-05, // minimum theta value
                     const double theta_upper = 20, // maximum theta value -> this can be incremented but a warning is given
                     int max_iter = 10, // TO change + add tolerance
+                    bool is_fixed_effects = false,
                     bool verbose = true) {
 
   std::cout << "Inside EMHDGM\n";
 
   // convert array to arma::cube
-  std::optional<arma::cube> Xbeta_opt = std::nullopt;
+  arma::cube Xbeta_opt;
 
-  if (Xbeta_in.isNotNull()) {
-    Rcpp::NumericVector Xvec(Xbeta_in);
-    Rcpp::IntegerVector dims = Xvec.attr("dim");
+  Rcpp::NumericVector Xvec(Xbeta_in);
+  Rcpp::IntegerVector dims = Xvec.attr("dim");
 
-    if (dims.size() != 3) {
+  if (dims.size() != 3) {
       Rcpp::stop("Xbeta must be a 3-dimensional array.");
-    }
-
-    int n_rows = dims[0];
-    int n_cols = dims[1];
-    int n_slices = dims[2];
-
-    arma::cube Xbeta(Xvec.begin(), n_rows, n_cols, n_slices, false); // no copy
-    Xbeta_opt = Xbeta;
   }
+
+  int n_rows = dims[0];
+  int n_cols = dims[1];
+  int n_slices = dims[2];
+
+  arma::cube Xbeta(Xvec.begin(), n_rows, n_cols, n_slices, false); // no copy
+  Xbeta_opt = Xbeta;
 
   std::cout << "After optional parameters \n";
 
@@ -111,7 +110,8 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
     .theta_lower = theta_lower,
     .theta_upper = theta_upper,
     .max_iter = max_iter,
-    .verbose = verbose
+    .is_fixed_effect = is_fixed_effects,
+    .verbose = verbose,
   };
 
   EMOutput res;
