@@ -1,9 +1,0 @@
-///////////////////
-Compile //////////
-//////////////////
-
-g++ src/tests/optim/test_nelder_mead.cpp -Isrc -o src/tests/optim/test_nelder_mead.exe
-
-
-//// Execute
-./src/tests/optim/test_nelder_mead.exe
