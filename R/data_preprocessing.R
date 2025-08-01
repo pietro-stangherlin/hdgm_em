@@ -26,7 +26,7 @@ PermuteVector <- function(input_vec,
 
   for(i in 1:length(input_vec)){
     temp_index = which(correct_sorting_vec == sorting_variable_vals[i])
-    res_vec[temp_index] = input_vec[q]
+    res_vec[temp_index] = input_vec[i]
   }
 
   return(res_vec)
