@@ -74,6 +74,9 @@ arma::mat Omega_one_t(const arma::vec vY_fixed_res_t,
   arma::vec temp_vec;
   arma::mat res_mat(q, q, arma::fill::eye);
 
+  // std::cout << "some_missing" << std::endl;
+  // std::cout << some_missing << std::endl;
+
   if(some_missing == false){
     temp_vec = vY_fixed_res_t - alpha * mXz * vZt;
     res_mat = temp_vec * temp_vec.t() +
@@ -82,16 +85,26 @@ arma::mat Omega_one_t(const arma::vec vY_fixed_res_t,
   else{
     // used to define the permutation matrix
     arma::uvec finite_idx = arma::find_finite(vY_fixed_res_t);
-    int len_finite = finite_idx.size();
+    int len_finite = finite_idx.n_elem;
     arma::uvec nonfinite_idx = arma::find_nonfinite(vY_fixed_res_t);
-    int len_nonfinite = nonfinite_idx.size();
+    int len_nonfinite = nonfinite_idx.n_elem;
+
+    // DEBUG
+    // std::cout << "finite_idx" << std::endl;
+    // std::cout << finite_idx << std::endl;
+    //
+    // std::cout << "nonfinite_idx" << std::endl;
+    // std::cout << nonfinite_idx << std::endl;
 
     arma::uvec combined = arma::join_vert(finite_idx, nonfinite_idx);
+
+    // std::cout << "combined" << std::endl;
+    // std::cout << combined << std::endl;
 
     arma::mat perm_matr = MakePermutMatrix(combined);
 
     // compute submatrix quantities
-    temp_vec = vY_fixed_res_t(finite_idx) - alpha * mXz.rows(finite_idx) * vZt(finite_idx);
+    temp_vec = vY_fixed_res_t.elem(finite_idx) - alpha * mXz.submat(finite_idx, finite_idx) * vZt.elem(finite_idx);
     arma::mat omega_mat = temp_vec * temp_vec.t() +
       alpha * alpha * mXz.submat(finite_idx,finite_idx) *
       mPsmt.submat(finite_idx,finite_idx) * mXz.submat(finite_idx,finite_idx).t();
@@ -354,16 +367,19 @@ arma::vec BetaUpdate(const arma::cube& Xbeta,  // T elements of (q x p)
   arma::uvec index_not_miss;
   arma::uvec t_index(1, arma::fill::zeros);
 
+  arma::vec temp_res;
+
   int T = y.n_cols;
 
   for (int t = 0; t < T; ++t) {
+    temp_res = alpha * Xz * z.col(t);
     if(missing_indicator[t] == 0){
-    right_term += Xbeta.slice(t).t() * (y.col(t) - alpha * Xz * z.col(t));} // (p)
+    right_term += Xbeta.slice(t).t() * (y.col(t) - temp_res);} // (p)
   else{
     t_index[0] = t;
     index_not_miss = arma::find_finite(y.col(t));
     right_term += Xbeta.slice(t).rows(index_not_miss).t() *
-      (y.submat(index_not_miss, t_index) - alpha * Xz.rows(index_not_miss) * z.submat(index_not_miss, t_index));
+      (y.submat(index_not_miss, t_index) - temp_res.elem(index_not_miss));
   }
   }
 
@@ -385,7 +401,7 @@ arma::vec BetaUpdate(const arma::cube& Xbeta,  // T elements of (q x p)
  * where \top stands for transposition
  */
 arma::mat MakePermutMatrix(const arma::uvec perm_indexes){
-  int L = perm_indexes.size();
+  int L = perm_indexes.n_elem;
   arma::mat D(L, L, arma::fill::eye);
 
   for(int l = 0; l < L; ++l){

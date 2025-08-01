@@ -18,6 +18,8 @@
 template <typename CovStore>
 KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore& Pp_store, CovStore& Pf_store) {
 
+  // DEBUG
+  // std::cout << "Inside Kalman Filter: " << std::endl;
 
   const int q = kf_inp.Y.n_rows; // observation vector dimensions
   const int p = kf_inp.Phi.n_rows; // state vector dimensions
@@ -50,6 +52,10 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
 
     yt = kf_inp.Y.col(t);
     nmiss = arma::find_finite(yt);
+    // DEBUG
+    // std::cout << "nmiss" << std::endl;
+    // std::cout << nmiss << std::endl;
+
     n_c = nmiss.n_elem;
 
     if (n_c > 0) {
@@ -61,6 +67,18 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
         Rt = kf_inp.R.submat(nmiss, nmiss);
         yt = yt.elem(nmiss);
       }
+
+      // DEBUG
+      // std::cout << "At" << std::endl;
+      // std::cout << At << std::endl;
+      //
+      // std::cout << "Rt" << std::endl;
+      // std::cout << Rt << std::endl;
+
+      // std::cout << "yt" << std::endl;
+      // std::cout << yt << std::endl;
+
+
 
       // Intermediate results
       VCt = Ppt * At.t();
@@ -95,6 +113,10 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
     // Store predicted and filtered data needed for smoothing
     xf_vals.col(t) = xft;
     xp_vals.col(t) = xpt;
+
+    // DEBUG
+    // std::cout << "Ppt: " << std::endl;
+    // std::cout << Ppt << std::endl;
 
     // Store covariance
     if constexpr (std::is_same_v<CovStore, arma::cube>) {
@@ -132,6 +154,9 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
 template <typename CovStore>
 KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& ksm_inp, CovStore& Ps, CovStore& Plos) {
 
+  // DEBUG
+  // std::cout << "Inside Kalman Smoother: " << std::endl;
+
   const int T = ksm_inp.xf.n_cols;
   const int p = ksm_inp.Phi.n_rows;
 
@@ -152,14 +177,6 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
   xs_vals.col(T-1) = ksm_inp.xf.col(T-1); // last smoothed state = filtered state
   K_times_A = (ksm_inp.nc_last == 0) ? arma::mat(p, p, arma::fill::zeros) : ksm_inp.K_last * ksm_inp.A_last;
 
-  // DEBUG
-  // std::cout << "ksm_inp.nc_last: " << ksm_inp.nc_last << std::endl;
-  // std::cout << "ksm_inp.K_last: " << std::endl;
-  // std::cout << ksm_inp.K_last << std::endl;
-  // std::cout << "K_times_A: " << std::endl;
-  // std::cout << K_times_A << std::endl;
-
-
   Ps_t = GetCov(ksm_inp.Pf, T-1, p); // last smoothed state cov = filtered state cov
 
 
@@ -178,7 +195,12 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
     arma::mat Pf = GetCov(ksm_inp.Pf, t, p);
     arma::mat Pp = GetCov(ksm_inp.Pp, t+1, p);
 
-    J_t = Pf * Phi_tr * inv_sympd(Pp);
+    // DEBUG
+    // std::cout << "Pp: " << std::endl;
+    // std::cout << Pp << std::endl;
+
+
+    J_t = Pf * Phi_tr * arma::inv_sympd(Pp);
 
     arma::mat J_t_T = J_t.t();
 
@@ -221,8 +243,14 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
   }
 
   // Smoothing t = 0 (array index) (actual time = 1)
+
   Pp = GetCov(ksm_inp.Pp, 0, p);
-  J_t_T = inv_sympd(Pp) * ksm_inp.Phi *  ksm_inp.P_0;
+
+  // DEBUG
+  // std::cout << "Pp0: " << std::endl;
+  // std::cout << Pp << std::endl;
+
+  J_t_T = arma::inv_sympd(Pp) * ksm_inp.Phi *  ksm_inp.P_0;
   Plos_t = GetCov(ksm_inp.Pf, 0, p) * J_t_T +
     J_t * (GetCov(Plos, 1, p) - ksm_inp.Phi * GetCov(ksm_inp.Pf, 0, p)) * J_t_T;
 

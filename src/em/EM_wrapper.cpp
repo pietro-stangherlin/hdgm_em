@@ -75,7 +75,7 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
   std::cout << "Inside EMHDGM\n";
 
   // convert array to arma::cube
-  // arma::cube Xbeta_opt;
+  arma::cube Xbeta_opt;
 
   Rcpp::NumericVector Xvec(Xbeta_in);
   Rcpp::IntegerVector dims = Xvec.attr("dim");
@@ -88,8 +88,8 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
   int n_cols = dims[1];
   int n_slices = dims[2];
 
-  arma::cube Xbeta_opt(Xvec.begin(), n_rows, n_cols, n_slices, false); // no copy
-  //Xbeta_opt = Xbeta;
+  arma::cube Xbeta(Xvec.begin(), n_rows, n_cols, n_slices, false); // no copy
+  Xbeta_opt = Xbeta;
 
   std::cout << "After optional parameters \n";
 
