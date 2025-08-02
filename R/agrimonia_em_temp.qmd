@@ -44,7 +44,7 @@ library(elevatr)
 
 
 ```{r preprocessing}
-load("data/Agrimonia_Dataset_v_3_0_0.Rdata")
+load("../../data/Agrimonia_Dataset_v_3_0_0.Rdata")
 agrim_df = AgrImOnIA_Dataset_v_3_0_0
 rm(AgrImOnIA_Dataset_v_3_0_0)
 
@@ -106,14 +106,14 @@ agrim_df_subsmpl = agrim_df |>
 ## EM HDGM
 
 ```{r}
-source("../hdgm_em/R/data_preprocessing.R")
+source("data_preprocessing.R")
 
 Sys.setenv("PKG_CXXFLAGS"="-std=c++20")
 
 library(Rcpp)
 library(RcppArmadillo)
 
-Rcpp::sourceCpp("../hdgm_em/src/em/EM_wrapper.cpp",
+Rcpp::sourceCpp("../src/em/EM_wrapper.cpp",
                 rebuild = TRUE)
 
 ```
