@@ -160,8 +160,8 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
   arma::mat par_history = arma::mat(4, em_in.max_iter + 1);
   arma::mat beta_history = arma::mat(p, em_in.max_iter + 1);
 
-  par_history.col(0) = arma::vec({alpha_temp, theta_temp,
-                  g_temp, sigma2_temp});
+  par_history.col(0) = arma::vec({alpha_temp, g_temp,
+                  theta_temp, sigma2_temp});
   beta_history.col(0) = beta_temp;
 
   // Identity helper matrices
@@ -204,10 +204,6 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
 
   }
-
-  // DEBUG
-  // std::cout << "missing_indicator" << std::endl;
-  // std::cout << missing_indicator << std::endl;
 
   // NOTE: this is inefficient, a possible work around
   // is to give each X matrix in input as transposed
@@ -285,25 +281,6 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
     Phi_temp = g_temp * Iqq;
     Q_temp = ExpCor(em_in.dist_matrix, theta_temp);
     R_temp = sigma2_temp * Iqq;
-
-
-    // DEBUG
-
-    // std::cout << "A_temp" << std::endl;
-    // std::cout << A_temp << std::endl;
-    //
-    // std::cout << "Phi_temp" << std::endl;
-    // std::cout << Phi_temp << std::endl;
-    //
-    // std::cout << "Q_temp" << std::endl;
-    // std::cout << Q_temp << std::endl;
-    //
-    // std::cout << "R_temp" << std::endl;
-    // std::cout << R_temp << std::endl;
-
-
-    // std::cout << "y_res" << std::endl;
-    // std::cout << y_res << std::endl;
 
     ///////////////////////
     // Kalman Smoother pass
@@ -402,8 +379,8 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
     g_temp = gUpdate(S00, S10);
 
     // Update parameters history
-    par_history.col(iter) = arma::vec({alpha_temp, theta_temp,
-                    g_temp, sigma2_temp});
+    par_history.col(iter) = arma::vec({alpha_temp, g_temp,
+                    theta_temp,sigma2_temp});
     beta_history.col(iter) = beta_temp;
   }
 
