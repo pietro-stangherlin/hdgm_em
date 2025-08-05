@@ -237,8 +237,8 @@ v_t &amp; \sim N(0, R) \quad \text{i.i.d}
 <p><span id="eq-complete-nllik-reduced"><span class="math display">\[
 \begin{aligned}
 -2 \ln L_{X,Y}(\Theta) &amp;= \ln |\Sigma_0| + (x_0 - \mu_0)^\top \Sigma_0^{-1} (x_0 - \mu_0) \\
-&amp;\quad + T \ln |Q| + \sum_{t=1}^{T} (x_t - \Phi x_{t-1})^\top Q^{-1}_t (x_t - \Phi x_{t-1}) \\
-&amp;\quad + T \ln |R| + \sum_{t=1}^{T} (y_t - A x_t -  \Gamma_t u)^\top R^{-1}_t (y_t - A x_t -  \Gamma_t u)
+&amp;\quad + T \ln |Q| + \sum_{t=1}^{T} (x_t - \Phi x_{t-1})^\top Q^{-1} (x_t - \Phi x_{t-1}) \\
+&amp;\quad + T \ln |R| + \sum_{t=1}^{T} (y_t - A x_t -  \Gamma_t u)^\top R^{-1} (y_t - A x_t -  \Gamma_t u)
 \end{aligned}
 \tag{18}\]</span></span></p>
 </section>
@@ -328,9 +328,9 @@ u^j = \left[\sum^T_{t=1} \Gamma^\top_t \Gamma_t \right]^{-1} \left[ \sum^T_{t=1}
 A = \alpha I, \quad \Phi = g I, \quad R = \sigma^2_Y I
 \tag{28}\]</span></span></p>
 <p><span id="eq-exp-cor-el"><span class="math display">\[
-Q_{ij} = \exp (-|| y_{t,i} - y_{t,j} ||_2 / \theta)
+Q_{ij} = \exp (-|| s(y_{t,i}) - s(y_{t,j}) ||_2 / \theta)
 \tag{29}\]</span></span></p>
-<p>with scalars <span class="math inline">\(\alpha\)</span>, <span class="math inline">\(|g|&lt;1\)</span> (implied stationary state autoregression structure), <span class="math inline">\(\sigma^2_{Y}, \theta &gt; 0\)</span>.</p>
+<p>with scalars <span class="math inline">\(\alpha\)</span>, <span class="math inline">\(|g|&lt;1\)</span> (implied stationary state autoregression structure), <span class="math inline">\(\sigma^2_{Y}, \theta &gt; 0\)</span> and <span class="math inline">\(s()\)</span> stands for the spatial point of its argument.</p>
 <p>The state innovation covariance has unitary variance and exponential correlation.</p>
 </section>
 <section id="em" class="level3">
@@ -338,10 +338,24 @@ Q_{ij} = \exp (-|| y_{t,i} - y_{t,j} ||_2 / \theta)
 <p>The EM updates follow the previously given ones with some changes. The ones reported are from <span class="citation" data-cites="Calculli2015">Calculli et al. (<a href="#ref-Calculli2015" role="doc-biblioref">2015</a>)</span>, where missing data updates are present and a more general multivariate response structure is considered.</p>
 <p>The update for <span class="math inline">\(g\)</span> is the univariate version of the update for <span class="math inline">\(\Phi\)</span> so the trace is taken: <span class="math inline">\(g^j = \frac{\text{tr}(S_{10})}{\text{tr}(S_{11})}\)</span>.</p>
 <p>The <span class="math inline">\(\sigma^2_Y\)</span> update is <span class="math inline">\((\sigma^2_Y)^j = \frac{1}{qT} \text{tr} \left( \sum^{T}_{t=1} \Omega_t \right)\)</span> where <span class="math inline">\(\Omega_t = y_t - \Gamma_t u - Ax_t + A P^T_t A^\top\)</span>.</p>
-<p>Since the scaling is given by <span class="math inline">\(\alpha\)</span>, it can’t be assumed known (unless in this parameterization) its update is <span class="math inline">\(\alpha^j = \frac{\sum^T_{t=1}\text{tr}\left(\psi_t x^\top_t \right)}{\text{tr} \left( S_{11} \right)}\)</span></p>
+<p>Since the scaling is given by <span class="math inline">\(\alpha\)</span>, it can’t be assumed known (at least in this parameterization) its update is <span class="math inline">\(\alpha^j = \frac{\sum^T_{t=1}\text{tr}\left(\psi_t x^\top_t \right)}{\text{tr} \left( S_{11} \right)}\)</span></p>
 <p>The exponential correlation parameter <span class="math inline">\(\theta\)</span> is updated via numerical optimization:</p>
 <p><span class="math inline">\(\theta^j = \text{argmin}_{\theta} \quad T\log|Q| + \text{tr} \left[Q^{-1} \left(S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top \right) \right]\)</span>.</p>
-<p>Since this is a univariat optimization problem Brent method is used, the <span class="math inline">\(\theta\)</span> dimension increases other methods should be employed such Nelder-Mead.</p>
+<p>Since this is a univariate optimization problem Brent method is used, if the <span class="math inline">\(\theta\)</span> dimension increases other methods should be employed such Nelder-Mead.</p>
+</section>
+<section id="mcmc-and-gibbs-sampling" class="level3">
+<h3 class="anchored" data-anchor-id="mcmc-and-gibbs-sampling">MCMC and Gibbs sampling</h3>
+<p>Here the reference <span class="citation" data-cites="ShumwayStoffer">(<a href="#ref-ShumwayStoffer" role="doc-biblioref">Shumway and Stoffer 2005</a>)</span> and for the specific case <span class="citation" data-cites="SAHUBayes">Sahu (<a href="#ref-SAHUBayes" role="doc-biblioref">2012</a>)</span>.</p>
+<p>Defining the prior on <span class="math inline">\(\Theta\)</span> with <span class="math inline">\(\pi(\Theta)\)</span> the log posterior is</p>
+<p><span class="math display">\[
+\begin{aligned}
+\ln [\pi(\Theta|y)] &amp;= -\frac{1}{2} \ln |\Sigma_0| -\frac{1}{2} (x_0 - \mu_0)^\top \Sigma_0^{-1} (x_0 - \mu_0) \\
+&amp;\quad -\frac{1}{2} T \ln |Q| -\frac{1}{2} \sum_{t=1}^{T} (x_t - \text{g} x_{t-1})^\top Q^{-1} (x_t - \text{g} x_{t-1}) \\
+&amp;\quad -\frac{1}{2} q T \ln |\sigma^2_Y| -\frac{1}{2} \frac{1}{\sigma^2_Y} \sum_{t=1}^{T} (y_t - \alpha x_t -  \Gamma_t u)^\top  (y_t - \alpha x_t -  \Gamma_t u) \\
+&amp; + \log[\pi(\Theta)]
+\end{aligned}
+\]</span></p>
+<p>Prior independence is assumed among the parameters. Here <span class="math inline">\(1/\sigma^2_Y\)</span> has a <span class="math inline">\(\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})\)</span> prior, to force stationarity <span class="math inline">\(g\)</span> we can consider a uniform distribution in <span class="math inline">\((-1,1)\)</span> and in order to ensure identifiability it has to be <span class="math inline">\(\alpha \geq 0\)</span> this can be accomplished by a reparameterization or a positive prior such as a Gamma. The <span class="math inline">\(\theta &gt; 0\)</span> spatial distance parameter can also have a Gamma prior and finally <span class="math inline">\(\beta \sim N_p(0,k I_p)\)</span></p>
 </section>
 </section>
 <section id="references" class="level2 unnumbered">
@@ -358,6 +372,9 @@ Durbin, and Koopman. 2012. <span>“Time Series Analysis by State Space Methods.
 </div>
 <div id="ref-Otto2023" class="csl-entry" role="listitem">
 Otto, Philipp, Alessandro Moro, Jacopo Rodeschini, Qendrim Shaboviq, Rosalba Ignaccolo, N. Golini, Michela Cameletti, Paolo Maranzano, Francesco Finazzi, and Alessandro Fassò. 2023. <span>“Spatiotemporal Modelling of PM 2.5 Concentrations in Lombardy (Italy) -a Comparative Study.”</span> <a href="https://doi.org/10.48550/arXiv.2309.07285">https://doi.org/10.48550/arXiv.2309.07285</a>.
+</div>
+<div id="ref-SAHUBayes" class="csl-entry" role="listitem">
+Sahu, Sujit K. 2012. <span>“16 - Hierarchical Bayesian Models for Space–Time Air Pollution Data.”</span> Edited by Tata Subba Rao, Suhasini Subba Rao, and C. R. Rao, Handbook of statistics, 30: 477–95. https://doi.org/<a href="https://doi.org/10.1016/B978-0-444-53858-1.00016-8">https://doi.org/10.1016/B978-0-444-53858-1.00016-8</a>.
 </div>
 <div id="ref-ShumwayStoffer" class="csl-entry" role="listitem">
 Shumway, Robert H., and David S. Stoffer. 2005. <em>Time Series Analysis and Its Applications (Springer Texts in Statistics)</em>. Berlin, Heidelberg: Springer-Verlag.

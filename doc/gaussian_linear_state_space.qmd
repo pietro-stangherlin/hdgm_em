@@ -151,8 +151,8 @@ with complete twice negative log likelihood:
 $$
 \begin{aligned}
 -2 \ln L_{X,Y}(\Theta) &= \ln |\Sigma_0| + (x_0 - \mu_0)^\top \Sigma_0^{-1} (x_0 - \mu_0) \\
-&\quad + T \ln |Q| + \sum_{t=1}^{T} (x_t - \Phi x_{t-1})^\top Q^{-1}_t (x_t - \Phi x_{t-1}) \\
-&\quad + T \ln |R| + \sum_{t=1}^{T} (y_t - A x_t -  \Gamma_t u)^\top R^{-1}_t (y_t - A x_t -  \Gamma_t u)
+&\quad + T \ln |Q| + \sum_{t=1}^{T} (x_t - \Phi x_{t-1})^\top Q^{-1} (x_t - \Phi x_{t-1}) \\
+&\quad + T \ln |R| + \sum_{t=1}^{T} (y_t - A x_t -  \Gamma_t u)^\top R^{-1} (y_t - A x_t -  \Gamma_t u)
 \end{aligned}
 $$ {#eq-complete-nllik-reduced}
 
@@ -249,10 +249,10 @@ A = \alpha I, \quad \Phi = g I, \quad R = \sigma^2_Y I
 $$ {#eq-hdgm-const}
 
 $$
-Q_{ij} = \exp (-|| y_{t,i} - y_{t,j} ||_2 / \theta)
+Q_{ij} = \exp (-|| s(y_{t,i}) - s(y_{t,j}) ||_2 / \theta)
 $$ {#eq-exp-cor-el}
 
-with scalars $\alpha$, $|g|<1$ (implied stationary state autoregression structure), $\sigma^2_{Y}, \theta > 0$.
+with scalars $\alpha$, $|g|<1$ (implied stationary state autoregression structure), $\sigma^2_{Y}, \theta > 0$ and $s()$ stands for the spatial point of its argument.
 
 The state innovation covariance has unitary variance and exponential correlation.
 
@@ -264,12 +264,29 @@ The update for $g$ is the univariate version of the update for $\Phi$ so the tra
 
 The $\sigma^2_Y$ update is $(\sigma^2_Y)^j = \frac{1}{qT} \text{tr} \left( \sum^{T}_{t=1} \Omega_t \right)$ where $\Omega_t = y_t - \Gamma_t u - Ax_t + A P^T_t A^\top$.
 
-Since the scaling is given by $\alpha$, it can't be assumed known (unless in this parameterization) its update is $\alpha^j = \frac{\sum^T_{t=1}\text{tr}\left(\psi_t x^\top_t \right)}{\text{tr} \left( S_{11} \right)}$
+Since the scaling is given by $\alpha$, it can't be assumed known (at least in this parameterization) its update is $\alpha^j = \frac{\sum^T_{t=1}\text{tr}\left(\psi_t x^\top_t \right)}{\text{tr} \left( S_{11} \right)}$
 
 The exponential correlation parameter $\theta$ is updated via numerical optimization:
 
 $\theta^j = \text{argmin}_{\theta} \quad T\log|Q| + \text{tr} \left[Q^{-1} \left(S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top \right) \right]$.
 
-Since this is a univariat optimization problem Brent method is used, the $\theta$ dimension increases other methods should be employed such Nelder-Mead.
+Since this is a univariate optimization problem Brent method is used, if the $\theta$ dimension increases other methods should be employed such Nelder-Mead.
 
-## References
+### MCMC and Gibbs sampling
+
+Here the reference [@ShumwayStoffer] and for the specific case @SAHUBayes.
+
+Defining the prior on $\Theta$ with $\pi(\Theta)$ the log posterior is
+
+$$
+\begin{aligned}
+\ln [\pi(\Theta|y)] &= -\frac{1}{2} \ln |\Sigma_0| -\frac{1}{2} (x_0 - \mu_0)^\top \Sigma_0^{-1} (x_0 - \mu_0) \\
+&\quad -\frac{1}{2} T \ln |Q| -\frac{1}{2} \sum_{t=1}^{T} (x_t - \text{g} x_{t-1})^\top Q^{-1} (x_t - \text{g} x_{t-1}) \\
+&\quad + \frac{1}{2} q T \ln |\frac{1}{\sigma^2_Y}| -\frac{1}{2} \frac{1}{\sigma^2_Y} \sum_{t=1}^{T} (y_t - \alpha x_t -  \Gamma_t u)^\top  (y_t - \alpha x_t -  \Gamma_t u) \\
+& + \log[\pi(\Theta)]
+\end{aligned}
+$$
+
+Prior independence is assumed among the parameters. Here $1/\sigma^2_Y$ has a $\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})$ prior, to force stationarity $g$ we can consider a uniform distribution in $(-1,1)$ and in order to ensure identifiability it has to be $\alpha \geq 0$ this can be accomplished by a reparameterization or a positive prior such as a Gamma. The $\theta > 0$ spatial distance parameter can also have a Gamma prior and finally $\beta \sim N_p(0,k I_p)$
+
+##  References
