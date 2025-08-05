@@ -287,6 +287,8 @@ $$
 \end{aligned}
 $$
 
-Prior independence is assumed among the parameters. Here $1/\sigma^2_Y$ has a $\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})$ prior, to force stationarity $g$ we can consider a uniform distribution in $(-1,1)$ and in order to ensure identifiability it has to be $\alpha \geq 0$ this can be accomplished by a reparameterization or a positive prior such as a Gamma. The $\theta > 0$ spatial distance parameter can also have a Gamma prior and finally $\beta \sim N_p(0,k I_p)$
+Prior independence is assumed among the parameters. Here $1/\sigma^2_Y$ has a $\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})$ prior; to force stationarity $g \sim Unif(-1,1)$; in order to ensure identifiability it has to be $\alpha \geq 0$ this can be accomplished by a reparameterization or a positive prior such as a$\Gamma(a_{\alpha},b_{\alpha})$. The $\theta > 0$ spatial distance parameter can also have a $\Gamma(a_{\theta},b_{\theta})$ prior and finally $u \sim N_p(0,k I_p)$.
 
-##  References
+At each iteration one has to sample from the conditional distributions for $\Theta$ and $x_1, x_2, ..., x_T$ given all other parameters.
+
+## References

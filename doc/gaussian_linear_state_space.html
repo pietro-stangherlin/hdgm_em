@@ -351,11 +351,12 @@ Q_{ij} = \exp (-|| s(y_{t,i}) - s(y_{t,j}) ||_2 / \theta)
 \begin{aligned}
 \ln [\pi(\Theta|y)] &amp;= -\frac{1}{2} \ln |\Sigma_0| -\frac{1}{2} (x_0 - \mu_0)^\top \Sigma_0^{-1} (x_0 - \mu_0) \\
 &amp;\quad -\frac{1}{2} T \ln |Q| -\frac{1}{2} \sum_{t=1}^{T} (x_t - \text{g} x_{t-1})^\top Q^{-1} (x_t - \text{g} x_{t-1}) \\
-&amp;\quad -\frac{1}{2} q T \ln |\sigma^2_Y| -\frac{1}{2} \frac{1}{\sigma^2_Y} \sum_{t=1}^{T} (y_t - \alpha x_t -  \Gamma_t u)^\top  (y_t - \alpha x_t -  \Gamma_t u) \\
+&amp;\quad + \frac{1}{2} q T \ln |\frac{1}{\sigma^2_Y}| -\frac{1}{2} \frac{1}{\sigma^2_Y} \sum_{t=1}^{T} (y_t - \alpha x_t -  \Gamma_t u)^\top  (y_t - \alpha x_t -  \Gamma_t u) \\
 &amp; + \log[\pi(\Theta)]
 \end{aligned}
 \]</span></p>
-<p>Prior independence is assumed among the parameters. Here <span class="math inline">\(1/\sigma^2_Y\)</span> has a <span class="math inline">\(\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})\)</span> prior, to force stationarity <span class="math inline">\(g\)</span> we can consider a uniform distribution in <span class="math inline">\((-1,1)\)</span> and in order to ensure identifiability it has to be <span class="math inline">\(\alpha \geq 0\)</span> this can be accomplished by a reparameterization or a positive prior such as a Gamma. The <span class="math inline">\(\theta &gt; 0\)</span> spatial distance parameter can also have a Gamma prior and finally <span class="math inline">\(\beta \sim N_p(0,k I_p)\)</span></p>
+<p>Prior independence is assumed among the parameters. Here <span class="math inline">\(1/\sigma^2_Y\)</span> has a <span class="math inline">\(\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})\)</span> prior; to force stationarity <span class="math inline">\(g \sim Unif(-1,1)\)</span>; in order to ensure identifiability it has to be <span class="math inline">\(\alpha \geq 0\)</span> this can be accomplished by a reparameterization or a positive prior such as a<span class="math inline">\(\Gamma(a_{\alpha},b_{\alpha})\)</span>. The <span class="math inline">\(\theta &gt; 0\)</span> spatial distance parameter can also have a <span class="math inline">\(\Gamma(a_{\theta},b_{\theta})\)</span> prior and finally <span class="math inline">\(u \sim N_p(0,k I_p)\)</span>.</p>
+<p>At each iteration one has to sample from the conditional distributions for <span class="math inline">\(\Theta\)</span> and <span class="math inline">\(x_1, x_2, ..., x_T\)</span> given all other parameters.</p>
 </section>
 </section>
 <section id="references" class="level2 unnumbered">
