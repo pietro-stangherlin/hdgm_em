@@ -22,12 +22,12 @@ HDGM.Llik <- function(param,
 
   # fixed effetcs
   if(length(param) > 4){
-    beta = as.matrix(param[4:length(param)])
+    beta = as.matrix(param[5:length(param)])
 
     for(t in 1:NCOL(y.matr)){
         index.not.miss <- which(is.finite(y.matr[,t]))
         y.matr[index.not.miss,t] <- y.matr[index.not.miss,t] -
-          as.vector(X.array[index.not,,t] %*% beta)
+          as.vector(X.array[index.not.miss,,t] %*% beta)
     }
   }
 
@@ -41,9 +41,10 @@ HDGM.Llik <- function(param,
              Q = ExpCor(mdist = dist.matr,
                         theta = theta),
              R = sigma2y * diag(nrow = q),
-             x_0 = rep(0, Y_LEN),
-             P_0 = diag(1, Y_LEN),
-             retLL = TRUE)$loglik)
+             x_0 = rep(0, q),
+             P_0 = diag(1, q),
+             retLL = TRUE,
+             vectorized_cov_matrices = TRUE)$loglik)
 
 }
 
