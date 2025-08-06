@@ -109,6 +109,10 @@ $$
 P^T_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
 $$ {#eq-lagone-covariance-smoother-initialization}
 
+### Some computational notes
+
+Since the smoother and the filter will return many covariance matrices it is convenient to save only the lower or upper diagonal elements, here this approach is used, other approaches consist in computing the Cholesky decomposition and storing that elements, this is useful for matrices that will be inverted, more useful and interesting computational facts can be found in @DurbinKoopman and in NASA papers such as @nasaNavigationFilter.
+
 ## Likelihood
 
 ### Complete Data Likelihood
@@ -287,8 +291,55 @@ $$
 \end{aligned}
 $$
 
-Prior independence is assumed among the parameters. Here $1/\sigma^2_Y$ has a $\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})$ prior; to force stationarity $g \sim Unif(-1,1)$; in order to ensure identifiability it has to be $\alpha \geq 0$ this can be accomplished by a reparameterization or a positive prior such as a$\Gamma(a_{\alpha},b_{\alpha})$. The $\theta > 0$ spatial distance parameter can also have a $\Gamma(a_{\theta},b_{\theta})$ prior and finally $u \sim N_p(0,k I_p)$.
+Prior independence is assumed among the parameters. Here $1/\sigma^2_Y$ has a $\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})$ prior; to force stationarity $g \sim Unif(-1,1)$; in order to ensure identifiability it has to be $\alpha \geq 0$ this can be accomplished by a reparameterization or a positive prior such as a$\Gamma(a_{\alpha},b_{\alpha})$. The $\theta > 0$ spatial distance parameter can also have a $\Gamma(a_{\theta},b_{\theta})$ prior and finally $u \sim N_p(u_0,\sigma^2_{u_0} I_p)$.
 
 At each iteration one has to sample from the conditional distributions for $\Theta$ and $x_1, x_2, ..., x_T$ given all other parameters.
+
+#### Closed form updates
+
+Exogenus variables
+
+$$
+u^{(j)} \sim N_p\left(W \left[S + \frac{u_0}{\sigma^2_{u_0}} \right], W \right)
+$$
+
+where
+
+$$
+\begin{align}
+W^{-1} &= \frac{1}{\sigma^2_{u_0}}I_p + \frac{1}{\sigma^2} \sum^T_{t = 1} \Gamma^\top_t \Gamma_t \\
+S &= \frac{1}{\sigma^2_Y} \sum^T_{t = 1} \Gamma^\top_t \left(y_t - \alpha x_t \right)
+\end{align}
+$$
+
+Observation error variance
+
+$$
+\left(\frac{1}{\sigma^2_Y}\right)^{(j)} \sim \Gamma \left(\alpha_{\sigma^2_Y} +\frac{qT}{2}, b_{\sigma^2_Y} + \frac{1}{2} \sum^T_{t=1} [y_t - \alpha x_t]^\top [y_t - \alpha x_t] \right)
+$$
+
+State vector (smoothed values)
+
+#### Metropolis Hastings updates
+
+## Model Extensions
+
+Obviuolsy there is an infinity of possibilities to extend the model, we'll mention some of them.
+
+### Increase the number of parameters in HDGM
+
+More specifically allowing each diagonal elements to have a distinct value in the autoregression equations, observation matrix equation and observation error covariance.
+
+### Remove the parametric spatial covariance assumption
+
+### Add time varying covariates instead of fixed effetcs
+
+### Go over the linear Gaussian distribution assumption
+
+Use models such the extended Kalman Filter [@DurbinKoopman] or consider the quantile dynamic models.
+
+#### HMM models
+
+[@ShumwayStoffer]
 
 ## References

@@ -198,6 +198,10 @@ P^T_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
 \tag{14}\]</span></span></p>
 </section>
 </section>
+<section id="some-computational-notes" class="level3">
+<h3 class="anchored" data-anchor-id="some-computational-notes">Some computational notes</h3>
+<p>Since the smoother and the filter will return many covariance matrices it is convenient to save only the lower or upper diagonal elements, here this approach is used, other approaches consist in computing the Cholesky decomposition and storing that elements, this is useful for matrices that will be inverted, more useful and interesting computational facts can be found in <span class="citation" data-cites="DurbinKoopman">Durbin and Koopman (<a href="#ref-DurbinKoopman" role="doc-biblioref">2012</a>)</span> and in NASA papers such as <span class="citation" data-cites="nasaNavigationFilter">J Russell Carpenter</span>.</p>
+</section>
 </section>
 <section id="likelihood" class="level2">
 <h2 class="anchored" data-anchor-id="likelihood">Likelihood</h2>
@@ -355,8 +359,52 @@ Q_{ij} = \exp (-|| s(y_{t,i}) - s(y_{t,j}) ||_2 / \theta)
 &amp; + \log[\pi(\Theta)]
 \end{aligned}
 \]</span></p>
-<p>Prior independence is assumed among the parameters. Here <span class="math inline">\(1/\sigma^2_Y\)</span> has a <span class="math inline">\(\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})\)</span> prior; to force stationarity <span class="math inline">\(g \sim Unif(-1,1)\)</span>; in order to ensure identifiability it has to be <span class="math inline">\(\alpha \geq 0\)</span> this can be accomplished by a reparameterization or a positive prior such as a<span class="math inline">\(\Gamma(a_{\alpha},b_{\alpha})\)</span>. The <span class="math inline">\(\theta &gt; 0\)</span> spatial distance parameter can also have a <span class="math inline">\(\Gamma(a_{\theta},b_{\theta})\)</span> prior and finally <span class="math inline">\(u \sim N_p(0,k I_p)\)</span>.</p>
+<p>Prior independence is assumed among the parameters. Here <span class="math inline">\(1/\sigma^2_Y\)</span> has a <span class="math inline">\(\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})\)</span> prior; to force stationarity <span class="math inline">\(g \sim Unif(-1,1)\)</span>; in order to ensure identifiability it has to be <span class="math inline">\(\alpha \geq 0\)</span> this can be accomplished by a reparameterization or a positive prior such as a<span class="math inline">\(\Gamma(a_{\alpha},b_{\alpha})\)</span>. The <span class="math inline">\(\theta &gt; 0\)</span> spatial distance parameter can also have a <span class="math inline">\(\Gamma(a_{\theta},b_{\theta})\)</span> prior and finally <span class="math inline">\(u \sim N_p(u_0,\sigma^2_{u_0} I_p)\)</span>.</p>
 <p>At each iteration one has to sample from the conditional distributions for <span class="math inline">\(\Theta\)</span> and <span class="math inline">\(x_1, x_2, ..., x_T\)</span> given all other parameters.</p>
+<section id="closed-form-updates" class="level4">
+<h4 class="anchored" data-anchor-id="closed-form-updates">Closed form updates</h4>
+<p>Exogenus variables</p>
+<p><span class="math display">\[
+u^{(j)} \sim N_p\left(W \left[S + \frac{u_0}{\sigma^2_{u_0}} \right], W \right)
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+\begin{align}
+W^{-1} &amp;= \frac{1}{\sigma^2_{u_0}}I_p + \frac{1}{\sigma^2} \sum^T_{t = 1} \Gamma^\top_t \Gamma_t \\
+S &amp;= \frac{1}{\sigma^2_Y} \sum^T_{t = 1} \Gamma^\top_t \left(y_t - \alpha x_t \right)
+\end{align}
+\]</span></p>
+<p>Observation error variance</p>
+<p><span class="math display">\[
+\left(\frac{1}{\sigma^2_Y}\right)^{(j)} \sim \Gamma \left(\alpha_{\sigma^2_Y} +\frac{qT}{2}, b_{\sigma^2_Y} + \frac{1}{2} \sum^T_{t=1} [y_t - \alpha x_t]^\top [y_t - \alpha x_t] \right)
+\]</span></p>
+<p>State vector (smoothed values)</p>
+</section>
+<section id="metropolis-hastings-updates" class="level4">
+<h4 class="anchored" data-anchor-id="metropolis-hastings-updates">Metropolis Hastings updates</h4>
+</section>
+</section>
+</section>
+<section id="model-extensions" class="level2">
+<h2 class="anchored" data-anchor-id="model-extensions">Model Extensions</h2>
+<p>Obviuolsy there is an infinity of possibilities to extend the model, we’ll mention some of them.</p>
+<section id="increase-the-number-of-parameters-in-hdgm" class="level3">
+<h3 class="anchored" data-anchor-id="increase-the-number-of-parameters-in-hdgm">Increase the number of parameters in HDGM</h3>
+<p>More specifically allowing each diagonal elements to have a distinct value in the autoregression equations, observation matrix equation and observation error covariance.</p>
+</section>
+<section id="remove-the-parametric-spatial-covariance-assumption" class="level3">
+<h3 class="anchored" data-anchor-id="remove-the-parametric-spatial-covariance-assumption">Remove the parametric spatial covariance assumption</h3>
+</section>
+<section id="add-time-varying-covariates-instead-of-fixed-effetcs" class="level3">
+<h3 class="anchored" data-anchor-id="add-time-varying-covariates-instead-of-fixed-effetcs">Add time varying covariates instead of fixed effetcs</h3>
+</section>
+<section id="go-over-the-linear-gaussian-distribution-assumption" class="level3">
+<h3 class="anchored" data-anchor-id="go-over-the-linear-gaussian-distribution-assumption">Go over the linear Gaussian distribution assumption</h3>
+<p>Use models such the extended Kalman Filter <span class="citation" data-cites="DurbinKoopman">(<a href="#ref-DurbinKoopman" role="doc-biblioref">Durbin and Koopman 2012</a>)</span> or consider the quantile dynamic models.</p>
+<section id="hmm-models" class="level4">
+<h4 class="anchored" data-anchor-id="hmm-models">HMM models</h4>
+<p><span class="citation" data-cites="ShumwayStoffer">(<a href="#ref-ShumwayStoffer" role="doc-biblioref">Shumway and Stoffer 2005</a>)</span></p>
+</section>
 </section>
 </section>
 <section id="references" class="level2 unnumbered">
@@ -370,6 +418,9 @@ Calculli, Crescenza, Alessandro Fassò, Francesco Finazzi, Alessio Pollice, and 
 </div>
 <div id="ref-DurbinKoopman" class="csl-entry" role="listitem">
 Durbin, and Koopman. 2012. <span>“Time Series Analysis by State Space Methods.”</span>
+</div>
+<div id="ref-nasaNavigationFilter" class="csl-entry" role="listitem">
+J Russell Carpenter, Christopher N. D’Souza. <span>“Navigation Filter Best Practices - NASA Technical Reports Server (NTRS) — Ntrs.nasa.gov.”</span> <a href="https://ntrs.nasa.gov/citations/20250002787">https://ntrs.nasa.gov/citations/20250002787</a>.
 </div>
 <div id="ref-Otto2023" class="csl-entry" role="listitem">
 Otto, Philipp, Alessandro Moro, Jacopo Rodeschini, Qendrim Shaboviq, Rosalba Ignaccolo, N. Golini, Michela Cameletti, Paolo Maranzano, Francesco Finazzi, and Alessandro Fassò. 2023. <span>“Spatiotemporal Modelling of PM 2.5 Concentrations in Lombardy (Italy) -a Comparative Study.”</span> <a href="https://doi.org/10.48550/arXiv.2309.07285">https://doi.org/10.48550/arXiv.2309.07285</a>.
