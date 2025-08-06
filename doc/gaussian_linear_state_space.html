@@ -200,7 +200,7 @@ P^T_{n-1, n-2} = (I - K_n A_n) \Phi_n P^{n-1}_{n-1}
 </section>
 <section id="some-computational-notes" class="level3">
 <h3 class="anchored" data-anchor-id="some-computational-notes">Some computational notes</h3>
-<p>Since the smoother and the filter will return many covariance matrices it is convenient to save only the lower or upper diagonal elements, here this approach is used, other approaches consist in computing the Cholesky decomposition and storing that elements, this is useful for matrices that will be inverted, more useful and interesting computational facts can be found in <span class="citation" data-cites="DurbinKoopman">Durbin and Koopman (<a href="#ref-DurbinKoopman" role="doc-biblioref">2012</a>)</span> and in NASA papers such as <span class="citation" data-cites="nasaNavigationFilter">J Russell Carpenter</span>.</p>
+<p>Since the smoother and the filter will return many covariance matrices it is convenient to save only the lower or upper diagonal elements, here this approach is used, other approaches consist in computing the Cholesky decomposition and storing that elements, this is useful for matrices that will be inverted, more useful and interesting computational facts can be found in <span class="citation" data-cites="DurbinKoopman">(<a href="#ref-DurbinKoopman" role="doc-biblioref">Durbin and Koopman 2012</a>)</span> and in NASA papers such as <span class="citation" data-cites="nasaNavigationFilter">(<a href="#ref-nasaNavigationFilter" role="doc-biblioref">J Russell Carpenter</a>)</span>.</p>
 </section>
 </section>
 <section id="likelihood" class="level2">
@@ -327,7 +327,7 @@ u^j = \left[\sum^T_{t=1} \Gamma^\top_t \Gamma_t \right]^{-1} \left[ \sum^T_{t=1}
 <h2 class="anchored" data-anchor-id="hdgm">HDGM</h2>
 <section id="model" class="level3">
 <h3 class="anchored" data-anchor-id="model">Model</h3>
-<p>Following <span class="citation" data-cites="Otto2023">Otto et al. (<a href="#ref-Otto2023" role="doc-biblioref">2023</a>)</span> the Hidden Dynamic Geostatistical Model (HDGM) is obtnaied imposing the following restrictions on model from <a href="#eq-state-space-time-fixed" class="quarto-xref">Equation&nbsp;17</a></p>
+<p>Following <span class="citation" data-cites="Otto2023">(<a href="#ref-Otto2023" role="doc-biblioref">Otto et al. 2023</a>)</span> the Hidden Dynamic Geostatistical Model (HDGM) is obtnaied imposing the following restrictions on model from <a href="#eq-state-space-time-fixed" class="quarto-xref">Equation&nbsp;17</a></p>
 <p><span id="eq-hdgm-const"><span class="math display">\[
 A = \alpha I, \quad \Phi = g I, \quad R = \sigma^2_Y I
 \tag{28}\]</span></span></p>
@@ -339,7 +339,7 @@ Q_{ij} = \exp (-|| s(y_{t,i}) - s(y_{t,j}) ||_2 / \theta)
 </section>
 <section id="em" class="level3">
 <h3 class="anchored" data-anchor-id="em">EM</h3>
-<p>The EM updates follow the previously given ones with some changes. The ones reported are from <span class="citation" data-cites="Calculli2015">Calculli et al. (<a href="#ref-Calculli2015" role="doc-biblioref">2015</a>)</span>, where missing data updates are present and a more general multivariate response structure is considered.</p>
+<p>The EM updates follow the previously given ones with some changes. The ones reported are from <span class="citation" data-cites="Calculli2015">(<a href="#ref-Calculli2015" role="doc-biblioref">Calculli et al. 2015</a>)</span>, where missing data updates are present and a more general multivariate response structure is considered.</p>
 <p>The update for <span class="math inline">\(g\)</span> is the univariate version of the update for <span class="math inline">\(\Phi\)</span> so the trace is taken: <span class="math inline">\(g^j = \frac{\text{tr}(S_{10})}{\text{tr}(S_{11})}\)</span>.</p>
 <p>The <span class="math inline">\(\sigma^2_Y\)</span> update is <span class="math inline">\((\sigma^2_Y)^j = \frac{1}{qT} \text{tr} \left( \sum^{T}_{t=1} \Omega_t \right)\)</span> where <span class="math inline">\(\Omega_t = y_t - \Gamma_t u - Ax_t + A P^T_t A^\top\)</span>.</p>
 <p>Since the scaling is given by <span class="math inline">\(\alpha\)</span>, it can’t be assumed known (at least in this parameterization) its update is <span class="math inline">\(\alpha^j = \frac{\sum^T_{t=1}\text{tr}\left(\psi_t x^\top_t \right)}{\text{tr} \left( S_{11} \right)}\)</span></p>
@@ -359,11 +359,12 @@ Q_{ij} = \exp (-|| s(y_{t,i}) - s(y_{t,j}) ||_2 / \theta)
 &amp; + \log[\pi(\Theta)]
 \end{aligned}
 \]</span></p>
-<p>Prior independence is assumed among the parameters. Here <span class="math inline">\(1/\sigma^2_Y\)</span> has a <span class="math inline">\(\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})\)</span> prior; to force stationarity <span class="math inline">\(g \sim Unif(-1,1)\)</span>; in order to ensure identifiability it has to be <span class="math inline">\(\alpha \geq 0\)</span> this can be accomplished by a reparameterization or a positive prior such as a<span class="math inline">\(\Gamma(a_{\alpha},b_{\alpha})\)</span>. The <span class="math inline">\(\theta &gt; 0\)</span> spatial distance parameter can also have a <span class="math inline">\(\Gamma(a_{\theta},b_{\theta})\)</span> prior and finally <span class="math inline">\(u \sim N_p(u_0,\sigma^2_{u_0} I_p)\)</span>.</p>
+<p>Prior independence is assumed among the parameters. Here <span class="math inline">\(1/\sigma^2_Y\)</span> has a <span class="math inline">\(\Gamma(a^0_{\sigma^2_Y},b^0_{\sigma^2_Y})\)</span> prior; to force stationarity <span class="math inline">\(g \sim Unif(-1,1)\)</span>; in order to ensure identifiability it has to be <span class="math inline">\(\alpha \geq 0\)</span> this can be accomplished by a reparameterization or a positive prior such as a <span class="math inline">\(\Gamma(a^0_{\alpha},b^0_{\alpha})\)</span>. The <span class="math inline">\(\theta &gt; 0\)</span> spatial distance parameter can also have a <span class="math inline">\(\Gamma(a^0_{\theta},b^0_{\theta})\)</span> prior and finally <span class="math inline">\(u \sim N_p(u_0,\sigma^2_{u_0} I_p)\)</span>.</p>
 <p>At each iteration one has to sample from the conditional distributions for <span class="math inline">\(\Theta\)</span> and <span class="math inline">\(x_1, x_2, ..., x_T\)</span> given all other parameters.</p>
 <section id="closed-form-updates" class="level4">
 <h4 class="anchored" data-anchor-id="closed-form-updates">Closed form updates</h4>
-<p>Exogenus variables</p>
+<section id="exogenus-variables-update" class="level5">
+<h5 class="anchored" data-anchor-id="exogenus-variables-update">Exogenus variables update</h5>
 <p><span class="math display">\[
 u^{(j)} \sim N_p\left(W \left[S + \frac{u_0}{\sigma^2_{u_0}} \right], W \right)
 \]</span></p>
@@ -374,14 +375,36 @@ W^{-1} &amp;= \frac{1}{\sigma^2_{u_0}}I_p + \frac{1}{\sigma^2} \sum^T_{t = 1} \G
 S &amp;= \frac{1}{\sigma^2_Y} \sum^T_{t = 1} \Gamma^\top_t \left(y_t - \alpha x_t \right)
 \end{align}
 \]</span></p>
-<p>Observation error variance</p>
+</section>
+<section id="observation-error-variance-update" class="level5">
+<h5 class="anchored" data-anchor-id="observation-error-variance-update">Observation error variance update</h5>
 <p><span class="math display">\[
 \left(\frac{1}{\sigma^2_Y}\right)^{(j)} \sim \Gamma \left(\alpha_{\sigma^2_Y} +\frac{qT}{2}, b_{\sigma^2_Y} + \frac{1}{2} \sum^T_{t=1} [y_t - \alpha x_t]^\top [y_t - \alpha x_t] \right)
 \]</span></p>
-<p>State vector (smoothed values)</p>
+</section>
+<section id="state-vector-update" class="level5">
+<h5 class="anchored" data-anchor-id="state-vector-update">State vector update</h5>
+<p>The state vector (smoothed values) updates are from Procedure 6.1 of <span class="citation" data-cites="ShumwayStoffer">(<a href="#ref-ShumwayStoffer" role="doc-biblioref">Shumway and Stoffer 2005</a>)</span>.</p>
+<p>The sampling scheme is backward from the last state (as in the Smoother case) to the first:</p>
+<p>Sample <span class="math inline">\(x^T_T\)</span> from it’s filtered distribution.</p>
+<p>From <span class="math inline">\(t = T-1,T-2,..,0\)</span> sample from <span class="math inline">\(p_{\Theta}(x_t|x_{t+1},y_{1:t})\)</span> i.e.&nbsp;from a <span class="math inline">\(N_q(m_t, V_t)\)</span> with <span class="math inline">\(m_t = x^t_t + J_t (x_{t+1} - x^t_{t+1})\)</span>, <span class="math inline">\(V_t = P^t_t - J_tP^t_{t+1}J^\top_t\)</span>.</p>
+</section>
 </section>
 <section id="metropolis-hastings-updates" class="level4">
 <h4 class="anchored" data-anchor-id="metropolis-hastings-updates">Metropolis Hastings updates</h4>
+<section id="autoregressive-term-update" class="level5">
+<h5 class="anchored" data-anchor-id="autoregressive-term-update">Autoregressive term update</h5>
+<p>A resonable proposal distribution with density <span class="math inline">\(q()\)</span> is the translated Beta distribution <span class="math inline">\(Beta(\alpha_g,\beta_g,a_g,c_g)\)</span> where <span class="math inline">\(\alpha_g,\beta_g\)</span> are the usual Beta parameters and <span class="math inline">\(a_g,c_g\)</span> are respectively the minimum and maximum possible values.</p>
+<p>Since <span class="math inline">\(p(g|\Theta / \{g\}) \propto \exp\left\{-\frac{1}{2} \sum_{t=1}^{T} (x_t - \text{g} x_{t-1})^\top Q^{-1} (x_t - \text{g} x_{t-1}) \right\}\)</span> the new value generated is accepted with probability <span class="math inline">\(min\left\{1, \frac{p(g^{(j)})q(g^{(j-1)})}{p(g^{(j-1)})q(g^{(j)})} \right\}\)</span>.</p>
+</section>
+<section id="observation-matrix-parameter-update" class="level5">
+<h5 class="anchored" data-anchor-id="observation-matrix-parameter-update">Observation matrix parameter update</h5>
+<p>Here, with an abuse of notation <span class="math inline">\(p(\alpha|\Theta / \{\alpha\}) \propto \Gamma(a^0_{\alpha},b^0_{\alpha})(\alpha) \exp \left\{ -\frac{1}{2} \frac{1}{\sigma^2_Y} \sum_{t=1}^{T} (y_t - \alpha x_t -  \Gamma_t u)^\top  (y_t - \alpha x_t -  \Gamma_t u) \right\}\)</span> and the proposal <span class="math inline">\(q()\)</span> is a <span class="math inline">\(\Gamma(a_{\alpha},b_{\alpha})\)</span>.</p>
+</section>
+<section id="theta-update" class="level5">
+<h5 class="anchored" data-anchor-id="theta-update">Theta update</h5>
+<p>Here <span class="math inline">\(p(\theta|\Theta / \{\theta\}) \propto \Gamma(a^0_{\theta},b^0_{\theta})(\theta) \exp\left\{ -\frac{1}{2} T \ln |Q| -\frac{1}{2} \sum_{t=1}^{T} (x_t - \text{g} x_{t-1})^\top Q^{-1} (x_t - \text{g} x_{t-1}) \right\}\)</span> and the proposal <span class="math inline">\(q()\)</span> is a <span class="math inline">\(\Gamma(a_{\theta},b_{\theta})\)</span>.</p>
+</section>
 </section>
 </section>
 </section>

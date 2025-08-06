@@ -111,7 +111,7 @@ $$ {#eq-lagone-covariance-smoother-initialization}
 
 ### Some computational notes
 
-Since the smoother and the filter will return many covariance matrices it is convenient to save only the lower or upper diagonal elements, here this approach is used, other approaches consist in computing the Cholesky decomposition and storing that elements, this is useful for matrices that will be inverted, more useful and interesting computational facts can be found in @DurbinKoopman and in NASA papers such as @nasaNavigationFilter.
+Since the smoother and the filter will return many covariance matrices it is convenient to save only the lower or upper diagonal elements, here this approach is used, other approaches consist in computing the Cholesky decomposition and storing that elements, this is useful for matrices that will be inverted, more useful and interesting computational facts can be found in [@DurbinKoopman] and in NASA papers such as [@nasaNavigationFilter].
 
 ## Likelihood
 
@@ -246,7 +246,7 @@ In case of missing data the Kalman Filter and Smoother updates won't change much
 
 ### Model
 
-Following @Otto2023 the Hidden Dynamic Geostatistical Model (HDGM) is obtnaied imposing the following restrictions on model from @eq-state-space-time-fixed
+Following [@Otto2023] the Hidden Dynamic Geostatistical Model (HDGM) is obtnaied imposing the following restrictions on model from @eq-state-space-time-fixed
 
 $$
 A = \alpha I, \quad \Phi = g I, \quad R = \sigma^2_Y I
@@ -262,7 +262,7 @@ The state innovation covariance has unitary variance and exponential correlation
 
 ### EM
 
-The EM updates follow the previously given ones with some changes. The ones reported are from @Calculli2015, where missing data updates are present and a more general multivariate response structure is considered.
+The EM updates follow the previously given ones with some changes. The ones reported are from [@Calculli2015], where missing data updates are present and a more general multivariate response structure is considered.
 
 The update for $g$ is the univariate version of the update for $\Phi$ so the trace is taken: $g^j = \frac{\text{tr}(S_{10})}{\text{tr}(S_{11})}$.
 
@@ -291,13 +291,13 @@ $$
 \end{aligned}
 $$
 
-Prior independence is assumed among the parameters. Here $1/\sigma^2_Y$ has a $\Gamma(a_{\sigma^2_Y},b_{\sigma^2_Y})$ prior; to force stationarity $g \sim Unif(-1,1)$; in order to ensure identifiability it has to be $\alpha \geq 0$ this can be accomplished by a reparameterization or a positive prior such as a$\Gamma(a_{\alpha},b_{\alpha})$. The $\theta > 0$ spatial distance parameter can also have a $\Gamma(a_{\theta},b_{\theta})$ prior and finally $u \sim N_p(u_0,\sigma^2_{u_0} I_p)$.
+Prior independence is assumed among the parameters. Here $1/\sigma^2_Y$ has a $\Gamma(a^0_{\sigma^2_Y},b^0_{\sigma^2_Y})$ prior; to force stationarity $g \sim Unif(-1,1)$; in order to ensure identifiability it has to be $\alpha \geq 0$ this can be accomplished by a reparameterization or a positive prior such as a $\Gamma(a^0_{\alpha},b^0_{\alpha})$. The $\theta > 0$ spatial distance parameter can also have a $\Gamma(a^0_{\theta},b^0_{\theta})$ prior and finally $u \sim N_p(u_0,\sigma^2_{u_0} I_p)$.
 
 At each iteration one has to sample from the conditional distributions for $\Theta$ and $x_1, x_2, ..., x_T$ given all other parameters.
 
 #### Closed form updates
 
-Exogenus variables
+##### Exogenus variables update
 
 $$
 u^{(j)} \sim N_p\left(W \left[S + \frac{u_0}{\sigma^2_{u_0}} \right], W \right)
@@ -312,15 +312,37 @@ S &= \frac{1}{\sigma^2_Y} \sum^T_{t = 1} \Gamma^\top_t \left(y_t - \alpha x_t \r
 \end{align}
 $$
 
-Observation error variance
+##### Observation error variance update
 
 $$
 \left(\frac{1}{\sigma^2_Y}\right)^{(j)} \sim \Gamma \left(\alpha_{\sigma^2_Y} +\frac{qT}{2}, b_{\sigma^2_Y} + \frac{1}{2} \sum^T_{t=1} [y_t - \alpha x_t]^\top [y_t - \alpha x_t] \right)
 $$
 
-State vector (smoothed values)
+##### State vector update
+
+The state vector (smoothed values) updates are from Procedure 6.1 of [@ShumwayStoffer].
+
+The sampling scheme is backward from the last state (as in the Smoother case) to the first:
+
+Sample $x^T_T$ from it's filtered distribution.
+
+From $t = T-1,T-2,..,0$ sample from $p_{\Theta}(x_t|x_{t+1},y_{1:t})$ i.e. from a $N_q(m_t, V_t)$ with $m_t = x^t_t + J_t (x_{t+1} - x^t_{t+1})$, $V_t = P^t_t - J_tP^t_{t+1}J^\top_t$.
 
 #### Metropolis Hastings updates
+
+##### Autoregressive term update
+
+A resonable proposal distribution with density $q()$ is the translated Beta distribution $Beta(\alpha_g,\beta_g,a_g,c_g)$ where $\alpha_g,\beta_g$ are the usual Beta parameters and $a_g,c_g$ are respectively the minimum and maximum possible values.
+
+Since $p(g|\Theta / \{g\}) \propto \exp\left\{-\frac{1}{2} \sum_{t=1}^{T} (x_t - \text{g} x_{t-1})^\top Q^{-1} (x_t - \text{g} x_{t-1}) \right\}$ the new value generated is accepted with probability $min\left\{1, \frac{p(g^{(j)})q(g^{(j-1)})}{p(g^{(j-1)})q(g^{(j)})} \right\}$.
+
+##### Observation matrix parameter update
+
+Here, with an abuse of notation $p(\alpha|\Theta / \{\alpha\}) \propto \Gamma(a^0_{\alpha},b^0_{\alpha})(\alpha) \exp \left\{ -\frac{1}{2} \frac{1}{\sigma^2_Y} \sum_{t=1}^{T} (y_t - \alpha x_t -  \Gamma_t u)^\top  (y_t - \alpha x_t -  \Gamma_t u) \right\}$ and the proposal $q()$ is a $\Gamma(a_{\alpha},b_{\alpha})$.
+
+##### Theta update
+
+Here $p(\theta|\Theta / \{\theta\}) \propto \Gamma(a^0_{\theta},b^0_{\theta})(\theta) \exp\left\{ -\frac{1}{2} T \ln |Q| -\frac{1}{2} \sum_{t=1}^{T} (x_t - \text{g} x_{t-1})^\top Q^{-1} (x_t - \text{g} x_{t-1}) \right\}$ and the proposal $q()$ is a $\Gamma(a_{\theta},b_{\theta})$.
 
 ## Model Extensions
 
@@ -336,7 +358,7 @@ More specifically allowing each diagonal elements to have a distinct value in th
 
 ### Go over the linear Gaussian distribution assumption
 
-Use models such the extended Kalman Filter [@DurbinKoopman] or consider the quantile dynamic models.
+Use models such the extended Kalman Filter and Particle Filters[@DurbinKoopman] or consider the quantile dynamic models.
 
 #### HMM models
 
