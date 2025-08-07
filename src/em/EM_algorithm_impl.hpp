@@ -49,8 +49,10 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
     sum_y_yT += y.col(t) * y.col(t).t();
   };
 
-  int last_iter;
+  int last_iter = 0;
   for(int iter = 1; iter < em_in.max_iter + 1; ++iter){
+
+    last_iter += 1;
 
     if(em_in.verbose == true){
       std::cout << "iter" << iter << std::endl;

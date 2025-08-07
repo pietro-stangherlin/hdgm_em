@@ -123,7 +123,7 @@ res_EM_dist <- EMHDGM(y = y.matr,
                  Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
                  x0_in = rep(0, Y_LEN),
                  P0_in = 5 * diag(nrow = Y_LEN),
-                 max_iter = 500, # increment
+                 max_iter = 50, # increment
                  verbose = TRUE,
                  bool_mat = TRUE,
                  is_fixed_effects = FALSE)

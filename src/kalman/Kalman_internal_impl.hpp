@@ -31,6 +31,9 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
   arma::mat K, Ppt, Pft, S, VCt;
   arma::mat At, Rt;
   arma::mat I(p, p, arma::fill::eye);
+  arma::mat temp_matr, temp_chol, S_chol;
+  arma::vec temp_diag;
+  double log_sum_diag = 0.0;
 
   xft = kf_inp.x_0;
   Pft = kf_inp.P_0;
@@ -64,6 +67,12 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
 
       // Intermediate results
       VCt = Ppt * At.t();
+      temp_matr = At * VCt + Rt;
+      // to check code below
+      // temp_matr = 0.5 * (temp_matr + temp_matr.t());
+      // temp_chol = arma::chol(temp_matr, "lower");
+      // S_chol = arma::inv(arma::trimatl(temp_chol));
+      // S = S_chol * S_chol.t();
       S = arma::inv(At * VCt + Rt);
 
       // Prediction error
@@ -79,11 +88,24 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
       Pft = (Pft + Pft.t()) * 0.5; // Ensure symmetry
 
       if (kf_inp.retLL) {
-        //TO DO: Maybe convenient to compute one S decomposition
-        // once and then do inverse and det
+        // since S = S_chol * S_chol.t()
+        // det(S) = det(S_chol)det(S_chol.t()) = det(S_chol)^2
+        // and log(det(S_chol)^2) = 2 * log(det(S_chol))
+        // since S_chol is lower triangular:
+        // 2 * log(det(S_chol)) = 2 * log(prod(diag(S_chol))) = 2 * sum(log(diag(S_chol)))
+        // temp_diag = S_chol.diag();
+        // for(int j = 0; j < temp_diag.n_elem; j++){
+        //   log_sum_diag += std::log(temp_diag[j]);
+        // }
+
         double log_det_val, det_sign;
+        //log_det_val = 2 * log_sum_diag;
         arma::log_det(log_det_val, det_sign, S);
+
         if (det_sign > 0) loglik += log_det_val - arma::as_scalar(et.t() * S * et);
+
+        // reset
+        log_sum_diag = 0.0;
       }
 
       // If all missing: just prediction.
