@@ -65,6 +65,9 @@ BootstrapHDGM <- function(mle.structural, mle.beta.fixed, y.matr, dist.matr, X.a
                 retLL = TRUE,
                 vectorized_cov_matrices = FALSE)
 
+  new_zero_state <- kf.res$xf[,start_obs_index]
+  new_zero_state_covariance <- kf.res$Pf[,start_obs_index]
+
 
 
   for(i in 1:NCOL(y.matr)){
@@ -110,8 +113,8 @@ BootstrapHDGM <- function(mle.structural, mle.beta.fixed, y.matr, dist.matr, X.a
                      g0 = phi,
                      sigma20 = sigma2y,
                      Xbeta_in = X.array[,,start_obs_index:NCOL(temp_y_matr)],
-                     x0_in = zero_state,
-                     P0_in = zero_state_var,
+                     x0_in = new_zero_state,
+                     P0_in = new_zero_state_var,
                      max_iter = max_EM_iter,
                      verbose = FALSE,
                      bool_mat = TRUE,
