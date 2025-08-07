@@ -57,7 +57,35 @@ hess.hat <- numDeriv::hessian(func = HDGM.Llik,
 
 # asymptotic information matrix
 asymptotic_var <- solve(-hess.hat) / NCOL(y.matr)
+
+# get an idea of dispersion
+cbind(c(res_EM$par_history[,res_EM$niter],
+        res_EM$beta_history[,res_EM$niter]),
+      sqrt(diag(asymptotic_var)))
+
 # Save Results -------------------
 
 save(res_EM, asymptotic_var, file = "data/HDGM_res_EM.RData")
+
+# Bootstrap ----------------------
+source("R/bootstrap_helper.R")
+
+# not working at the moment
+boot.res <- BootstrapHDGM(mle.structural = res_EM$par_history[,res_EM$niter],
+                          mle.beta.fixed = res_EM$beta_history[,res_EM$niter],
+                          y.matr = y.matr,
+                          dist.matr = dists_matr,
+                          X.array = X.array,
+                          zero_state = rep(0, NROW(y.matr)),
+                          zero_state_var = diag(1, nrow = NROW(y.matr)),
+                          max_EM_iter = 30,
+                          start_obs_index = 10,
+                          B = 10)
+
+
+
+
+
+
+
 
