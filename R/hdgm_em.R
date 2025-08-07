@@ -59,5 +59,5 @@ hess.hat <- numDeriv::hessian(func = HDGM.Llik,
 asymptotic_var <- solve(-hess.hat) / NCOL(y.matr)
 # Save Results -------------------
 
-save(res_EM, hess.hat, file = "data/HDGM_res_EM.RData")
+save(res_EM, asymptotic_var, file = "data/HDGM_res_EM.RData")
 

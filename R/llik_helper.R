@@ -1,11 +1,13 @@
 library(Rcpp)
 library(RcppArmadillo)
 
-source("R/model_simulation_helper.R")
+
 Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp")
 
+source("R/model_simulation_helper.R")
+
 #' @description  return the log-likelihood for a HDGM
-#' @param param (vector) vector with paramers (a, phi, theta, sigma2y, beta)
+#' @param param (vector) vector with parameters (a, phi, theta, sigma2y, beta)
 #' @param y.matr (matrix) observation vector matrix, each column is an observation
 #' @param dist.matrix (matrix) space distance matrix (assuming a fixed order) among all
 #' @param X.array (array)
@@ -51,5 +53,4 @@ HDGM.Llik <- function(param,
              vectorized_cov_matrices = TRUE)$loglik)
 
 }
-
 
