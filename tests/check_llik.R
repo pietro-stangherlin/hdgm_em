@@ -2,7 +2,7 @@ rm(list = ls())
 library(Rcpp)
 library(RcppArmadillo)
 
-source("tests/test_helper.R")
+source("../R/model_simulation_helper.R")
 
 Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp")
 

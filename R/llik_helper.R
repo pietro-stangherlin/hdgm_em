@@ -1,8 +1,8 @@
 library(Rcpp)
 library(RcppArmadillo)
 
-source("../tests/test_helper.R")
-Rcpp::sourceCpp("../src/kalman/Kalman_wrapper.cpp")
+source("R/model_simulation_helper.R")
+Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp")
 
 #' @description  return the log-likelihood for a HDGM
 #' @param param (vector) vector with paramers (a, phi, theta, sigma2y, beta)
@@ -13,14 +13,16 @@ HDGM.Llik <- function(param,
                       y.matr,
                       dist.matr,
                       X.array = NULL){
+
+
   a = param[1]
   phi = param[2]
   theta = param[3]
   sigma2y = param[4]
 
-  q = NCOL(y.matr)
+  q = NROW(y.matr)
 
-  # fixed effetcs
+  # fixed effects
   if(length(param) > 4){
     beta = as.matrix(param[5:length(param)])
 
@@ -30,6 +32,8 @@ HDGM.Llik <- function(param,
           as.vector(X.array[index.not.miss,,t] %*% beta)
     }
   }
+
+  gc()
 
   # possible improvement
   # do a first pass of kalman smoother
@@ -47,6 +51,5 @@ HDGM.Llik <- function(param,
              vectorized_cov_matrices = TRUE)$loglik)
 
 }
-
 
 

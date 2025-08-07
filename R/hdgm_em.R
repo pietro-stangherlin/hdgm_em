@@ -6,7 +6,8 @@ library(RcppArmadillo)
 Rcpp::sourceCpp("src/em/EM_wrapper.cpp",
                 rebuild = TRUE)
 
-
+# if already executed EM
+load("data/HDGM_res_EM.RData")
 
 
 # Initial linear model beta estimates -------------------------------------
@@ -42,17 +43,19 @@ res_EM <- EMHDGM(y = y.matr,
 
 # Asymptotic Std -----------------
 # not supported at the moment
-source("llik_helper.R")
+source("R/llik_helper.R")
 
 # bad alloc :(
-# hess <- numDeriv::hessian(func = HDGM.Llik,
-#                   x = c(res_EM$par_history[,res_EM$niter],
-#                     res_EM$beta_history[,res_EM$niter]),
-#                   y.matr = y.matr,
-#           dist.matr = dists_matr_sub,
-#           X.array = X.array)
+hess.hat <- numDeriv::hessian(func = HDGM.Llik,
+                  x = c(res_EM$par_history[,res_EM$niter],
+                    res_EM$beta_history[,res_EM$niter]),
+                  y.matr = y.matr,
+          dist.matr = dists_matr,
+          X.array = X.array,
+          method = "Richardson", # WARNING: decrease eps (but it's REALLY slow)
+          method.args = list(eps=1e-3, d=0.1, zero.tol=sqrt(.Machine$double.eps/7e-7), r=4, v=2, show.details=FALSE))
 
 # Save Results -------------------
 
-save(res_EM, file = "data/HDGM_res_EM.RData")
+save(res_EM, hess.hat, file = "data/HDGM_res_EM.RData")
 

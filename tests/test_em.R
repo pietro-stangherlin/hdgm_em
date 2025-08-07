@@ -5,7 +5,7 @@ library(RcppArmadillo)
 
 Sys.setenv("PKG_CXXFLAGS"="-std=c++20")
 
-source("tests/test_helper.R")
+source("../R/model_simulation_helper.R")
 
 Rcpp::sourceCpp("src/em/EM_wrapper.cpp",
                 rebuild = TRUE)

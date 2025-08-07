@@ -2,7 +2,7 @@ rm(list = ls())
 library(Rcpp)
 library(RcppArmadillo)
 
-source("tests/test_helper.R")
+source("R/model_simulation_helper.R")
 
 # This testing requires the dfms package
 
@@ -16,8 +16,8 @@ Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp",
 
 
 # generate some data -------------------
-N <- 1000 # times: t = 1,..,N
-n <- rp <- 5 # y_t dimension
+N <- 10000 # times: t = 1,..,N
+n <- rp <- 10 # y_t dimension
 # in this case state dimension = rp = n
 
 
