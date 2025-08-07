@@ -55,6 +55,8 @@ hess.hat <- numDeriv::hessian(func = HDGM.Llik,
           method = "Richardson", # WARNING: decrease eps (but it's REALLY slow)
           method.args = list(eps=1e-3, d=0.1, zero.tol=sqrt(.Machine$double.eps/7e-7), r=4, v=2, show.details=FALSE))
 
+# asymptotic information matrix
+asymptotic_var <- solve(-hess.hat) / NCOL(y.matr)
 # Save Results -------------------
 
 save(res_EM, hess.hat, file = "data/HDGM_res_EM.RData")
