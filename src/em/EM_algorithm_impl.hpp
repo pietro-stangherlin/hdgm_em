@@ -242,8 +242,10 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
   arma::mat y_res;
 
   // EM iterations
-  int last_iter = 1;
+  int last_iter = 0;
   for (int iter = 1; iter < em_in.max_iter + 1; ++iter) {
+
+    last_iter += 1;
 
     if (em_in.verbose){
       int remainder;
@@ -319,7 +321,7 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
       return EMOutput{.par_history = par_history,
                       .beta_history = beta_history,
-                      .llik = llik_prev, .niter = iter};
+                      .llik = llik_prev, .niter = last_iter};
     };
 
 

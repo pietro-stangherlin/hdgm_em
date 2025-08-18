@@ -79,7 +79,7 @@ boot.res <- BootstrapHDGM(mle.structural = res_EM$par_history[,res_EM$niter],
                           zero_state = rep(0, NROW(y.matr)),
                           zero_state_var = diag(1, nrow = NROW(y.matr)),
                           max_EM_iter = 30,
-                          start_obs_index = 10,
+                          start_obs_index = 1,
                           B = 10)
 
 

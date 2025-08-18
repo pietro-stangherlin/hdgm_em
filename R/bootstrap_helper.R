@@ -66,7 +66,7 @@ BootstrapHDGM <- function(mle.structural, mle.beta.fixed, y.matr, dist.matr, X.a
                 vectorized_cov_matrices = FALSE)
 
   new_zero_state <- kf.res$xf[,start_obs_index]
-  new_zero_state_covariance <- kf.res$Pf[,start_obs_index]
+  new_zero_state_var <- kf.res$Pf[,,start_obs_index]
 
 
 
@@ -80,7 +80,11 @@ BootstrapHDGM <- function(mle.structural, mle.beta.fixed, y.matr, dist.matr, X.a
     # NOTE: in the equation below is missing the term
     # Phi %*% S where S is a matrix related to the correlation between
     # observation and state errors (here assumed S = 0)
-    kalman.gains[,,i] <- (mle.Phi * temp_matr) %*% err.Sigmas.chols.inv[,,i] %*% t(err.Sigmas.chols.inv[,,i])
+    # (6.116) formulas
+    # kalman.gains[,,i] <- (mle.Phi * temp_matr) %*% err.Sigmas.chols.inv[,,i] %*% t(err.Sigmas.chols.inv[,,i])
+    # using uncorrelated errors kalman gain
+    kalman.gains[,,i] <- temp_matr %*% err.Sigmas.chols.inv[,,i] %*% t(err.Sigmas.chols.inv[,,i])
+
   }
 
   rm(kf.res)
@@ -106,7 +110,7 @@ BootstrapHDGM <- function(mle.structural, mle.beta.fixed, y.matr, dist.matr, X.a
 
     # run EM
     res_EM <- EMHDGM(y = temp_y_matr[,start_obs_index:NCOL(temp_y_matr)],
-                     dist_matrix = dists_matr,
+                     dist_matrix = dist.matr,
                      alpha0 = a,
                      beta0 = mle.beta.fixed, # start with OLS estimate
                      theta0 = theta,
