@@ -80,7 +80,7 @@ boot.res <- BootstrapHDGM(mle.structural = c(A, G, THETA, SIGMAY^2),
                           X.array = FIXED_EFFECTS_DESIGN_MATRIX,
                           zero_state = rep(0, NROW(y.matr)),
                           zero_state_var = diag(1, nrow = NROW(y.matr)),
-                          max_EM_iter = 30,
+                          max_EM_iter = 100,
                           start_obs_index = 1,
                           B = 10)
 

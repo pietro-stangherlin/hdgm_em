@@ -14,8 +14,11 @@ source("R/model_simulation_helper.R")
 #' @param y.matr (matrix) observation vector matrix, each column is an observation
 #' @param dist.matrix (matrix) space distance matrix (assuming a fixed order) among all
 #' @param X.array (array)
+#' @param first_t0 (int): number of first observations kept in order to improve the procedure stability
+#' those first t0 observations won't be resampled
 BootstrapHDGM <- function(mle.structural, mle.beta.fixed, y.matr, dist.matr, X.array,
-                          zero_state, zero_state_var, max_EM_iter, start_obs_index, B){
+                          zero_state, zero_state_var, max_EM_iter, start_obs_index, B,
+                          first_t0 = 5){
 
 
 
@@ -27,6 +30,10 @@ BootstrapHDGM <- function(mle.structural, mle.beta.fixed, y.matr, dist.matr, X.a
   boot.structural <- matrix(NA, nrow = length(mle.structural), ncol = B)
 
   q = NROW(y.matr)
+
+  # save first 1:t0 starting values to improve stability
+  first_t0_vals <- y.matr[,1:first_t0]
+
 
   is_fixed_effects = FALSE
 
@@ -95,17 +102,22 @@ BootstrapHDGM <- function(mle.structural, mle.beta.fixed, y.matr, dist.matr, X.a
   for(b in 1:B){
     print(paste0("iter: ", b, collapse = ""))
 
-    temp_ortho_errs <- ortho.errs[,sample(1:NCOL(ortho.errs), replace = TRUE)]
-    temp_y_matr <- matrix(NA, nrow = NROW(temp_ortho_errs), ncol = NCOL(temp_ortho_errs))
+    temp_ortho_errs <- ortho.errs[,sample((first_t0 + 1):NCOL(ortho.errs), replace = TRUE)]
+    temp_y_matr <- matrix(NA, nrow = NROW(temp_ortho_errs), ncol = NCOL(ortho.errs))
+    temp_y_matr[,1:(first_t0)] <- first_t0_vals
 
     x_temp <- zero_state
 
     # simulate observations
-    # NOTE: the book suggest to skip the first observations due to
+    # NOTE: the book suggests to skip the first observations due to
     # first estimates high variance
-    for(i in 1:NCOL(temp_ortho_errs)){
-      x_temp <- mle.Phi %*% x_temp + kalman.gains[,,i] %*% err.Sigmas.chols[,,i] %*% ortho.errs[,i]
-      temp_y_matr[,i] <- as.vector(mle.A %*% x_temp +  err.Sigmas.chols[,,i] %*% ortho.errs[,i])
+    for(i in (first_t0 + 1):NCOL(ortho.errs)){
+      x_temp <- mle.Phi %*% x_temp + kalman.gains[,,i] %*% err.Sigmas.chols[,,i] %*% temp_ortho_errs[,i - first_t0]
+      temp_y_matr[,i] <- as.vector(mle.A %*% x_temp +  err.Sigmas.chols[,,i] %*% temp_ortho_errs[,i - first_t0])
+
+      if(is_fixed_effects){
+        temp_y_matr[,i] <- temp_y_matr[,i] + as.vector(X.array[index.not.miss,,i] %*% beta)
+      }
     }
 
     # run EM
