@@ -228,17 +228,23 @@ In case of missing data the Kalman Filter and Smoother updates won't change much
 
 ### Numerical Hessian and standard errors
 
+A simple, but still potentially computationally intensive, way to obtain an estimate of the mle standard errors are the numerical standard errors from the inverse of the information matrix, which here is the (numerical) negative hessian at the mle.
+
 ### Bootstrap
+
+The non-parametric bootstrap based on error resampling (excluding the first observations to improve stability) can be found in [@ShumwayStoffer].
 
 ### Bayesian Inference
 
-## Parameters selection
+## Parameters selection and error evaluation
 
 ### Information Criteria
 
+Since the Kalman filter returns the likelihood we can easily compute the AIC, BIC etc.
+
 ### Cross - Validation
 
--   Sliding window
+-   Expanding or Sliding Window
 
 -   Leave one station out (only for certain models)
 
@@ -352,9 +358,11 @@ Obviuolsy there is an infinity of possibilities to extend the model, we'll menti
 
 More specifically allowing each diagonal elements to have a distinct value in the autoregression equations, observation matrix equation and observation error covariance.
 
-### Remove the parametric spatial covariance assumption
+### Increase flexibility of the fixed effects
 
-### Add time varying covariates instead of fixed effetcs
+For example adding splines basis.
+
+### Turn fixed effects into time varying covariates
 
 ### Go over the linear Gaussian distribution assumption
 

@@ -302,23 +302,26 @@ u^j = \left[\sum^T_{t=1} \Gamma^\top_t \Gamma_t \right]^{-1} \left[ \sum^T_{t=1}
 <h2 class="anchored" data-anchor-id="inference">Inference</h2>
 <section id="numerical-hessian-and-standard-errors" class="level3">
 <h3 class="anchored" data-anchor-id="numerical-hessian-and-standard-errors">Numerical Hessian and standard errors</h3>
+<p>A simple, but still potentially computationally intensive, way to obtain an estimate of the mle standard errors are the numerical standard errors from the inverse of the information matrix, which here is the (numerical) negative hessian at the mle.</p>
 </section>
 <section id="bootstrap" class="level3">
 <h3 class="anchored" data-anchor-id="bootstrap">Bootstrap</h3>
+<p>The non-parametric bootstrap based on error resampling (excluding the first observations to improve stability) can be found in <span class="citation" data-cites="ShumwayStoffer">(<a href="#ref-ShumwayStoffer" role="doc-biblioref">Shumway and Stoffer 2005</a>)</span>.</p>
 </section>
 <section id="bayesian-inference" class="level3">
 <h3 class="anchored" data-anchor-id="bayesian-inference">Bayesian Inference</h3>
 </section>
 </section>
-<section id="parameters-selection" class="level2">
-<h2 class="anchored" data-anchor-id="parameters-selection">Parameters selection</h2>
+<section id="parameters-selection-and-error-evaluation" class="level2">
+<h2 class="anchored" data-anchor-id="parameters-selection-and-error-evaluation">Parameters selection and error evaluation</h2>
 <section id="information-criteria" class="level3">
 <h3 class="anchored" data-anchor-id="information-criteria">Information Criteria</h3>
+<p>Since the Kalman filter returns the likelihood we can easily compute the AIC, BIC etc.</p>
 </section>
 <section id="cross---validation" class="level3">
 <h3 class="anchored" data-anchor-id="cross---validation">Cross - Validation</h3>
 <ul>
-<li><p>Sliding window</p></li>
+<li><p>Expanding or Sliding Window</p></li>
 <li><p>Leave one station out (only for certain models)</p></li>
 </ul>
 </section>
@@ -415,15 +418,16 @@ S &amp;= \frac{1}{\sigma^2_Y} \sum^T_{t = 1} \Gamma^\top_t \left(y_t - \alpha x_
 <h3 class="anchored" data-anchor-id="increase-the-number-of-parameters-in-hdgm">Increase the number of parameters in HDGM</h3>
 <p>More specifically allowing each diagonal elements to have a distinct value in the autoregression equations, observation matrix equation and observation error covariance.</p>
 </section>
-<section id="remove-the-parametric-spatial-covariance-assumption" class="level3">
-<h3 class="anchored" data-anchor-id="remove-the-parametric-spatial-covariance-assumption">Remove the parametric spatial covariance assumption</h3>
+<section id="increase-flexibility-of-the-fixed-effects" class="level3">
+<h3 class="anchored" data-anchor-id="increase-flexibility-of-the-fixed-effects">Increase flexibility of the fixed effects</h3>
+<p>For example adding splines basis.</p>
 </section>
-<section id="add-time-varying-covariates-instead-of-fixed-effetcs" class="level3">
-<h3 class="anchored" data-anchor-id="add-time-varying-covariates-instead-of-fixed-effetcs">Add time varying covariates instead of fixed effetcs</h3>
+<section id="turn-fixed-effects-into-time-varying-covariates" class="level3">
+<h3 class="anchored" data-anchor-id="turn-fixed-effects-into-time-varying-covariates">Turn fixed effects into time varying covariates</h3>
 </section>
 <section id="go-over-the-linear-gaussian-distribution-assumption" class="level3">
 <h3 class="anchored" data-anchor-id="go-over-the-linear-gaussian-distribution-assumption">Go over the linear Gaussian distribution assumption</h3>
-<p>Use models such the extended Kalman Filter <span class="citation" data-cites="DurbinKoopman">(<a href="#ref-DurbinKoopman" role="doc-biblioref">Durbin and Koopman 2012</a>)</span> or consider the quantile dynamic models.</p>
+<p>Use models such the extended Kalman Filter and Particle Filters<span class="citation" data-cites="DurbinKoopman">(<a href="#ref-DurbinKoopman" role="doc-biblioref">Durbin and Koopman 2012</a>)</span> or consider the quantile dynamic models.</p>
 <section id="hmm-models" class="level4">
 <h4 class="anchored" data-anchor-id="hmm-models">HMM models</h4>
 <p><span class="citation" data-cites="ShumwayStoffer">(<a href="#ref-ShumwayStoffer" role="doc-biblioref">Shumway and Stoffer 2005</a>)</span></p>
