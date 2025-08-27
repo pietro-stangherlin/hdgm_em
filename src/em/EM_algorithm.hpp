@@ -25,3 +25,6 @@ EMOutputUnstructured UnstructuredEM_cpp_mat(EMInputUnstructured& em_in);
 
 EMOutput EMHDGM_cpp(EMInput & em_in);
 EMOutput EMHDGM_cpp_mat(EMInput & em_in);
+
+EMOutput EMHDGM_diag_cpp(EMInput & em_in);
+EMOutput EMHDGM_diag_cpp_mat(EMInput & em_in);

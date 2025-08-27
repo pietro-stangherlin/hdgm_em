@@ -130,6 +130,6 @@ if(BOOL_HDGM_EM_PREPROCESS){
     )
   }
 
-  save(y.matr, X.array, dists_matr, file = "data/agri_matrix_array_em.RData")
+  save(y.matr, X.array, dists_matr, selected_vars_names, file = "data/agri_matrix_array_em.RData")
 
 }

@@ -31,3 +31,14 @@ EMOutput EMHDGM_cpp(EMInput & em_in){
 EMOutput EMHDGM_cpp_mat(EMInput & em_in){
   return EMHDGM_cpp_core<arma::mat>(em_in);
 };
+
+//  ------------------ Structured Case diag transition matrix ------------------------ //
+
+EMOutput EMHDGM_diag_cpp(EMInput & em_in){
+  return EMHDGM_diag_cpp_core<arma::cube>(em_in);
+};
+
+EMOutput EMHDGM_diag_cpp_mat(EMInput & em_in){
+  return EMHDGM_diag_cpp_core<arma::mat>(em_in);
+};
+

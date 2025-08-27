@@ -20,7 +20,7 @@ lm.formula <- paste0("AQ_pm25~",
                             collapse = ""),
                      collapse = "")
 
-lm.fit <- lm(as.formula(lm.formula), data = agrim_df)
+lm.fit.agri <- lm(as.formula(lm.formula), data = agrim_df)
 rm(agrim_df)
 
 # EM ---------------------------------------------------
@@ -29,7 +29,22 @@ load("data/agri_matrix_array_em.RData")
 res_EM <- EMHDGM(y = y.matr,
                  dist_matrix = dists_matr,
                  alpha0 = 1,
-                 beta0 = coef(lm.fit), # start with OLS estimate
+                 beta0 = coef(lm.fit.agri), # start with OLS estimate
+                 theta0 = 1,
+                 g0 = 0.5,
+                 sigma20 = 1,
+                 Xbeta_in = X.array,
+                 x0_in = rep(0, q),
+                 P0_in = diag(1, nrow = q),
+                 max_iter = 200,
+                 verbose = TRUE,
+                 bool_mat = TRUE,
+                 is_fixed_effects = TRUE)
+
+res_EM_diag <- EMHDGM_diag(y = y.matr,
+                 dist_matrix = dists_matr,
+                 alpha0 = 1,
+                 beta0 = coef(lm.fit.agri), # start with OLS estimate
                  theta0 = 1,
                  g0 = 0.5,
                  sigma20 = 1,
@@ -65,7 +80,7 @@ cbind(c(res_EM$par_history[,res_EM$niter],
 
 # Save Results -------------------
 
-save(res_EM, asymptotic_var, file = "data/HDGM_res_EM.RData")
+save(res_EM, res_EM_diag, asymptotic_var, file = "data/HDGM_res_EM.RData")
 
 # Bootstrap ----------------------
 source("R/bootstrap_helper.R")

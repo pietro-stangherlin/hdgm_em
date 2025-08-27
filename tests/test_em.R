@@ -342,5 +342,49 @@ par(mfrow = c(1,1))
 
 res_EM_miss_dep_false$llik
 
+# Structured diag --------------------------------------
+
+res_EM <- EMHDGM_diag(y = y.matr,
+                 dist_matrix = DIST_MATRIX,
+                 alpha0 = A,
+                 beta0 = rep(0, 2),
+                 theta0 = THETA,
+                 g0 = G,
+                 sigma20 = SIGMAY^2,
+                 Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
+                 x0_in = rep(0, Y_LEN),
+                 P0_in = diag(1, nrow = Y_LEN),
+                 max_iter = 50, # increment
+                 verbose = TRUE,
+                 bool_mat = FALSE,
+                 is_fixed_effects = FALSE)
+
+cbind(res_EM$par_history[,1], res_EM$par_history[,res_EM$niter])
+
+plot(res_EM$par_history[1,], type = "l")
+plot(res_EM$par_history[2,], type = "l")
+plot(res_EM$par_history[3,], type = "l")
+plot(res_EM$par_history[4,], type = "l")
+plot(res_EM$par_history[5,], type = "l")
+
+# Starting from not true values -------------------------
+res_EM_dist <- EMHDGM_diag(y = y.matr,
+                      dist_matrix = DIST_MATRIX,
+                      alpha0 = 5 * A ,
+                      beta0 = rep(0, 2),
+                      theta0 = 5 * THETA,
+                      g0 = 6 * G, # assuming stationarity: this has to be in (-1,1)
+                      sigma20 = 2 * SIGMAY^2,
+                      Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
+                      x0_in = rep(0, Y_LEN),
+                      P0_in = 5 * diag(nrow = Y_LEN),
+                      max_iter = 200, # increment
+                      verbose = TRUE,
+                      bool_mat = TRUE,
+                      is_fixed_effects = FALSE)
+
+# false starting values
+cbind(res_EM$par_history[,1], res_EM_dist$par_history[,1], res_EM_dist$par_history[,res_EM_dist$niter])
+
 
 

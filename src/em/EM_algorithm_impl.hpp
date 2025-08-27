@@ -395,6 +395,276 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
                   .llik = llik_next, .niter = last_iter};
 };
 
+// -------------------- Structured Case diagonal Transition matrix --------------------- //
+
+
+// assuming no missing observations and no matrix permutations
+// assuming state vector has same dimension of observation vector
+template <typename CovStore>
+EMOutput EMHDGM_diag_cpp_core(EMInput& em_in) {
+
+  int q = em_in.y.n_rows; // observation and state vector length
+  int T = em_in.y.n_cols;
+  int p = em_in.beta0.n_elem; // fixed effect vector length
+
+  double alpha_temp = em_in.alpha0;
+  double theta_temp = em_in.theta0;
+  //keep g0 scalar so we don't have to change the em.in structure
+  arma::vec g_vec_temp = arma::ones(q) * em_in.g0;
+  double sigma2_temp = em_in.sigma20;
+
+  arma::vec beta_temp = em_in.beta0;
+
+  // NOTE: parameter dimension has to be changed if the parameters space change
+  // also, zero is not a perfect initialization value
+  // q parameters for Phi diagonal (g param) + 3 for alpha, theta, sigma^2
+  arma::mat par_history = arma::mat(q + 3, em_in.max_iter + 1);
+  arma::mat beta_history = arma::mat(p, em_in.max_iter + 1);
+
+  arma::vec full_vec(q + 3);
+
+  full_vec(0) = alpha_temp;
+  full_vec.subvec(1, q) = g_vec_temp;   // q elements
+  full_vec(q + 1) = theta_temp;
+  full_vec(q + 2) = sigma2_temp;
+
+  par_history.col(0) = full_vec;
+  beta_history.col(0) = beta_temp;
+
+  // Identity helper matrices
+  arma::mat Iqq(q,q,arma::fill::eye);
+  arma::mat Ipp(p,p,arma::fill::eye);
+
+  arma::vec x0_smoothed = em_in.x0_in;
+  arma::mat P0_smoothed = em_in.P0_in;
+  arma::mat Xz = Iqq;  // unscaled transfer matrix
+
+  // state space matrices
+  arma::mat A_temp; // observation matrix
+  arma::mat Phi_temp; // transition matrix
+  arma::mat Q_temp; //state error covariance matrix
+  arma::mat R_temp; // observation error covariance matrix
+
+  // Precompute fixed-effects sum
+  arma::mat mXbeta_sum(p, p, arma::fill::zeros);
+  arma::mat m_inv_mXbeta_sum;
+
+  // Make vector of 0 and 1 for each time
+  // if 0 there's no missing observation at time
+  // else there 1
+
+  arma::uvec missing_indicator(T, arma::fill::zeros);
+  arma::uvec index_not_miss; // temp, changed at each time
+  arma::uvec t_index(1, arma::fill::zeros);
+
+  arma::vec y_t;
+  arma::mat X_t;
+
+  // first mark which observations contain at least one missing
+  for(int t = 0; t < T; ++t){
+
+    index_not_miss = arma::find_finite(em_in.y.col(t));
+
+    if(index_not_miss.n_elem < q){
+      missing_indicator[t] = 1;
+    }
+
+
+  }
+
+  // NOTE: this is inefficient, a possible work around
+  // is to give each X matrix in input as transposed
+  // then select the non missing columns (rows in the traditional format)
+  // and transpose again.
+
+  if (em_in.is_fixed_effect == true) {
+
+    for (int t = 0; t < T; ++t) {
+      y_t = em_in.y.col(t);
+      X_t = em_in.Xbeta.slice(t);
+
+      if(missing_indicator[t] == 0){
+        mXbeta_sum += X_t.t() * X_t;
+      }
+      else{
+        // some missings found
+        index_not_miss = arma::find_finite(y_t);
+        mXbeta_sum += X_t.rows(index_not_miss).t() *
+          X_t.rows(index_not_miss);
+      }
+
+    }
+    m_inv_mXbeta_sum = arma::inv_sympd(mXbeta_sum);
+  }
+
+  double llik_prev;
+  double llik_next;
+
+  llik_prev = LOWEST_DOUBLE;
+
+  double llik_relative_diff;
+
+  arma::mat y_res;
+
+  // EM iterations
+  int last_iter = 0;
+  for (int iter = 1; iter < em_in.max_iter + 1; ++iter) {
+
+    last_iter += 1;
+
+    if (em_in.verbose){
+      int remainder;
+      remainder = iter % 1;
+
+      if(remainder == 0){
+        std::cout << "Iteration " << iter << std::endl;
+      };
+
+    };
+
+
+    // Subtract fixed effects
+    y_res = em_in.y;
+
+    if (em_in.is_fixed_effect == true) {
+      for (int t = 0; t < T; ++t) {
+        y_t = y_res.col(t);
+        X_t = em_in.Xbeta.slice(t);
+
+        t_index[0] = t;
+
+        if(missing_indicator[t] == 0){
+          y_res.col(t) -= X_t * beta_temp;
+        }
+        else{
+          index_not_miss = arma::find_finite(y_t);
+          y_t = y_t.elem(index_not_miss);
+          y_t -=  X_t.rows(index_not_miss) * beta_temp;
+          y_res.submat(index_not_miss,t_index) = y_t;
+        }
+      }
+    }
+
+    // update state space matrices
+    A_temp = alpha_temp * Iqq;
+    Phi_temp = arma::diagmat(g_vec_temp);
+    Q_temp = ExpCor(em_in.dist_matrix, theta_temp);
+    R_temp = sigma2_temp * Iqq;
+
+    ///////////////////////
+    // Kalman Smoother pass
+    ///////////////////////
+
+    KalmanFilterInput kfin{
+      .Y = y_res,
+      .Phi = Phi_temp,
+      .A = A_temp,
+      .Q = Q_temp,
+      .R = R_temp,
+      .x_0 = x0_smoothed,
+      .P_0 = P0_smoothed,
+      .retLL = true};
+
+    auto ksm_res = SKFS_cpp(kfin, std::type_identity<CovStore>{});
+
+    llik_next = ksm_res.loglik;
+
+    if(em_in.verbose == true){
+      std::cout << "llik: " << llik_next << std::endl;
+    };
+
+    llik_relative_diff = (llik_next - llik_prev) / abs(llik_prev);
+
+    if(llik_relative_diff < em_in.rel_llik_tol)  {
+      std::cout << "Relative Log Likelihood non increasing, returning" << std::endl;
+
+
+      if(llik_relative_diff < 0){
+        std::cout << "WARNING: Log Likelihood decreasing, returning" << std::endl;
+
+      };
+
+      return EMOutput{.par_history = par_history,
+                      .beta_history = beta_history,
+                      .llik = llik_prev, .niter = last_iter};
+    };
+
+
+    llik_prev = llik_next;
+
+    //////////////////////////
+    // EM parameters updates
+    /////////////////////////
+
+    x0_smoothed = ksm_res.x0_smoothed;
+    P0_smoothed = ksm_res.P0_smoothed;
+
+    // S matrices
+    arma::mat S00 = ComputeS00_core<CovStore>(ksm_res.x_smoothed, ksm_res.P_smoothed, x0_smoothed, P0_smoothed);
+    arma::mat S11 = ComputeS11_core<CovStore>(ksm_res.x_smoothed, ksm_res.P_smoothed, S00, x0_smoothed, P0_smoothed);
+    arma::mat S10 = ComputeS10_core<CovStore>(ksm_res.x_smoothed, ksm_res.Lag_one_cov_smoothed, x0_smoothed);
+
+
+    //std::cout << "before OmegaSumUpdate_core" << std::endl;
+    // Omega Update
+    arma::mat omega_sum_temp = OmegaSumUpdate_core<CovStore>(y_res, // residual minus fixed effect
+                                                             ksm_res.x_smoothed,
+                                                             Xz,
+                                                             ksm_res.P_smoothed,
+                                                             alpha_temp,
+                                                             missing_indicator,
+                                                             sigma2_temp);
+
+
+    // Sigma2 update
+    sigma2_temp = Sigma2Update(omega_sum_temp, q, T);
+
+    //std::cout << "before AlphaUpdate_core" << std::endl;
+
+    // Alpha update
+    alpha_temp = AlphaUpdate_core<CovStore>(y_res, ksm_res.x_smoothed,
+                                            Xz, ksm_res.P_smoothed,
+                                            missing_indicator);
+
+    // Beta update
+    if (em_in.is_fixed_effect == true) {
+      beta_temp = BetaUpdate(em_in.Xbeta,
+                             em_in.y,
+                             ksm_res.x_smoothed,
+                             alpha_temp,
+                             Xz,
+                             m_inv_mXbeta_sum,
+                             missing_indicator);
+
+    }
+
+    // Theta (optimization)
+    theta_temp = ThetaUpdate(em_in.dist_matrix, Phi_temp,
+                             S00, S10, S11,
+                             T,
+                             em_in.theta_lower, em_in.theta_upper);
+
+    // g update
+    g_vec_temp = arma::diagvec(S10 * arma::inv_sympd(S00));
+
+    // Update parameters history
+    full_vec(0) = alpha_temp;
+    full_vec.subvec(1, q) = g_vec_temp;
+    full_vec(q + 1) = theta_temp;
+    full_vec(q + 2) = sigma2_temp;
+
+
+    par_history.col(iter) = full_vec;
+    beta_history.col(iter) = beta_temp;
+  }
+
+  std::cout << "WARNING: maximum number of iterations reached" << std::endl;
+
+  return EMOutput{.par_history = par_history,
+                  .beta_history = beta_history,
+                  .llik = llik_next, .niter = last_iter};
+};
+
 
 
 

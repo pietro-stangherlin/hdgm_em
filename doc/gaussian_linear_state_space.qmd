@@ -201,7 +201,7 @@ $$ {#eq-fixed-eff-error}
 The EM fully analytical updates are then
 
 $$
-\Phi^j = S_{10} S_{11}^{-1}
+\Phi^j = S_{10} S_{00}^{-1}
 $$ {#eq-Phi-update}
 
 $$
@@ -358,11 +358,15 @@ Obviuolsy there is an infinity of possibilities to extend the model, we'll menti
 
 More specifically allowing each diagonal elements to have a distinct value in the autoregression equations, observation matrix equation and observation error covariance.
 
+For example if we let the transition matrix $\Phi$ to be diagonal.
+
 ### Increase flexibility of the fixed effects
 
 For example adding splines basis.
 
 ### Turn fixed effects into time varying covariates
+
+This will require to add each fixed effect coefficient to the state space with some implementation changes since the new state covariance will probably be block diagonal.
 
 ### Go over the linear Gaussian distribution assumption
 
