@@ -278,7 +278,7 @@ S_{11} &amp;= \sum^{T}_{t = 1} x^T_t (x^T_{t})^\top + P^T_{t,t}
 \tag{22}\]</span></span></p>
 <p>The EM fully analytical updates are then</p>
 <p><span id="eq-Phi-update"><span class="math display">\[
-\Phi^j = S_{10} S_{11}^{-1}
+\Phi^j = S_{10} S_{00}^{-1}
 \tag{23}\]</span></span></p>
 <p><span id="eq-Q-update"><span class="math display">\[
 Q^j = T^{-1}(S_{11} - S_{10} S^{-1}_{00} S^\top_{10})
@@ -417,6 +417,7 @@ S &amp;= \frac{1}{\sigma^2_Y} \sum^T_{t = 1} \Gamma^\top_t \left(y_t - \alpha x_
 <section id="increase-the-number-of-parameters-in-hdgm" class="level3">
 <h3 class="anchored" data-anchor-id="increase-the-number-of-parameters-in-hdgm">Increase the number of parameters in HDGM</h3>
 <p>More specifically allowing each diagonal elements to have a distinct value in the autoregression equations, observation matrix equation and observation error covariance.</p>
+<p>For example if we let the transition matrix <span class="math inline">\(\Phi\)</span> to be diagonal.</p>
 </section>
 <section id="increase-flexibility-of-the-fixed-effects" class="level3">
 <h3 class="anchored" data-anchor-id="increase-flexibility-of-the-fixed-effects">Increase flexibility of the fixed effects</h3>
@@ -424,6 +425,7 @@ S &amp;= \frac{1}{\sigma^2_Y} \sum^T_{t = 1} \Gamma^\top_t \left(y_t - \alpha x_
 </section>
 <section id="turn-fixed-effects-into-time-varying-covariates" class="level3">
 <h3 class="anchored" data-anchor-id="turn-fixed-effects-into-time-varying-covariates">Turn fixed effects into time varying covariates</h3>
+<p>This will require to add each fixed effect coefficient to the state space with some implementation changes since the new state covariance will probably be block diagonal.</p>
 </section>
 <section id="go-over-the-linear-gaussian-distribution-assumption" class="level3">
 <h3 class="anchored" data-anchor-id="go-over-the-linear-gaussian-distribution-assumption">Go over the linear Gaussian distribution assumption</h3>

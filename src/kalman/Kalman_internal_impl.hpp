@@ -142,6 +142,142 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
   };
 }
 
+// ---------------------  Kalman Filter ---------------------- //
+
+// template with options to use arma::cube or arma::mat (vectorized) (symmetric: half space)
+// to store the filtered and predicted state covariances
+// Pp_store: predicted state covariance matrices
+// Pf_store: filtered state covariance matrices
+template <typename CovStore>
+KalmanFilterResultT<CovStore> SKF_core_TimeVaryingObsMatr(const KalmanFilterInputTimeVaryingObsMatr& kf_inp,
+                                                          CovStore& Pp_store, CovStore& Pf_store) {
+
+  const int q = kf_inp.Y.n_rows; // observation vector dimensions
+  const int p = kf_inp.Phi.n_rows; // state vector dimensions
+  const int T = kf_inp.Y.n_cols; // number of observations
+
+  // predicted and filtered state (mean)
+  arma::mat xp_vals(p, T, arma::fill::zeros);
+  arma::mat xf_vals(p, T, arma::fill::zeros);
+
+  // current iteration tempory values
+  arma::vec xpt, xft, yt, et;
+  arma::mat K, Ppt, Pft, S, VCt;
+  arma::mat At, Rt;
+  arma::mat I(p, p, arma::fill::eye);
+  arma::mat temp_matr, temp_chol, S_chol;
+  arma::vec temp_diag;
+  double log_sum_diag = 0.0;
+
+  xft = kf_inp.x_0;
+  Pft = kf_inp.P_0;
+
+  // define once
+  arma::mat Phi_tr = kf_inp.Phi.t();
+
+  arma::uvec nmiss, arow = arma::find_finite(kf_inp.Phi.row(0));
+  int n_c = 0; // used to count number of missing observations at each time
+  double loglik = kf_inp.retLL ? -q * std::log(2 * 3.14159265359) : std::numeric_limits<double>::quiet_NaN();
+
+  for (int t = 0; t < T; ++t) {
+    xpt = kf_inp.Phi * xft;
+    Ppt = kf_inp.Phi * Pft * Phi_tr + kf_inp.Q;
+    Ppt = 0.5 * (Ppt + Ppt.t()); // force symmetry
+
+    // WARNING: TO DO: populate blocks
+    At = arma::mat(q, p, arma::fill::zeros);
+
+    yt = kf_inp.Y.col(t);
+    nmiss = arma::find_finite(yt);
+
+    n_c = nmiss.n_elem;
+
+    if (n_c > 0) {
+      if (n_c == q) {
+        At = At;
+        Rt = kf_inp.R;
+      } else {
+        At = At.submat(nmiss, arow);
+        Rt = kf_inp.R.submat(nmiss, nmiss);
+        yt = yt.elem(nmiss);
+      }
+
+      // Intermediate results
+      VCt = Ppt * At.t();
+      temp_matr = At * VCt + Rt;
+      // to check code below
+      // temp_matr = 0.5 * (temp_matr + temp_matr.t());
+      // temp_chol = arma::chol(temp_matr, "lower");
+      // S_chol = arma::inv(arma::trimatl(temp_chol));
+      // S = S_chol * S_chol.t();
+      S = arma::inv(At * VCt + Rt);
+
+      // Prediction error
+      et = yt - At * xpt;
+
+
+      // Kalman gain
+      K = VCt * S;
+      // Updated state estimate
+      xft = xpt + K * et;
+      // Updated state covariance estimate
+      Pft = (I - K * At) * Ppt;
+      Pft = (Pft + Pft.t()) * 0.5; // Ensure symmetry
+
+      if (kf_inp.retLL) {
+        // since S = S_chol * S_chol.t()
+        // det(S) = det(S_chol)det(S_chol.t()) = det(S_chol)^2
+        // and log(det(S_chol)^2) = 2 * log(det(S_chol))
+        // since S_chol is lower triangular:
+        // 2 * log(det(S_chol)) = 2 * log(prod(diag(S_chol))) = 2 * sum(log(diag(S_chol)))
+        // temp_diag = S_chol.diag();
+        // for(int j = 0; j < temp_diag.n_elem; j++){
+        //   log_sum_diag += std::log(temp_diag[j]);
+        // }
+
+        double log_det_val, det_sign;
+        //log_det_val = 2 * log_sum_diag;
+        arma::log_det(log_det_val, det_sign, S);
+
+        if (det_sign > 0) loglik += log_det_val - arma::as_scalar(et.t() * S * et);
+
+        // reset
+        log_sum_diag = 0.0;
+      }
+
+      // If all missing: just prediction.
+    } else {
+      xft = xpt;
+      Pft = Ppt;
+    }
+
+    // Store predicted and filtered data needed for smoothing
+    xf_vals.col(t) = xft;
+    xp_vals.col(t) = xpt;
+
+    // Store covariance
+    if constexpr (std::is_same_v<CovStore, arma::cube>) {
+      Pp_store.slice(t) = Ppt;
+      Pf_store.slice(t) = Pft;
+    } else {
+      Pp_store.col(t) = FromSymMatrixToVector(Ppt);
+      Pf_store.col(t) = FromSymMatrixToVector(Pft);
+    }
+  }
+
+  if (kf_inp.retLL) loglik *= 0.5;
+
+  return KalmanFilterResultT<CovStore>{
+    .xf = xf_vals,
+    .Pf = Pf_store,
+    .xp = xp_vals,
+    .Pp = Pp_store,
+    .K_last = K,
+    .A_last = At,
+    .nc_last = n_c,
+    .loglik = loglik
+  };
+}
 
 
 // ---------------------  Kalman Smoother ---------------------- //
