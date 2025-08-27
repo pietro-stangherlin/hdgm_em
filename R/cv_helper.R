@@ -42,7 +42,7 @@ CVExpandingWindow <- function(y_matr,
                             starting_obs = 400,
                             step_ahead_pred = 3,
                             max_EM_iter = 50){
-  n = ncol(y_matrix)
+  n = ncol(y_matr)
   q = nrow(y_matr)
   I = diag(q)
   # allocate error matrix
@@ -106,6 +106,12 @@ CVExpandingWindow <- function(y_matr,
     k = t + step_ahead_pred
     err_temp_fixed <- y.matr[,k] - as.vector(X_array[,,k] %*% temp_fixed)
 
+    # matrix of all fixed effects
+    temp_fixed_obs <- matrix(NA, nrow = q, ncol = n)
+
+    for(j in 1:t){
+      temp_fixed_obs[,j] <- X_array[,,j] %*% temp_fixed
+    }
 
     # run kalman filter to obtain prediction
     custom.skf.res.mat <- SKF(Y = cbind(y.matr[,1:t], matrix(NaN, nrow = q, ncol = step_ahead_pred)),
@@ -140,7 +146,7 @@ CVLOSO <- function(y_matr,
                    validation_station_indexes,
                    max_EM_iter = 50){
 
-  n = ncol(y_matrix)
+  n = ncol(y_matr)
   q = nrow(y_matr)
   I = diag(q)
 
@@ -152,6 +158,7 @@ CVLOSO <- function(y_matr,
   temp_fixed <- intial_est_fixed
 
   for(i in 1:L){
+    print(paste0("iter: ", i, collapse = ""))
     # set to NaN current validation station values
     temp_y_matr <- y_matr
     val_ind <- validation_station_indexes[i]
@@ -177,14 +184,15 @@ CVLOSO <- function(y_matr,
     temp_fixed <- res_EM$beta_history[,res_EM$niter]
 
     # matrix of all fixed effects
-    temp_fixed <- matrix(NA, nrow = q, ncol = n)
+    temp_fixed_obs <- matrix(NA, nrow = q, ncol = n)
 
     for(j in 1:n){
-      temp_fixed[,j] <- X_array[,,j] %*% temp_fixed
+      temp_fixed_obs[,j] <- X_array[,,j] %*% temp_fixed
     }
 
     # predict all the observations (actually states) running the kalman filter
-    custom.skf.res.mat <- SKF(Y = temp_y_matr - temp_fixed,
+    # first remove the fixed effects
+    custom.skf.res.mat <- SKF(Y = temp_y_matr - temp_fixed_obs,
                               Phi = temp_struct[2] * I,
                               A = temp_struct[1] * I,
                               Q = ExpCor(mdist = dist_matr, theta = temp_struct[3]),
@@ -193,7 +201,9 @@ CVLOSO <- function(y_matr,
                               P_0 = diag(1, nrow = q),
                               retLL = TRUE,
                               vectorized_cov_matrices = TRUE)
-    err_matr[,val_ind] <- custom.skf.res.mat$xp[val_ind,]
+
+    # compute errors by subtracting both fixed and non fixed effects
+    err_matr[,i] <- y_matr[val_ind,] - temp_fixed_obs[val_ind,] - custom.skf.res.mat$xp[val_ind,]
 
   }
 

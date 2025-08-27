@@ -72,7 +72,7 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
                     bool is_fixed_effects = false,
                     bool verbose = true) {
 
-  std::cout << "Inside EMHDGM\n";
+  // std::cout << "Inside EMHDGM\n";
 
   // convert array to arma::cube
   arma::cube Xbeta_opt;
@@ -91,7 +91,7 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
   arma::cube Xbeta(Xvec.begin(), n_rows, n_cols, n_slices, false); // no copy
   Xbeta_opt = Xbeta;
 
-  std::cout << "After optional parameters \n";
+  // std::cout << "After optional parameters \n";
 
 
   // make input structure
@@ -116,7 +116,7 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
 
   EMOutput res;
 
-  std::cout << "After optional EMInput \n";
+  // std::cout << "After optional EMInput \n";
 
   if(bool_mat == true){
     res = EMHDGM_cpp_mat(inp);
@@ -124,7 +124,7 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
     res = EMHDGM_cpp(inp);
   }
 
-  std::cout << "After EMOutput \n";
+  // std::cout << "After EMOutput \n";
 
   return Rcpp::List::create(
     Rcpp::Named("par_history") = res.par_history,

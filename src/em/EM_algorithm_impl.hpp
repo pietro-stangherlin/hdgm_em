@@ -373,7 +373,7 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
     }
 
-    // Theta and V update (optimization)
+    // Theta (optimization)
     theta_temp = ThetaUpdate(em_in.dist_matrix, Phi_temp,
                                 S00, S10, S11,
                                 T,

@@ -82,10 +82,35 @@ boot.res <- BootstrapHDGM(mle.structural = res_EM$par_history[,res_EM$niter],
                           start_obs_index = 1,
                           B = 10)
 
+save(boot.res, file = "data/HDGM_boot_res.RData")
 
+# CV ---------------------------------
+source("R/cv_helper.R")
 
+# Expanding Window ---------
 
+cv_expw_res <- CVExpandingWindow(y_matr = y.matr,
+                                 X_array = X.array,
+                                 dist_matr = dists_matr,
+                                 initial_est_structural = res_EM$par_history[,res_EM$niter],
+                                 intial_est_fixed = res_EM$beta_history[,res_EM$niter],
+                                 starting_obs = 1700,
+                                 step_ahead_pred = 3,
+                                 max_EM_iter = 50)
 
+# LOSO ---------------------
 
+cv_stations_id <- 1:49
 
+cv_loso_res <- CVLOSO(y_matr = y.matr,
+                      X_array = X.array,
+                      dist_matr = dists_matr,
+                      initial_est_structural = res_EM$par_history[,res_EM$niter],
+                      intial_est_fixed = res_EM$beta_history[,res_EM$niter],
+                      validation_station_index = cv_stations_id,
+                      max_EM_iter = 50)
+
+colnames(cv_loso_res) <- cv_stations_id
+
+save(cv_expw_res, cv_loso_res, file = "data/HDGM_cv_res.RData")
 
