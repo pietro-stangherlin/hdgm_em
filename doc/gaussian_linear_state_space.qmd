@@ -368,6 +368,42 @@ For example adding splines basis.
 
 This will require to add each fixed effect coefficient to the state space with some implementation changes since the new state covariance will probably be block diagonal.
 
+More specifically we keep the autoregressive structure while moving the fixed effects to the state space which will be partitioned in $x_t = (x^{(1)}_t, x^{(2)}_t)$ where $x^{(1)}$ is the autoregressive state space component and $x^{(2)}$ the coefficient previous fixed effects component. We assume $Cov(x^{(1)}_t, x^{(2)}_t) = \text{block diag}(Var(x_t^{(1)}), Var(x_t^{(2)})) = Q \forall t$. We also partition the new observation matrix $A = (A^{(1)}, A^{(2)}_t)$: note that only the second block depends on time and is made by covariate values.
+
+A simple assumption is to set $Var(x_t^{(2)})$ to a diagonal matrix. Exploiting the block-diagonal structure we obtain a separable objective function in the vector of variances and $\theta$ for which we can use exactly the same optimization method used before, we get:
+
+$$\text{min}_{\Theta} \quad T[\log|Q^{(1)}| + \log|Q^{(2)}|] + \text{tr} \left[(Q^{-1})^{(1)}H^{(1)} \right] + \text{tr} \left[(Q^{-1})^{(2)}H^{(2)} \right]$$ {#eq-separable-cov-optim}
+
+where $H = S_{11} - S_{10} \Phi^{\top} - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top$ and $H^{(1)}$ is the upper matrix, while $H^{(2)}$ the lower matrix.
+
+The optimization of components with $Q^{(1)}$ is the same as before using Brent method while the diagonal structure of $Q^{(2)}$ and its inverse permits analytical updates.
+
+We can also write the components of the likelihood with $A_t$ after breaking the block product
+
+$$
+\begin{split}
+\text{tr} \left\{R^{-1} \sum^{T}_{t=1} \left[ \left(y_t - A^{(2)}_t x^{(2)}_t - A^{(1)}x^{(1)}_t \right) \left(y_t - A^{(2)}_t x^{(2)}_t - A^{(1)}x^{(1)}_t \right)^\top + \\
+A^{(1)} P^T_{t, 11} (A^{(1)})^\top + A^{(1)} P^T_{t, 12} (A^{(2)}_t)^\top + A^{(2)}_t P^T_{t, 21} (A^{(1)})^\top + A^{(2)}_t P^T_{t, 22} (A^{(2)}_t)^\top \right] \right\}
+\end{split}
+$$ {#eq-A-sum-blocks-decomposition}
+
+We recall that only $A^{(1)}$ has parameters that need to be estimated.
+
+Defining $\omega_t = y_t - A^{(2)}_t x^{(2)}_t$ we get
+
+$$
+\propto \text{tr} \left\{R^{-1} \left[ - A^{(1)} \left(\sum^{T}_{t=1}x^{(1)}_t \omega^\top_t - P^T_{t, 12} (A^{(2)}_t)^\top \right) - \\
+ \left(\sum^{T}_{t=1} \omega_t (x^{(1)}_t)^\top - A^{(2)}_t P^T_{t, 21} \right) (A^{(1)})^\top + \\
+A^{(1)} \left( \sum^{T}_{t=1}x^{(1)}_t (x^{(1)}_t)^\top + P^T_{t, 11} \right) (A^{(1)})^\top \right] \right\}
+$$ {#eq-a-block-factorized}
+
+Since $\text{tr}(X) = \text{tr}(X^\top)$ and $(P^T_{t, 21})^\top = P^T_{t, 12}$ the above expression can be further simplified with
+
+$$
+\propto \text{tr} \left\{R^{-1} \left[ - 2A^{(1)} \left(\sum^{T}_{t=1}x^{(1)}_t \omega^\top_t - P^T_{t, 12} (A^{(2)}_t)^\top \right) + \\
+A^{(1)} \left( \sum^{T}_{t=1}x^{(1)}_t (x^{(1)}_t)^\top + P^T_{t, 11} \right) (A^{(1)})^\top \right] \right\}
+$$ {#eq-trace-block-A-simplied}
+
 ### Go over the linear Gaussian distribution assumption
 
 Use models such the extended Kalman Filter and Particle Filters[@DurbinKoopman] or consider the quantile dynamic models.
