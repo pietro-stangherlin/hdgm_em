@@ -15,11 +15,6 @@ Rcpp::List SKF(const arma::mat& Y,
                bool retLL,
                bool vectorized_cov_matrices) {
 
-  // std::cout << "Inside Rcpp wrapper\n";
-  // std::cout << "X dims: " << X.n_rows << " x " << X.n_cols << std::endl;
-  // std::cout << "Address of X memory: " << X.memptr() << std::endl;
-
-
   // make input struct
   KalmanFilterInput inp{.Y = Y,
                         .Phi = Phi,
@@ -29,13 +24,6 @@ Rcpp::List SKF(const arma::mat& Y,
                         .x_0 = x_0,
                         .P_0 = P_0,
                         .retLL = retLL};
-
-  // std::cout << "AFTER KalmanFilterInput inp \n";
-  // std::cout << "Address of X memory: " << inp.X.memptr() << std::endl;
-  // std::cout << "X dims: " << inp.X.n_rows << " x " << inp.X.n_cols << std::endl;
-  //
-  //
-
 
   // a bit ugly return
 
@@ -68,10 +56,6 @@ Rcpp::List SKF(const arma::mat& Y,
       Rcpp::Named("loglik")  = res.loglik
     );
   };
-
-
-
-
 };
 
 
@@ -140,3 +124,170 @@ Rcpp::List SKFS_mat(const arma::mat& Y,
     Rcpp::Named("loglik") = res.loglik
   );
 }
+
+// time varying observation matrix
+// [[Rcpp::export]]
+Rcpp::List SKF_tmA(const arma::mat& Y,
+               const arma::mat& Phi,
+               const Rcpp::NumericVector& A_array,
+               const arma::mat& Q,
+               const arma::mat& R,
+               const arma::vec& x_0,
+               const arma::mat& P_0,
+               bool retLL,
+               bool vectorized_cov_matrices) {
+
+  // convert array to arma::cube
+  Rcpp::NumericVector A_vec(A_array);
+  Rcpp::IntegerVector dims = A_vec.attr("dim");
+
+  if (dims.size() != 3) {
+    Rcpp::stop("Xbeta must be a 3-dimensional array.");
+  }
+
+  int n_rows = dims[0];
+  int n_cols = dims[1];
+  int n_slices = dims[2];
+
+  arma::cube A_cube(A_vec.begin(), n_rows, n_cols, n_slices, false); // no copy
+
+
+  // make input struct
+  KalmanFilterInputTimeVaryingObsMatr inp{.Y = Y,
+                        .Phi = Phi,
+                        .A_cube = A_cube,
+                        .Q = Q,
+                        .R = R,
+                        .x_0 = x_0,
+                        .P_0 = P_0,
+                        .retLL = retLL};
+
+
+  // a bit ugly return
+
+  if (vectorized_cov_matrices == true){
+    KalmanFilterResultMat res;
+    res = SKF_tmA_cpp_mat(inp);
+    return Rcpp::List::create(
+      Rcpp::Named("xf")       = res.xf,
+      Rcpp::Named("Pf")       = res.Pf,
+      Rcpp::Named("xp")  = res.xp,
+      Rcpp::Named("Pp")  = res.Pp,
+      Rcpp::Named("K_last")  = res.K_last,
+      Rcpp::Named("A_last")  = res.A_last,
+      Rcpp::Named("nc_last") = res.nc_last,
+      Rcpp::Named("loglik")  = res.loglik
+    );
+
+  }
+  else{
+    KalmanFilterResult res;
+    res = SKF_tmA_cpp(inp);
+    return Rcpp::List::create(
+      Rcpp::Named("xf")       = res.xf,
+      Rcpp::Named("Pf")       = res.Pf,
+      Rcpp::Named("xp")  = res.xp,
+      Rcpp::Named("Pp")  = res.Pp,
+      Rcpp::Named("K_last")  = res.K_last,
+      Rcpp::Named("A_last")  = res.A_last,
+      Rcpp::Named("nc_last") = res.nc_last,
+      Rcpp::Named("loglik")  = res.loglik
+    );
+  };
+};
+
+
+// [[Rcpp::export]]
+Rcpp::List SKFS_tmA(const arma::mat& Y,
+                const arma::mat& Phi,
+                const Rcpp::NumericVector& A_array,
+                const arma::mat& Q,
+                const arma::mat& R,
+                const arma::vec& x_0,
+                const arma::mat& P_0,
+                const bool retLL) {
+
+  // convert array to arma::cube
+  Rcpp::NumericVector A_vec(A_array);
+  Rcpp::IntegerVector dims = A_vec.attr("dim");
+
+  if (dims.size() != 3) {
+    Rcpp::stop("Xbeta must be a 3-dimensional array.");
+  }
+
+  int n_rows = dims[0];
+  int n_cols = dims[1];
+  int n_slices = dims[2];
+
+  arma::cube A_cube(A_vec.begin(), n_rows, n_cols, n_slices, false); // no copy
+
+
+  // make input struct
+  KalmanFilterInputTimeVaryingObsMatr inp{.Y = Y,
+                        .Phi = Phi,
+                        .A_cube = A_cube,
+                        .Q = Q,
+                        .R = R,
+                        .x_0 = x_0,
+                        .P_0 = P_0,
+                        .retLL = retLL};
+
+  KalmanSmootherLlikResult res = SKFS_tmA_cpp(inp, std::type_identity<arma::cube>{});
+
+  return Rcpp::List::create(
+    Rcpp::Named("x_smoothed") = res.x_smoothed,
+    Rcpp::Named("P_smoothed") = res.P_smoothed,
+    Rcpp::Named("Lag_one_cov_smoothed") = res.Lag_one_cov_smoothed,
+    Rcpp::Named("x0_smoothed") = res.x0_smoothed,
+    Rcpp::Named("P0_smoothed") = res.P0_smoothed,
+    Rcpp::Named("loglik") = res.loglik
+  );
+}
+
+// [[Rcpp::export]]
+Rcpp::List SKFS_tmA_mat(const arma::mat& Y,
+                    const arma::mat& Phi,
+                    const Rcpp::NumericVector& A_array,
+                    const arma::mat& Q,
+                    const arma::mat& R,
+                    const arma::vec& x_0,
+                    const arma::mat& P_0,
+                    const bool retLL) {
+
+  // convert array to arma::cube
+  Rcpp::NumericVector A_vec(A_array);
+  Rcpp::IntegerVector dims = A_vec.attr("dim");
+
+  if (dims.size() != 3) {
+    Rcpp::stop("Xbeta must be a 3-dimensional array.");
+  }
+
+  int n_rows = dims[0];
+  int n_cols = dims[1];
+  int n_slices = dims[2];
+
+  arma::cube A_cube(A_vec.begin(), n_rows, n_cols, n_slices, false); // no copy
+
+
+  // make input struct
+  KalmanFilterInputTimeVaryingObsMatr inp{.Y = Y,
+                                          .Phi = Phi,
+                                          .A_cube = A_cube,
+                                          .Q = Q,
+                                          .R = R,
+                                          .x_0 = x_0,
+                                          .P_0 = P_0,
+                                          .retLL = retLL};
+
+  KalmanSmootherLlikResultMat res = SKFS_tmA_cpp(inp, std::type_identity<arma::mat>{});
+
+  return Rcpp::List::create(
+    Rcpp::Named("x_smoothed") = res.x_smoothed,
+    Rcpp::Named("P_smoothed") = res.P_smoothed,
+    Rcpp::Named("Lag_one_cov_smoothed") = res.Lag_one_cov_smoothed,
+    Rcpp::Named("x0_smoothed") = res.x0_smoothed,
+    Rcpp::Named("P0_smoothed") = res.P0_smoothed,
+    Rcpp::Named("loglik") = res.loglik
+  );
+}
+

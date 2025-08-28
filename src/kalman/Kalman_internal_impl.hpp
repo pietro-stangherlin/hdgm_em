@@ -144,10 +144,8 @@ KalmanFilterResultT<CovStore> SKF_core(const KalmanFilterInput& kf_inp, CovStore
 
 // ---------------------  Kalman Filter ---------------------- //
 
-// template with options to use arma::cube or arma::mat (vectorized) (symmetric: half space)
-// to store the filtered and predicted state covariances
-// Pp_store: predicted state covariance matrices
-// Pf_store: filtered state covariance matrices
+// In future this has to be included in SKF_core as a template
+// in order to have just one template
 template <typename CovStore>
 KalmanFilterResultT<CovStore> SKF_core_TimeVaryingObsMatr(const KalmanFilterInputTimeVaryingObsMatr& kf_inp,
                                                           CovStore& Pp_store, CovStore& Pf_store) {
@@ -185,7 +183,7 @@ KalmanFilterResultT<CovStore> SKF_core_TimeVaryingObsMatr(const KalmanFilterInpu
     Ppt = 0.5 * (Ppt + Ppt.t()); // force symmetry
 
     // WARNING: TO DO: populate blocks
-    At = arma::mat(q, p, arma::fill::zeros);
+    At = kf_inp.A_cube.slice(t);
 
     yt = kf_inp.Y.col(t);
     nmiss = arma::find_finite(yt);

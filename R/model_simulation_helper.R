@@ -20,11 +20,11 @@ library(mvtnorm)
 
 
 LinGauStateSpaceSim <- function(n_times = 10^3,
-                          transMatr = diag(0.5, state_dim),
-                          obsMatr = diag(1, state_dim),
-                          stateCovMatr = diag(1, state_dim),
-                          obsCovMatr = diag(0.1, obs_dim),
-                          zeroState = rep(0, obs_dim)){
+                          transMatr,
+                          obsMatr,
+                          stateCovMatr,
+                          obsCovMatr,
+                          zeroState){
 
   obs_dim = NROW(obsMatr)
   state_dim = NROW(transMatr)
@@ -62,6 +62,66 @@ LinGauStateSpaceSim <- function(n_times = 10^3,
               "observations" = Y))
 
 }
+
+
+
+#' @description Simulate from a linear Gaussian State Space model
+#' @param n_times (int): number of observations
+#' @param obs_dim (int): dimension of the observed vector
+#' @param state_dim (int): dimension of the state vector
+#' @param transMatr (matrix): state transition matrix
+#' @param obsMatr (array): observation transfer matrices array
+#' @param transMatr (matrix): state transition matrix
+#' @param stateCovMatr (matrix): state covariance matrix
+#' @param obsCovMatr (matrix): observation error covariance matrix
+#' @param zeroState (vector): initial state vector
+#' @return (list): with elements: the two matrices of simulated states and obserbations
+
+
+LinGauStateSpaceSimTimeVarObsMatr <- function(n_times,
+                                transMatr,
+                                obsMatrArray,
+                                stateCovMatr = diag(1, state_dim),
+                                obsCovMatr = diag(0.1, obs_dim),
+                                zeroState = rep(0, obs_dim)){
+
+  obs_dim = NROW(obsMatrArray[,,1])
+  state_dim = NROW(transMatr)
+
+  Y <- matrix(NA, nrow = obs_dim, ncol = n_times) # data matrix
+  X <- matrix(NA, nrow = state_dim, ncol = n_times + 1) # state matrix
+
+
+  X_errs <- t(rmvnorm(n = n_times,
+                      mean = rep(0, state_dim),
+                      sigma = stateCovMatr))
+
+  Y_errs <- t(rmvnorm(n = n_times,
+                      mean = rep(0, obs_dim),
+                      sigma = obsCovMatr))
+
+  # simulate process
+  X[,1] <- transMatr %*% as.matrix(zeroState) + t(rmvnorm(n = 1,
+                                                          mean = rep(0, state_dim),
+                                                          sigma = stateCovMatr))
+
+  # simulate
+
+
+  for(i in 1:n_times){
+    # generate state
+    X[,i+1] <- transMatr %*% as.matrix(X[,i]) + X_errs[,i]
+    # generate observation
+    Y[,i] <- obsMatrArray[,,i] %*% as.matrix(X[,i]) + Y_errs[,i]
+  }
+
+
+
+  return(list("states" =  X,
+              "observations" = Y))
+
+}
+
 
 # HDGM Simulation ----------------------------------------
 

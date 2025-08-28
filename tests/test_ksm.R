@@ -17,17 +17,18 @@ Rcpp::sourceCpp("src/kalman/Kalman_wrapper.cpp",
 
 # generate some data -------------------
 N <- 10000 # times: t = 1,..,N
-n <- rp <- 10 # y_t dimension
+n <- 5 # y_t dimension
+rp <- 10 # state dimension
 # in this case state dimension = rp = n
 
 
 A <- diag(0.8, rp) # transition matrix
-C <- diag(1, rp) # observation matrix: diagonal only if rp = n
+C <- cbind(diag(1, n), matrix(runif(n * (rp - n)), n, rp - n)) # observation matrix: diagonal only if rp = n
 Q <- diag(1, rp) # state covariance
 R <- diag(0.1, n) # Observation covariance (n x n)
 
 
-F_0 <- as.vector(rep(0, n))  # Initial state vector (rp x 1)
+F_0 <- as.vector(rep(0, rp))  # Initial state vector (rp x 1)
 P_0 <- diag(0.5, rp) # Initial state covariance (rp x rp)
 
 set.seed(123)
@@ -209,4 +210,59 @@ custom.skfs.res.missing <- SKFS(Y = X_missing, Phi = A, A = C, Q = Q, R = R,
 
 plot(custom.skfs.res.missing$x_smoothed[1,], type = "l")
 abline(v = missing_indexes, col = "red")
+
+
+# Time varying observation matrix --------------------------------------
+
+set.seed(123)
+
+# state dim
+p = 10
+# obs vector dim
+q = 5
+
+TR_MATR <- diag(1, p)
+
+OBS_MATR_ARRAY <- array(NA, dim = c(q, p, N))
+# populate obs matrices array
+
+for (i in 1:N){
+  OBS_MATR_ARRAY[,,i] <- cbind(diag(1, q),
+                               matrix(runif(q * (p - q)), q, p - q))
+}
+
+STATE_COV_MATR <- as.matrix(Matrix::bdiag(diag(1, q),
+                                diag(2, p - q)))
+
+OBS_COV_MATR <- diag(0.1, q)
+
+sim_res_tmA <- LinGauStateSpaceSimTimeVarObsMatr(n_times = N,
+                                                 transMatr = TR_MATR,
+                                                 obsMatrArray = OBS_MATR_ARRAY,
+                                                 stateCovMatr = STATE_COV_MATR,
+                                                 obsCovMatr = OBS_COV_MATR,
+                                                 zeroState = rep(0, p))
+
+
+
+# Filter -----------------------------
+
+custom.skf.res.tma <- SKF_tmA(Y = sim_res_tmA$observations, Phi = TR_MATR, A_array = OBS_MATR_ARRAY,
+                            Q = STATE_COV_MATR, R = OBS_COV_MATR,
+                        x_0 =  rep(0, p), P_0 = diag(1, p),
+                        retLL = TRUE,
+                        vectorized_cov_matrices = FALSE)
+
+plot(sim_res_tmA$states[1,], type = "l")
+lines(custom.skfs.res.tma$xf[1,], col = "red")
+
+# Smoother ---------------------------
+
+custom.skfs.res.tma <- SKFS_tmA(Y = sim_res_tmA$observations, Phi = TR_MATR, A_array = OBS_MATR_ARRAY,
+                               Q = STATE_COV_MATR, R = OBS_COV_MATR,
+                               x_0 =  rep(0, p), P_0 = diag(1, p),
+                               retLL = TRUE)
+
+plot(sim_res_tmA$states[1,], type = "l")
+lines(custom.skfs.res.tma$x_smoothed[1,], col = "blue")
 

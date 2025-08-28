@@ -57,6 +57,29 @@ KalmanFilterResultMat SKF_cpp_mat(const KalmanFilterInput& kf_inp) {
   return SKF_core<arma::mat>(kf_inp, Pp, Pf);
 };
 
+// time varying A_t observation matrix
+
+KalmanFilterResult SKF_tmA_cpp(const KalmanFilterInputTimeVaryingObsMatr& kf_inp) {
+  int p = kf_inp.Phi.n_rows;
+  int T = kf_inp.Y.n_cols;
+
+  arma::cube Pp(p, p, T, arma::fill::zeros);
+  arma::cube Pf(p, p, T, arma::fill::zeros);
+
+  return SKF_core_TimeVaryingObsMatr<arma::cube>(kf_inp, Pp, Pf);
+};
+
+KalmanFilterResultMat SKF_tmA_cpp_mat(const KalmanFilterInputTimeVaryingObsMatr& kf_inp) {
+  int p = kf_inp.Phi.n_rows;
+  int T = kf_inp.Y.n_cols;
+  int sym_len = p * (p + 1) / 2;
+
+  arma::mat Pp(sym_len, T, arma::fill::zeros);
+  arma::mat Pf(sym_len, T, arma::fill::zeros);
+
+  return SKF_core_TimeVaryingObsMatr<arma::mat>(kf_inp, Pp, Pf);
+};
+
 
 // Kalman Smoother
 KalmanSmootherResult FIS_cpp(const KalmanSmootherInput& ksm_inp) {
@@ -114,6 +137,55 @@ KalmanSmootherLlikResultMat SKFS_cpp(const KalmanFilterInput& kfsm_inp,
                                      std::type_identity<arma::mat>) {
 
   KalmanFilterResultMat kf = SKF_cpp_mat(kfsm_inp);
+
+  KalmanSmootherInputMat ksmin = {
+    .Phi = kfsm_inp.Phi,
+    .xf = kf.xf,
+    .xp = kf.xp,
+    .Pf = kf.Pf,
+    .Pp = kf.Pp,
+    .K_last = kf.K_last,
+    .A_last = kf.A_last,
+    .x_0 = kfsm_inp.x_0,
+    .P_0 = kfsm_inp.P_0,
+    .nc_last = kf.nc_last
+  };
+
+  KalmanSmootherResultMat ksmout = FIS_cpp_mat(ksmin);
+
+
+  return KalmanSmootherLlikResultMat(ksmout, kf.loglik);
+}
+
+// Time varying observation matrix
+KalmanSmootherLlikResult SKFS_tmA_cpp(const KalmanFilterInputTimeVaryingObsMatr& kfsm_inp,
+                                  std::type_identity<arma::cube>) {
+
+  KalmanFilterResult kf = SKF_tmA_cpp(kfsm_inp);
+
+  KalmanSmootherInput ksmin = {
+    .Phi = kfsm_inp.Phi,
+    .xf = kf.xf,
+    .xp = kf.xp,
+    .Pf = kf.Pf,
+    .Pp = kf.Pp,
+    .K_last = kf.K_last,
+    .A_last = kf.A_last,
+    .x_0 = kfsm_inp.x_0,
+    .P_0 = kfsm_inp.P_0,
+    .nc_last = kf.nc_last
+  };
+
+  KalmanSmootherResult ksmout = FIS_cpp(ksmin);
+
+
+  return KalmanSmootherLlikResult(ksmout, kf.loglik);
+}
+
+KalmanSmootherLlikResultMat SKFS_tmA_cpp(const KalmanFilterInputTimeVaryingObsMatr& kfsm_inp,
+                                      std::type_identity<arma::mat>) {
+
+  KalmanFilterResultMat kf = SKF_tmA_cpp_mat(kfsm_inp);
 
   KalmanSmootherInputMat ksmin = {
     .Phi = kfsm_inp.Phi,

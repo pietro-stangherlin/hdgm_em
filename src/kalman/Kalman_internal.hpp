@@ -25,3 +25,14 @@ KalmanSmootherLlikResult SKFS_cpp(const KalmanFilterInput& kfsm_inp,
 
 KalmanSmootherLlikResultMat SKFS_cpp(const KalmanFilterInput& kfsm_inp,
                                      std::type_identity<arma::mat>);
+
+// time varying observation matrix
+KalmanFilterResult SKF_tmA_cpp(const KalmanFilterInputTimeVaryingObsMatr& kf_inp);
+KalmanFilterResultMat SKF_tmA_cpp_mat(const KalmanFilterInputTimeVaryingObsMatr& kf_inp);
+
+KalmanSmootherLlikResult SKFS_tmA_cpp(const KalmanFilterInputTimeVaryingObsMatr& kfsm_inp,
+                                      std::type_identity<arma::cube>);
+
+KalmanSmootherLlikResultMat SKFS_tmA_cpp(const KalmanFilterInputTimeVaryingObsMatr& kfsm_inp,
+                                         std::type_identity<arma::mat>);
+

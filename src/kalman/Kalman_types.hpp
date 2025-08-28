@@ -19,20 +19,12 @@ struct KalmanFilterInput {
 
 // NOTE: for time varying case
 // the observation matrix A can change with time
-// more specifically, we assume it to be a block diagonal matrix
-//|upper_block_t 0          |
-//|0             lower_block|
-// where the upper block is time varying
-// and the lower block is time fixed
-// to not waste storage on the matrix zeros
-// we pass the two blocks (cube of matrices for the upper and matrix for the lower)
-// as separate inputs
+// so we pass a cube of matrices instead of a single fixed one
 
 struct KalmanFilterInputTimeVaryingObsMatr {
   const arma::mat& Y; // matrix with observation: each observation is a column
   const arma::mat& Phi; // state transition matrix
-  const arma::cube& A_upper; // observation matrix upper block time varying
-  const arma::mat& A_lower; // observation matrix lower block time fixed
+  const arma::cube& A_cube; // observation matrix upper block time varying
   const arma::mat& Q; // state covariance error matrix
   const arma::mat& R; // observation error covariance matrix
   const arma::vec& x_0; // initial state
