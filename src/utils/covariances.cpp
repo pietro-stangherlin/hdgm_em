@@ -14,3 +14,18 @@ arma::mat ExpCor(const arma::mat& mdist, double theta) {
   return arma::exp(-mdist / theta);
 }
 
+
+// Make block diagonal matrix given two matrices
+// this can be further generalized to more than two matrices...
+
+arma::mat MakeTwoBlockDiag(const arma::mat A, arma::mat B){
+  // zeros blocks
+  arma::mat ZeroTopRight(A.n_rows, B.n_cols, arma::fill::zeros);
+  arma::mat ZeroBottomLeft(B.n_rows, A.n_cols, arma::fill::zeros);
+
+  // join
+  arma::mat top = arma::join_rows(A, ZeroTopRight);
+  arma::mat low = arma::join_rows(B, ZeroBottomLeft);
+
+  return(arma::join_cols(top, low));
+}

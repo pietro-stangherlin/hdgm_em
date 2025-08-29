@@ -671,7 +671,268 @@ EMOutput EMHDGM_diag_cpp_core(EMInput& em_in) {
                   .llik = llik_next, .niter = last_iter};
 };
 
+// -------------------- AR + Coefficients as Random Effects Case --------------------- //
 
+
+// no missing observations
+// here we assume the Xbeta cube made by block matrices
+// X_t = (X^(1)_t, X^(2)_t)
+// with X^(1)_t a unit matrix I
+// which will be scaled by a varying alpha parameter of autoregresive terms
+// which will be multiplied by the autoregressive state terms
+// while X^(2)_t is the actual covariates matrix for that time
+// which will be multiplied by the coefficients state variables
+// it is assumed a blockdiagonal covariance matrix for the partitioned
+// state vector x_t = (x^(1)_t, x^(2)_t):
+// Cov(x_t) = Q = blockdiag(Q^(1), Q^(2)) where
+// Q^(1) is a diagonal matrix with the variances of each coefficient
+// and Q^(2) is the spatial correlation matrix of each spatial pair
+
+// to keep things simple we assume there are NOT fixed effects
+
+template <typename CovStore>
+EMOutput EMHDGM_AR_RandomEffects_cpp_core(EMInputNonConstCovariates& em_in) {
+
+  int q = em_in.y.n_rows; // observation vector length
+  int T = em_in.y.n_cols;
+  int p = em_in.beta0.n_elem; // covariates coefficient vector state length
+  int L = p + q;
+  // NOTE that q + p should match with each covariates matrix number of columns
+
+  double alpha_temp = em_in.alpha0;
+  double theta_temp = em_in.theta0;
+  double g_temp = em_in.g0;
+  double sigma2_temp = em_in.sigma20;
+
+  // in order to recycle variable the beta name will be used
+  // for the beta variances
+  arma::vec beta_temp = em_in.beta0;
+
+  // NOTE: parameter dimension has to be changed if the parameters space change
+  // also, zero is not a perfect initialization value
+  arma::mat par_history = arma::mat(4, em_in.max_iter + 1);
+  arma::mat beta_history = arma::mat(p, em_in.max_iter + 1);
+
+  par_history.col(0) = arma::vec({alpha_temp, g_temp,
+                  theta_temp, sigma2_temp});
+  beta_history.col(0) = beta_temp;
+
+  // Identity helper matrices
+  arma::mat X_t;
+
+  arma::mat Q_lower_block_temp, Q_upper_block_temp;
+
+  arma::mat Iqq(q,q,arma::fill::eye);
+  arma::mat Ipp(p,p,arma::fill::eye);
+  arma::mat Ill(L, L,arma::fill::eye);
+
+  arma::vec x0_smoothed = em_in.x0_in;
+  arma::mat P0_smoothed = em_in.P0_in;
+
+
+  // state space matrices
+
+  // updates the partial covariates matrix
+
+  for(int t = 0; t < T; ++t){
+    X_t = em_in.Xbeta.slice(t);
+    // scale the first diagonal matrix
+    X_t.submat(0, 0, q-1, q-1) = alpha_temp * Iqq;
+    // write it back
+    em_in.Xbeta.slice(t) = X_t;
+  }
+
+  arma::mat Phi_temp; // transition matrix
+  Phi_temp = g_temp * Ill;
+
+  arma::mat Q_temp; //state error covariance matrix
+  Q_lower_block_temp = arma::diagmat(beta_temp);
+  Q_upper_block_temp = ExpCor(em_in.dist_matrix, theta_temp);
+  Q_temp = MakeTwoBlockDiag(Q_upper_block_temp, Q_lower_block_temp);
+
+  arma::mat R_temp; // observation error covariance matrix
+
+  // Make vector of 0 and 1 for each time
+  // if 0 there's no missing observation at time
+  // else there 1
+
+  arma::uvec missing_indicator(T, arma::fill::zeros);
+  arma::uvec index_not_miss; // temp, changed at each time
+  arma::uvec t_index(1, arma::fill::zeros);
+
+  arma::vec y_t;
+
+  // first mark which observations contain at least one missing
+  for(int t = 0; t < T; ++t){
+
+    index_not_miss = arma::find_finite(em_in.y.col(t));
+
+    if(index_not_miss.n_elem < q){
+      missing_indicator[t] = 1;
+    }
+
+  }
+
+  double llik_prev;
+  double llik_next;
+
+  llik_prev = LOWEST_DOUBLE;
+
+  double llik_relative_diff;
+
+  arma::mat y_res;
+
+  // EM iterations
+  int last_iter = 0;
+  for (int iter = 1; iter < em_in.max_iter + 1; ++iter) {
+
+    last_iter += 1;
+
+    if (em_in.verbose){
+      int remainder;
+      remainder = iter % 1;
+
+      if(remainder == 0){
+        std::cout << "Iteration " << iter << std::endl;
+      };
+
+    };
+
+
+    // Subtract fixed effects
+    y_res = em_in.y;
+
+    // update state space matrices
+    R_temp = sigma2_temp * Iqq;
+
+    ///////////////////////
+    // Kalman Smoother pass
+    ///////////////////////
+
+    KalmanFilterInputTimeVaryingObsMatr kfin{
+      .Y = y_res,
+      .Phi = Phi_temp,
+      .A_cube = em_in.Xbeta,
+      .Q = Q_temp,
+      .R = R_temp,
+      .x_0 = x0_smoothed,
+      .P_0 = P0_smoothed,
+      .retLL = true};
+
+    auto ksm_res = SKFS_tmA_cpp(kfin, std::type_identity<CovStore>{});
+
+    llik_next = ksm_res.loglik;
+
+    if(em_in.verbose == true){
+      std::cout << "llik: " << llik_next << std::endl;
+    };
+
+    llik_relative_diff = (llik_next - llik_prev) / abs(llik_prev);
+
+    if(llik_relative_diff < em_in.rel_llik_tol)  {
+      std::cout << "Relative Log Likelihood non increasing, returning" << std::endl;
+
+
+      if(llik_relative_diff < 0){
+        std::cout << "WARNING: Log Likelihood decreasing, returning" << std::endl;
+
+      };
+
+      return EMOutput{.par_history = par_history,
+                      .beta_history = beta_history,
+                      .llik = llik_prev, .niter = last_iter};
+    };
+
+
+    llik_prev = llik_next;
+
+    //////////////////////////
+    // EM parameters updates
+    /////////////////////////
+
+    x0_smoothed = ksm_res.x0_smoothed;
+    P0_smoothed = ksm_res.P0_smoothed;
+
+    // S matrices
+    arma::mat S00 = ComputeS00_core<CovStore>(ksm_res.x_smoothed, ksm_res.P_smoothed, x0_smoothed, P0_smoothed);
+    arma::mat S11 = ComputeS11_core<CovStore>(ksm_res.x_smoothed, ksm_res.P_smoothed, S00, x0_smoothed, P0_smoothed);
+    arma::mat S10 = ComputeS10_core<CovStore>(ksm_res.x_smoothed, ksm_res.Lag_one_cov_smoothed, x0_smoothed);
+
+    // useful matrix
+    arma::mat H;
+    H = S11 - S10 * Phi_temp - Phi_temp * S10.t() + Phi_temp * S00 * Phi_temp.t();
+
+    // g update
+    g_temp = gUpdate(S00, S10);
+    Phi_temp = g_temp * Ill;
+
+    //std::cout << "before OmegaSumUpdate_core" << std::endl;
+    // Omega Update (not considering missing observations at the moment)
+    arma::mat omega_sum_temp(q,q, arma::fill::zeros);
+    arma::vec temp_res;
+    for(int t = 0; t < T; ++t){
+      temp_res = y_res.col(t) - em_in.Xbeta.slice(t) * ksm_res.x_smoothed(t) + em_in.Xbeta.slice(t) * GetCov(ksm_res.P_smoothed, t, q + p) * em_in.Xbeta.slice(t).t();
+      omega_sum_temp += temp_res * temp_res.t();
+    };
+
+
+    // Sigma2 update
+    sigma2_temp = arma::trace(omega_sum_temp) / (T * q);
+
+    //std::cout << "before AlphaUpdate_core" << std::endl;
+
+
+    // Alpha update (not considering missing observations at the moment)
+    // compute partial residuals w.r.t fixed observation matrix block
+    arma::mat res_mat(q, q, arma::fill::zeros);
+    arma::mat A_t;
+    arma::vec x_t;
+    arma::mat P_smooth_temp;
+    for(int t = 0; t < T; ++t){
+      A_t = em_in.Xbeta.slice(t);
+      x_t = ksm_res.x_smoothed.col(t);
+      P_smooth_temp = GetCov(ksm_res.P_smoothed, t, q + p);
+      temp_res = y_res.col(t) - A_t.submat(q, q, q + p - 1, q + p - 1) * x_t.subvec(q, q + p - 1);
+      res_mat =  res_mat + x_t.subvec(0, q - 1) * temp_res.t() - P_smooth_temp.submat(0, q, q, q + p - 1) * A_t.submat(q, q, q + p - 1, q + p - 1).t();
+    }
+
+    alpha_temp = arma::trace(res_mat) / arma::trace(S11.submat(0, 0, q-1, q-1));
+
+
+    // State covariance matrix parameters update
+    // here called beta for variable names economy
+
+    // Analytical Coefficients variances updates
+    arma::vec H_diag = arma::diagvec(H);
+    for(int i = 0; i < p; ++i){
+      beta_temp(i) = H_diag(q + i) / T;
+    };
+
+    Q_lower_block_temp = arma::diagmat(beta_temp);
+
+    // Theta (optimization)
+    arma::mat H_1 = H.submat(0, 0, q-1, q-1);
+    theta_temp = ThetaUpdate(em_in.dist_matrix, H_1,
+                             T,
+                             em_in.theta_lower, em_in.theta_upper);
+
+    Q_upper_block_temp = ExpCor(em_in.dist_matrix, theta_temp);
+
+    // rebuild state covariance matrix as a two block diagonal matrix
+    Q_temp = MakeTwoBlockDiag(Q_upper_block_temp, Q_lower_block_temp);
+
+    // Update parameters history
+    par_history.col(iter) = arma::vec({alpha_temp, g_temp,
+                    theta_temp,sigma2_temp});
+    beta_history.col(iter) = beta_temp;
+  }
+
+  std::cout << "WARNING: maximum number of iterations reached" << std::endl;
+
+  return EMOutput{.par_history = par_history,
+                  .beta_history = beta_history,
+                  .llik = llik_next, .niter = last_iter};
+};
 
 
 

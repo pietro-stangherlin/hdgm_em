@@ -28,3 +28,6 @@ EMOutput EMHDGM_cpp_mat(EMInput & em_in);
 
 EMOutput EMHDGM_diag_cpp(EMInput & em_in);
 EMOutput EMHDGM_diag_cpp_mat(EMInput & em_in);
+
+EMOutput EMHDGM_tv_cpp(EMInputNonConstCovariates & em_in);
+EMOutput EMHDGM_tv_cpp_mat(EMInputNonConstCovariates & em_in);

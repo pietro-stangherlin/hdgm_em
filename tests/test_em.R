@@ -342,7 +342,7 @@ par(mfrow = c(1,1))
 
 res_EM_miss_dep_false$llik
 
-# Structured diag --------------------------------------
+# STRUCTURED DIAG --------------------------------------
 
 res_EM <- EMHDGM_diag(y = y.matr,
                  dist_matrix = DIST_MATRIX,
@@ -385,6 +385,46 @@ res_EM_dist <- EMHDGM_diag(y = y.matr,
 
 # false starting values
 cbind(res_EM$par_history[,1], res_EM_dist$par_history[,1], res_EM_dist$par_history[,res_EM_dist$niter])
+
+# TIME VARYING --------------------------------------
+
+# Data generation ---------------------------------------
+
+p = 6
+
+STATE_COV_BLOCK_MATRIX <- as.matrix(Matrix::bdiag(COR_MATRIX, diag(1:p)))
+OBS_MATR_ARRAY <- array(NA, dim = c(Y_LEN, Y_LEN + p, N))
+# populate it
+for(t in 1:N){
+  OBS_MATR_ARRAY[,,t] <- cbind(A * diag(nrow = Y_LEN),
+                               matrix(runif(Y_LEN * p), Y_LEN, p))
+}
+
+StateSpaceRes <- LinGauStateSpaceSimTimeVarObsMatr(n_times = N,
+                                     transMatr = G * diag(nrow = Y_LEN + p),
+                                     obsMatrArray = OBS_MATR_ARRAY,
+                                     stateCovMatr = STATE_COV_BLOCK_MATRIX,
+                                     obsCovMatr = SIGMAY^2 * diag(nrow = Y_LEN),
+                                     zeroState = rep(0, Y_LEN + p))
+
+# Starting from true values --------------------------------------------------
+res_EM_tva <- EMHDGM_tv(y = StateSpaceRes$observations,
+                           dist_matrix = DIST_MATRIX,
+                           alpha0 = A ,
+                           beta0 = rep(0, p),
+                           theta0 = THETA,
+                           g0 = G, # assuming stationarity: this has to be in (-1,1)
+                           sigma20 = SIGMAY^2,
+                           Xbeta_in = OBS_MATR_ARRAY,
+                           x0_in = rep(0, Y_LEN + p),
+                           P0_in = diag(nrow = Y_LEN + p),
+                           max_iter = 200, # increment
+                           verbose = TRUE,
+                           bool_mat = TRUE,
+                           is_fixed_effects = FALSE)
+
+res_EM_tva$par_history[]
+
 
 
 

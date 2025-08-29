@@ -220,5 +220,89 @@ Rcpp::List EMHDGM_diag(const arma::mat& y, // observation matrix (n x T) where T
 
 }
 
+// [[Rcpp::export]]
+Rcpp::List EMHDGM_tv(const arma::mat& y, // observation matrix (n x T) where T = n. obs
+                  const arma::mat& dist_matrix, // state distance matrix (complete data)
+                  double alpha0, // initial observation matrix scaling
+                  const arma::vec beta0, // initial fixed effect
+                  double theta0, // initial state covariance parameter (exponential)
+                  double g0, // initial state transition matrix scaling
+                  double sigma20, // initial observations variance
+                  bool bool_mat,
+                  const arma::vec x0_in,
+                  const arma::mat P0_in,
+                  Rcpp::NumericVector& Xbeta_in,
+                  const double rel_llik_tol = 1.0e-5, // stopping criterion: relative incremente log likelihood
+                  const double theta_lower = 1e-05, // minimum theta value
+                  const double theta_upper = 20, // maximum theta value -> this can be incremented but a warning is given
+                  int max_iter = 10, // TO change + add tolerance
+                  bool is_fixed_effects = false,
+                  bool verbose = true) {
+
+  // std::cout << "Inside EMHDGM\n";
+
+  // convert array to arma::cube
+  arma::cube Xbeta_opt;
+
+  Rcpp::NumericVector Xvec(Xbeta_in);
+  Rcpp::IntegerVector dims = Xvec.attr("dim");
+
+  if (dims.size() != 3) {
+    Rcpp::stop("Xbeta must be a 3-dimensional array.");
+  }
+
+  int n_rows = dims[0];
+  int n_cols = dims[1];
+  int n_slices = dims[2];
+
+  arma::cube Xbeta(Xvec.begin(), n_rows, n_cols, n_slices, false); // no copy
+  Xbeta_opt = Xbeta;
+
+  // std::cout << "After optional parameters \n";
+
+
+  // make input structure
+  EMInputNonConstCovariates inp{
+    .y = y,
+    .dist_matrix = dist_matrix,
+    .alpha0 = alpha0,
+    .beta0 = beta0,
+    .theta0 = theta0,
+    .g0 = g0,
+    .sigma20 = sigma20,
+    .x0_in = x0_in,
+    .P0_in = P0_in,
+    .Xbeta = Xbeta_opt,
+    .rel_llik_tol = rel_llik_tol,
+    .theta_lower = theta_lower,
+    .theta_upper = theta_upper,
+    .max_iter = max_iter,
+    .is_fixed_effect = is_fixed_effects,
+    .verbose = verbose,
+  };
+
+  EMOutput res;
+
+  // std::cout << "After optional EMInput \n";
+
+  if(bool_mat == true){
+    res = EMHDGM_tv_cpp_mat(inp);
+  }else{
+    res = EMHDGM_tv_cpp(inp);
+  }
+
+  // std::cout << "After EMOutput \n";
+
+  return Rcpp::List::create(
+    Rcpp::Named("par_history") = res.par_history,
+    Rcpp::Named("beta_history") = res.beta_history,
+    Rcpp::Named("llik") = res.llik,
+    Rcpp::Named("niter") = res.niter
+  );
+
+
+}
+
+
 
 

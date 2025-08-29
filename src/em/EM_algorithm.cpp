@@ -42,3 +42,12 @@ EMOutput EMHDGM_diag_cpp_mat(EMInput & em_in){
   return EMHDGM_diag_cpp_core<arma::mat>(em_in);
 };
 
+// --------------- Structured AR + Random Effects Covariates Coefficients --------------//
+EMOutput EMHDGM_tv_cpp(EMInputNonConstCovariates & em_in){
+  return EMHDGM_AR_RandomEffects_cpp_core<arma::cube>(em_in);
+};
+
+EMOutput EMHDGM_tv_cpp_mat(EMInputNonConstCovariates & em_in){
+  return EMHDGM_AR_RandomEffects_cpp_core<arma::mat>(em_in);
+};
+
