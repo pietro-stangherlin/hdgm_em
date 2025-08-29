@@ -182,7 +182,6 @@ KalmanFilterResultT<CovStore> SKF_core_TimeVaryingObsMatr(const KalmanFilterInpu
     Ppt = kf_inp.Phi * Pft * Phi_tr + kf_inp.Q;
     Ppt = 0.5 * (Ppt + Ppt.t()); // force symmetry
 
-    // WARNING: TO DO: populate blocks
     At = kf_inp.A_cube.slice(t);
 
     yt = kf_inp.Y.col(t);

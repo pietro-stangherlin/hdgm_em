@@ -40,6 +40,8 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
   Q = em_in.Q_0;
   R = em_in.R_0;
 
+  arma::mat H;
+
   x0_smoothed = em_in.x0_in;
   P0_smoothed = em_in.P0_in;
 
@@ -140,8 +142,6 @@ EMOutputUnstructured UnstructuredEM_cpp_core(EMInputUnstructured& em_in){
 
 // -------------------- Structured Case --------------------- //
 
-
-// assuming no missing observations and no matrix permutations
 // assuming state vector has same dimension of observation vector
 template <typename CovStore>
 EMOutput EMHDGM_cpp_core(EMInput& em_in) {
@@ -175,10 +175,13 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
   arma::mat Xz = Iqq;  // unscaled transfer matrix
 
   // state space matrices
+  arma::mat H;
   arma::mat A_temp; // observation matrix
   arma::mat Phi_temp; // transition matrix
   arma::mat Q_temp; //state error covariance matrix
   arma::mat R_temp; // observation error covariance matrix
+
+  Phi_temp = g_temp * Iqq;
 
   // Precompute fixed-effects sum
   arma::mat mXbeta_sum(p, p, arma::fill::zeros);
@@ -282,7 +285,7 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 
     // update state space matrices
     A_temp = alpha_temp * Iqq;
-    Phi_temp = g_temp * Iqq;
+    // Phi_temp already updates below
     Q_temp = ExpCor(em_in.dist_matrix, theta_temp);
     R_temp = sigma2_temp * Iqq;
 
@@ -339,6 +342,12 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
     arma::mat S11 = ComputeS11_core<CovStore>(ksm_res.x_smoothed, ksm_res.P_smoothed, S00, x0_smoothed, P0_smoothed);
     arma::mat S10 = ComputeS10_core<CovStore>(ksm_res.x_smoothed, ksm_res.Lag_one_cov_smoothed, x0_smoothed);
 
+    arma::mat H;
+    H = S11 - S10 * Phi_temp - Phi_temp * S10.t() + Phi_temp * S00 * Phi_temp.t();
+
+    // g update
+    g_temp = gUpdate(S00, S10);
+    Phi_temp = g_temp * Iqq;
 
     //std::cout << "before OmegaSumUpdate_core" << std::endl;
     // Omega Update
@@ -374,13 +383,9 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
     }
 
     // Theta (optimization)
-    theta_temp = ThetaUpdate(em_in.dist_matrix, Phi_temp,
-                                S00, S10, S11,
+    theta_temp = ThetaUpdate(em_in.dist_matrix, H,
                                 T,
                                 em_in.theta_lower, em_in.theta_upper);
-
-    // g update
-    g_temp = gUpdate(S00, S10);
 
     // Update parameters history
     par_history.col(iter) = arma::vec({alpha_temp, g_temp,
@@ -398,7 +403,7 @@ EMOutput EMHDGM_cpp_core(EMInput& em_in) {
 // -------------------- Structured Case diagonal Transition matrix --------------------- //
 
 
-// assuming no missing observations and no matrix permutations
+//assuming no missing observations and no matrix permutations
 // assuming state vector has same dimension of observation vector
 template <typename CovStore>
 EMOutput EMHDGM_diag_cpp_core(EMInput& em_in) {
@@ -604,6 +609,8 @@ EMOutput EMHDGM_diag_cpp_core(EMInput& em_in) {
     arma::mat S11 = ComputeS11_core<CovStore>(ksm_res.x_smoothed, ksm_res.P_smoothed, S00, x0_smoothed, P0_smoothed);
     arma::mat S10 = ComputeS10_core<CovStore>(ksm_res.x_smoothed, ksm_res.Lag_one_cov_smoothed, x0_smoothed);
 
+    arma::mat H;
+    H = S11 - S10 * Phi_temp - Phi_temp * S10.t() + Phi_temp * S00 * Phi_temp.t();
 
     //std::cout << "before OmegaSumUpdate_core" << std::endl;
     // Omega Update
@@ -639,8 +646,7 @@ EMOutput EMHDGM_diag_cpp_core(EMInput& em_in) {
     }
 
     // Theta (optimization)
-    theta_temp = ThetaUpdate(em_in.dist_matrix, Phi_temp,
-                             S00, S10, S11,
+    theta_temp = ThetaUpdate(em_in.dist_matrix, H,
                              T,
                              em_in.theta_lower, em_in.theta_upper);
 
@@ -664,7 +670,6 @@ EMOutput EMHDGM_diag_cpp_core(EMInput& em_in) {
                   .beta_history = beta_history,
                   .llik = llik_next, .niter = last_iter};
 };
-
 
 
 

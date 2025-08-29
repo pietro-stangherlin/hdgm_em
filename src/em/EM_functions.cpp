@@ -138,22 +138,14 @@ double Sigma2Update(const arma::mat& Omega_sum,
  *
  * @param log_theta: log of the exponential spatila correlation matrix
  * @param dist_matrix Distance matrix between spatial locations (p x p)
- * @param S00 Smoothed second moment of x_{t-1} (p x p)
- * @param S10 Smoothed cross-moment between x_t and x_{t-1} (p x p)
- * @param S11 Smoothed second moment of x_t (p x p)
- * @param Phi Autoregressive Transition Matrix
+ * @param H = S11 + S10 * Phi_temp + Phi_temp * S10.t() + Phi_temp * S00 * Phi_temp.t();
  * @param T Number of time observations
  * @return double The value of the negative objective function at given theta
  */
 double LogThetaNegativeToOptim(const double log_theta,
                              const arma::mat &dist_matrix,
-                             const arma::mat &S00,
-                             const arma::mat &S10,
-                             const arma::mat &S11,
-                             const arma::mat &Phi,
+                             const arma::mat &H,
                              const int &T){
-
-  int p = S00.n_cols;
 
   double logdet_val = 0.0;
   double det_sign = 0.0;
@@ -163,9 +155,8 @@ double LogThetaNegativeToOptim(const double log_theta,
   arma::log_det(logdet_val, det_sign, Sigma_eta);
 
   arma::mat Sigma_eta_inv = arma::inv(Sigma_eta);
-  arma::mat expr = S11 - S10 * Phi.t() - Phi * S10.t() + Phi * S00 * Phi.t();
 
-  double trace_val = arma::trace(Sigma_eta_inv * expr);
+  double trace_val = arma::trace(Sigma_eta_inv * H);
 
   return T * logdet_val + trace_val;
 
@@ -176,18 +167,12 @@ double LogThetaNegativeToOptim(const double log_theta,
  *        in the Hierarchical Dynamic Gaussian Model (HDGM).
  *
  * @param dist_matrix p x p distance matrix between spatial locations
- * @param Phi Autoregressive transition matrix
- * @param S00 Smoothed second moment of x_{t-1} over time (p x p)
- * @param S10 Smoothed cross-moment of x_t and x_{t-1} over time (p x p)
- * @param S11 Smoothed second moment of x_t over time (p x p)
+ * @param H = S11 + S10 * Phi_temp + Phi_temp * S10.t() + Phi_temp * S00 * Phi_temp.t();
  * @param T Number of time points
  * @return double Optimized value of theta that minimizes the objective
  */
 double ThetaUpdate(const arma::mat &dist_matrix,
-                   const arma::mat &Phi,
-                  const arma::mat& S00,
-                  const arma::mat& S10,
-                  const arma::mat& S11,
+                   const arma::mat &H,
                   int &T,
                   double theta_lower,
                   double theta_upper,
@@ -195,7 +180,7 @@ double ThetaUpdate(const arma::mat &dist_matrix,
 
 
   auto obj_fun = [&](const double &log_theta) {
-    return LogThetaNegativeToOptim(log_theta, dist_matrix, S00, S10, S11, Phi, T);
+    return LogThetaNegativeToOptim(log_theta, dist_matrix, H, T);
   };
 
 
