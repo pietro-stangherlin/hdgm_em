@@ -192,18 +192,18 @@ CVLOSO <- function(y_matr,
 
     # predict all the observations (actually states) running the kalman filter
     # first remove the fixed effects
-    custom.skf.res.mat <- SKF(Y = temp_y_matr - temp_fixed_obs,
+
+    custom.skf.res.mat <- SKFS(Y = temp_y_matr - temp_fixed_obs,
                               Phi = temp_struct[2] * I,
                               A = temp_struct[1] * I,
                               Q = ExpCor(mdist = dist_matr, theta = temp_struct[3]),
                               R = temp_struct[4] * I,
                               x_0 = rep(0, q),
                               P_0 = diag(1, nrow = q),
-                              retLL = TRUE,
-                              vectorized_cov_matrices = TRUE)
+                              retLL = TRUE)
 
     # compute errors by subtracting both fixed and non fixed effects
-    err_matr[,i] <- y_matr[val_ind,] - temp_fixed_obs[val_ind,] - custom.skf.res.mat$xp[val_ind,]
+    err_matr[,i] <- y_matr[val_ind,] - temp_fixed_obs[val_ind,] - custom.skf.res.mat$x_smoothed[val_ind,]
 
   }
 

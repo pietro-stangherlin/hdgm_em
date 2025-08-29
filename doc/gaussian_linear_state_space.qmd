@@ -374,9 +374,15 @@ A simple assumption is to set $Var(x_t^{(2)})$ to a diagonal matrix. Exploiting 
 
 $$\text{min}_{\Theta} \quad T[\log|Q^{(1)}| + \log|Q^{(2)}|] + \text{tr} \left[(Q^{-1})^{(1)}H^{(1)} \right] + \text{tr} \left[(Q^{-1})^{(2)}H^{(2)} \right]$$ {#eq-separable-cov-optim}
 
-where $H = S_{11} - S_{10} \Phi^{\top} - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top$ and $H^{(1)}$ is the upper matrix, while $H^{(2)}$ the lower matrix.
+where $H = S_{11} - S_{10} \Phi^{\top} - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top$ and $H^{(1)}$ is the upper right block matrix, while $H^{(2)}$ the lower left block matrix.
 
-The optimization of components with $Q^{(1)}$ is the same as before using Brent method while the diagonal structure of $Q^{(2)}$ and its inverse permits analytical updates.
+The optimization of components with $Q^{(1)}$ is the same as before using Brent method while the diagonal structure of $Q^{(2)}$ and its inverse permits analytical updates since (taking the minus inverse determinant)
+
+$$
+T \log|Q^{(2)}| + \text{tr}\left[(Q^{-1})^{(2)} H^{(2)} \right] = -T \sum^{J}_{j=1} \log \left(\frac{1}{\sigma^2_j}\right) + \sum^J_{j=1}\frac{H^{(2)}_{jj}}{\sigma^2_j}
+$$
+
+from which we get $\sigma^2_j = \frac{H^{(2)}_{jj}}{T}$.
 
 We can also write the components of the likelihood with $A_t$ after breaking the block product
 
@@ -403,6 +409,8 @@ $$
 \propto \text{tr} \left\{R^{-1} \left[ - 2A^{(1)} \left(\sum^{T}_{t=1}x^{(1)}_t \omega^\top_t - P^T_{t, 12} (A^{(2)}_t)^\top \right) + \\
 A^{(1)} \left( \sum^{T}_{t=1}x^{(1)}_t (x^{(1)}_t)^\top + P^T_{t, 11} \right) (A^{(1)})^\top \right] \right\}
 $$ {#eq-trace-block-A-simplied}
+
+The computations get even simpler if we assume $A^{(1)} = \alpha I$ where $\alpha$ is a scalar which is almost the same as in the HDGM.
 
 ### Go over the linear Gaussian distribution assumption
 

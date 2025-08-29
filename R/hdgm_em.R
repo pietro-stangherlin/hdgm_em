@@ -13,6 +13,7 @@ load("data/HDGM_res_EM.RData")
 # Initial linear model beta estimates -------------------------------------
 
 load("data/agri_df.RData")
+load("data/agri_matrix_array_em.RData")
 
 lm.formula <- paste0("AQ_pm25~",
                      paste0("Month+",
@@ -24,18 +25,19 @@ lm.fit.agri <- lm(as.formula(lm.formula), data = agrim_df)
 rm(agrim_df)
 
 # EM ---------------------------------------------------
-load("data/agri_matrix_array_em.RData")
+
 
 res_EM <- EMHDGM(y = y.matr,
                  dist_matrix = dists_matr,
-                 alpha0 = 1,
-                 beta0 = coef(lm.fit.agri), # start with OLS estimate
+                 alpha0 = 7.09,
+                 beta0 = coef(lm.fit.agri), # else start with OLS estimate
                  theta0 = 1,
-                 g0 = 0.5,
-                 sigma20 = 1,
+                 g0 = 0.76,
+                 sigma20 = 8.8,
                  Xbeta_in = X.array,
-                 x0_in = rep(0, q),
-                 P0_in = diag(1, nrow = q),
+                 x0_in = rep(0, nrow(y.matr)),
+                 P0_in = diag(1, nrow = nrow(y.matr)),
+                 rel_llik_tol = 1e-5,
                  max_iter = 200,
                  verbose = TRUE,
                  bool_mat = TRUE,
@@ -74,9 +76,13 @@ hess.hat <- numDeriv::hessian(func = HDGM.Llik,
 asymptotic_var <- solve(-hess.hat) / NCOL(y.matr)
 
 # get an idea of dispersion
-cbind(c(res_EM$par_history[,res_EM$niter],
+round(cbind(c(res_EM$par_history[,res_EM$niter],
         res_EM$beta_history[,res_EM$niter]),
-      sqrt(diag(asymptotic_var)))
+      sqrt(diag(asymptotic_var))),3)
+
+round(cbind(c(res_EM$par_history[,res_EM$niter],
+              res_EM$beta_history[,res_EM$niter]),
+            sqrt(diag(asymptotic_var)) * sqrt(NCOL(y.matr))),3)
 
 # Save Results -------------------
 
@@ -126,6 +132,12 @@ cv_loso_res <- CVLOSO(y_matr = y.matr,
                       max_EM_iter = 50)
 
 colnames(cv_loso_res) <- cv_stations_id
+
+MSE <- function(x){
+  mean( (x - mean(x, na.rm = TRUE))^2 , na.rm = TRUE)
+}
+
+apply(cv_loso_res, 2, MSE)
 
 save(cv_expw_res, cv_loso_res, file = "data/HDGM_cv_res.RData")
 

@@ -429,8 +429,12 @@ S &amp;= \frac{1}{\sigma^2_Y} \sum^T_{t = 1} \Gamma^\top_t \left(y_t - \alpha x_
 <p>More specifically we keep the autoregressive structure while moving the fixed effects to the state space which will be partitioned in <span class="math inline">\(x_t = (x^{(1)}_t, x^{(2)}_t)\)</span> where <span class="math inline">\(x^{(1)}\)</span> is the autoregressive state space component and <span class="math inline">\(x^{(2)}\)</span> the coefficient previous fixed effects component. We assume <span class="math inline">\(Cov(x^{(1)}_t, x^{(2)}_t) = \text{block diag}(Var(x_t^{(1)}), Var(x_t^{(2)})) = Q \forall t\)</span>. We also partition the new observation matrix <span class="math inline">\(A = (A^{(1)}, A^{(2)}_t)\)</span>: note that only the second block depends on time and is made by covariate values.</p>
 <p>A simple assumption is to set <span class="math inline">\(Var(x_t^{(2)})\)</span> to a diagonal matrix. Exploiting the block-diagonal structure we obtain a separable objective function in the vector of variances and <span class="math inline">\(\theta\)</span> for which we can use exactly the same optimization method used before, we get:</p>
 <p><span id="eq-separable-cov-optim"><span class="math display">\[\text{min}_{\Theta} \quad T[\log|Q^{(1)}| + \log|Q^{(2)}|] + \text{tr} \left[(Q^{-1})^{(1)}H^{(1)} \right] + \text{tr} \left[(Q^{-1})^{(2)}H^{(2)} \right] \tag{30}\]</span></span></p>
-<p>where <span class="math inline">\(H = S_{11} - S_{10} \Phi^{\top} - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top\)</span> and <span class="math inline">\(H^{(1)}\)</span> is the upper matrix, while <span class="math inline">\(H^{(2)}\)</span> the lower matrix.</p>
-<p>The optimization of components with <span class="math inline">\(Q^{(1)}\)</span> is the same as before using Brent method while the diagonal structure of <span class="math inline">\(Q^{(2)}\)</span> and its inverse permits analytical updates.</p>
+<p>where <span class="math inline">\(H = S_{11} - S_{10} \Phi^{\top} - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top\)</span> and <span class="math inline">\(H^{(1)}\)</span> is the upper right block matrix, while <span class="math inline">\(H^{(2)}\)</span> the lower left block matrix.</p>
+<p>The optimization of components with <span class="math inline">\(Q^{(1)}\)</span> is the same as before using Brent method while the diagonal structure of <span class="math inline">\(Q^{(2)}\)</span> and its inverse permits analytical updates since (taking the minus inverse determinant)</p>
+<p><span class="math display">\[
+T \log|Q^{(2)}| + \text{tr}\left[(Q^{-1})^{(2)} H^{(2)} \right] = -T \sum^{J}_{j=1} \log \left(\frac{1}{\sigma^2_j}\right) + \sum^J_{j=1}\frac{H^{(2)}_{jj}}{\sigma^2_j}
+\]</span></p>
+<p>from which we get <span class="math inline">\(\sigma^2_j = \frac{H^{(2)}_{jj}}{T}\)</span>.</p>
 <p>We can also write the components of the likelihood with <span class="math inline">\(A_t\)</span> after breaking the block product</p>
 <p><span id="eq-A-sum-blocks-decomposition"><span class="math display">\[
 \begin{split}
@@ -450,6 +454,7 @@ A^{(1)} \left( \sum^{T}_{t=1}x^{(1)}_t (x^{(1)}_t)^\top + P^T_{t, 11} \right) (A
 \propto \text{tr} \left\{R^{-1} \left[ - 2A^{(1)} \left(\sum^{T}_{t=1}x^{(1)}_t \omega^\top_t - P^T_{t, 12} (A^{(2)}_t)^\top \right) + \\
 A^{(1)} \left( \sum^{T}_{t=1}x^{(1)}_t (x^{(1)}_t)^\top + P^T_{t, 11} \right) (A^{(1)})^\top \right] \right\}
 \tag{33}\]</span></span></p>
+<p>The computations get even simpler if we assume <span class="math inline">\(A^{(1)} = \alpha I\)</span> where <span class="math inline">\(\alpha\)</span> is a scalar which is almost the same as in the HDGM.</p>
 </section>
 <section id="go-over-the-linear-gaussian-distribution-assumption" class="level3">
 <h3 class="anchored" data-anchor-id="go-over-the-linear-gaussian-distribution-assumption">Go over the linear Gaussian distribution assumption</h3>
