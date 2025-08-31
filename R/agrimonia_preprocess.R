@@ -49,8 +49,16 @@ if(BOOL_GENERAL_PREPROCESS){
 
   # Adding month
   agrim_df$Month = months(agrim_df$Time)
-  agrim_df$Month = factor(agrim_df$Month, levels = c("gennaio", "febbraio", "marzo",
-                                                     "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"))
+  agrim_df$Month = factor(agrim_df$Month,
+                          levels = c("gennaio", "febbraio", "marzo",
+                                      "aprile", "maggio", "giugno",
+                                     "luglio", "agosto", "settembre",
+                                     "ottobre", "novembre", "dicembre"))
+  # Adding weekdays
+  agrim_df$Weekday <- weekdays(agrim_df$Time)
+  agrim_df$Weekday <- factor(agrim_df$Weekday,
+                             levels = c("lunedì", "martedì", "mercoledì",
+                                        "giovedì", "venerdì", "sabato", "domenica"))
 
   # Remove rows with NAs in AQ_pm25
   agrim_df = agrim_df[!is.na(agrim_df$AQ_pm25), ]
@@ -59,7 +67,7 @@ if(BOOL_GENERAL_PREPROCESS){
   agrim_df = agrim_df |>
     dplyr::select(IDStations, Latitude, Longitude, Time, Altitude, AQ_pm25, WE_temp_2m,
                   WE_tot_precipitation, WE_rh_mean, WE_wind_speed_100m_mean, WE_blh_layer_max,
-                  LI_pigs_v2, LI_bovine_v2, LA_hvi, LA_lvi, Month)
+                  LI_pigs_v2, LI_bovine_v2, LA_hvi, LA_lvi, Month, Weekday)
 
   save(agrim_df, file = "data/agri_df.RData")
 
@@ -90,14 +98,14 @@ if(BOOL_HDGM_EM_PREPROCESS){
   response_name <- "AQ_pm25"
   selected_vars_names <- c("Altitude","WE_temp_2m", "WE_tot_precipitation", "WE_rh_mean" ,
                            "WE_wind_speed_100m_mean", "WE_blh_layer_max", "LI_pigs_v2",
-                           "LI_bovine_v2", "LA_hvi", "LA_lvi") # Month missing at the moment
+                           "LI_bovine_v2", "LA_hvi", "LA_lvi") # Month and Weekday missing at the moment
   indicator_name = "IDStations"
   time_name <- "Time"
 
   # allocate response matrix and covariates array
   y.matr <- matrix(NaN, nrow = q, ncol = N_times)
-  # add months
-  X.array <- array(NaN, dim = c(q, length(selected_vars_names) + 12, N_times))
+  # add months and weekdays
+  X.array <- array(NaN, dim = c(q, length(selected_vars_names) + 12 + 6, N_times))
 
   # populate
 
@@ -119,9 +127,20 @@ if(BOOL_HDGM_EM_PREPROCESS){
       # excluding reference january
       zeros_months_matr[,month_index - 1] <- rep(1, NROW(temp_matr))
     }
-    # adding intercept and months
+
     # january is the reference
-    temp_matr <- cbind(rep(1,NROW(temp_matr)), zeros_months_matr, temp_matr)
+
+    # add weekday indicator
+    # monday as a reference
+    zeros_weekdays_matr <- matrix(0, nrow = NROW(temp_matr), ncol = 6)
+    weekday_index <- which(levels(agrim_df[["Weekday"]]) == base::weekdays(unique_times_sorted[i]))
+    if(weekday_index > 1){
+      # excluding reference january
+      zeros_weekdays_matr[,weekday_index - 1] <- rep(1, NROW(temp_matr))
+    }
+
+    # adding intercept and months
+    temp_matr <- cbind(rep(1,NROW(temp_matr)), zeros_months_matr, zeros_weekdays_matr, temp_matr)
 
     X.array[,,i] <- PermuteMatrix(
       temp_matr,

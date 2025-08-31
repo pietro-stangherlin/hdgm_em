@@ -16,7 +16,7 @@ load("data/agri_df.RData")
 load("data/agri_matrix_array_em.RData")
 
 lm.formula <- paste0("AQ_pm25~",
-                     paste0("Month+",
+                     paste0("Month+Weekday+",
                             paste0(selected_vars_names, collapse = "+"),
                             collapse = ""),
                      collapse = "")
@@ -29,11 +29,11 @@ rm(agrim_df)
 
 res_EM <- EMHDGM(y = y.matr,
                  dist_matrix = dists_matr,
-                 alpha0 = 7.09,
+                 alpha0 = 5,
                  beta0 = coef(lm.fit.agri), # else start with OLS estimate
                  theta0 = 1,
-                 g0 = 0.76,
-                 sigma20 = 8.8,
+                 g0 = 0.5,
+                 sigma20 = 5,
                  Xbeta_in = X.array,
                  x0_in = rep(0, nrow(y.matr)),
                  P0_in = diag(1, nrow = nrow(y.matr)),
@@ -115,7 +115,7 @@ cv_expw_res <- CVExpandingWindow(y_matr = y.matr,
                                  dist_matr = dists_matr,
                                  initial_est_structural = res_EM$par_history[,res_EM$niter],
                                  intial_est_fixed = res_EM$beta_history[,res_EM$niter],
-                                 starting_obs = 1700,
+                                 starting_obs = 1824,
                                  step_ahead_pred = 3,
                                  max_EM_iter = 50)
 
@@ -144,7 +144,8 @@ MSE_zero_mean <- function(x){
 sqrt(apply(cv_loso_res, 2, MSE_zero_mean))
 sqrt(apply(cv_expw_res, 1, MSE_zero_mean))
 
-
+plot(y.matr[1,], type = "l", ylim = c(-30, 100))
+lines(cv_loso_res[,1], col = 2)
 
 
 # Fixed effects residuals --------------------------------
@@ -158,6 +159,8 @@ for(i in 1:NCOL(y.matr)){
 
 plot(y.matr[1,], type = "l", ylim = c(-30, 100))
 lines(fixed_effects_res[1,], col = 2)
+
+sqrt(apply(fixed_effects_res, 1, MSE_zero_mean))
 
 save(fixed_effects_res, cv_expw_res, cv_loso_res, file = "data/HDGM_cv_res.RData")
 
