@@ -144,5 +144,21 @@ MSE_zero_mean <- function(x){
 sqrt(apply(cv_loso_res, 2, MSE_zero_mean))
 sqrt(apply(cv_expw_res, 1, MSE_zero_mean))
 
-save(cv_expw_res, cv_loso_res, file = "data/HDGM_cv_res.RData")
+
+
+
+# Fixed effects residuals --------------------------------
+# with parameters estimated on all data, not CV
+
+fixed_effects_res <- matrix(NA, nrow = nrow(y.matr), ncol = ncol(y.matr))
+for(i in 1:NCOL(y.matr)){
+  fixed_effects_res[,i] <- y.matr[,i] - X.array[,,i] %*% res_EM$beta_history[,res_EM$niter]
+}
+
+
+plot(y.matr[1,], type = "l", ylim = c(-30, 100))
+lines(fixed_effects_res[1,], col = 2)
+
+save(fixed_effects_res, cv_expw_res, cv_loso_res, file = "data/HDGM_cv_res.RData")
+
 
