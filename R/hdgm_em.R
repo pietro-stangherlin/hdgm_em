@@ -137,8 +137,12 @@ MSE <- function(x){
   mean( (x - mean(x, na.rm = TRUE))^2 , na.rm = TRUE)
 }
 
-sqrt(apply(cv_loso_res, 2, MSE))
-sqrt(apply(cv_expw_res, 1, MSE))
+MSE_zero_mean <- function(x){
+  mean( x^2 , na.rm = TRUE)
+}
+
+sqrt(apply(cv_loso_res, 2, MSE_zero_mean))
+sqrt(apply(cv_expw_res, 1, MSE_zero_mean))
 
 save(cv_expw_res, cv_loso_res, file = "data/HDGM_cv_res.RData")
 
