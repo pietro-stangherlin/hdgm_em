@@ -16,16 +16,24 @@ load("data/agri_df.RData")
 load("data/agri_matrix_array_em.RData")
 
 lm.formula <- paste0("AQ_pm25~",
-                     paste0("Month+Weekday+",
+                     paste0("Month+",
                             paste0(selected_vars_names, collapse = "+"),
                             collapse = ""),
                      collapse = "")
 
 lm.fit.agri <- lm(as.formula(lm.formula), data = agrim_df)
+
+lm.formula.week <- paste0("AQ_pm25~",
+                     paste0("Month+WeekDay",
+                            paste0(selected_vars_names, collapse = "+"),
+                            collapse = ""),
+                     collapse = "")
+
+lm.fit.agri.week <- lm(as.formula(lm.formula.week), data = agrim_df)
+
 rm(agrim_df)
 
 # EM ---------------------------------------------------
-
 
 res_EM <- EMHDGM(y = y.matr,
                  dist_matrix = dists_matr,
@@ -51,8 +59,8 @@ res_EM_diag <- EMHDGM_diag(y = y.matr,
                  g0 = 0.5,
                  sigma20 = 1,
                  Xbeta_in = X.array,
-                 x0_in = rep(0, q),
-                 P0_in = diag(1, nrow = q),
+                 x0_in = rep(0, nrow(y.matr)),
+                 P0_in = diag(1, nrow = nrow(y.matr)),
                  max_iter = 200,
                  verbose = TRUE,
                  bool_mat = TRUE,
@@ -70,7 +78,7 @@ hess.hat <- numDeriv::hessian(func = HDGM.Llik,
           dist.matr = dists_matr,
           X.array = X.array,
           method = "Richardson", # WARNING: decrease eps (but it's REALLY slow)
-          method.args = list(eps=1e-3, d=0.1, zero.tol=sqrt(.Machine$double.eps/7e-7), r=4, v=2, show.details=FALSE))
+          method.args = list(eps=1e-2, d=0.1, zero.tol=sqrt(.Machine$double.eps/7e-7), r=4, v=2, show.details=FALSE))
 
 # asymptotic information matrix
 asymptotic_var <- solve(-hess.hat) / NCOL(y.matr)
@@ -86,7 +94,7 @@ round(cbind(c(res_EM$par_history[,res_EM$niter],
 
 # Save Results -------------------
 
-save(res_EM, res_EM_diag, asymptotic_var, file = "data/HDGM_res_EM.RData")
+save(res_EM, asymptotic_var, file = "data/HDGM_res_EM.RData")
 
 # Bootstrap ----------------------
 source("R/bootstrap_helper.R")

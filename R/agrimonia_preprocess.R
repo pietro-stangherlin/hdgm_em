@@ -105,7 +105,8 @@ if(BOOL_HDGM_EM_PREPROCESS){
   # allocate response matrix and covariates array
   y.matr <- matrix(NaN, nrow = q, ncol = N_times)
   # add months and weekdays
-  X.array <- array(NaN, dim = c(q, length(selected_vars_names) + 12 + 6, N_times))
+  X.array <- array(NaN, dim = c(q, length(selected_vars_names) + 12, N_times))
+  X.array.week <- array(NaN, dim = c(q, length(selected_vars_names) + 12 + 6, N_times))
 
   # populate
 
@@ -140,13 +141,22 @@ if(BOOL_HDGM_EM_PREPROCESS){
     }
 
     # adding intercept and months
-    temp_matr <- cbind(rep(1,NROW(temp_matr)), zeros_months_matr, zeros_weekdays_matr, temp_matr)
+    temp_matr <- cbind(rep(1,NROW(temp_matr)), zeros_months_matr, temp_matr)
 
     X.array[,,i] <- PermuteMatrix(
       temp_matr,
       temp_window[[indicator_name]],
       unique_stations
     )
+
+    temp_matr <- cbind(rep(1,NROW(temp_matr)), zeros_months_matr, zeros_weekdays_matr, temp_matr)
+
+    X.array.week[,,i] <- PermuteMatrix(
+      temp_matr,
+      temp_window[[indicator_name]],
+      unique_stations
+    )
+
   }
 
   save(y.matr, X.array, dists_matr, selected_vars_names, file = "data/agri_matrix_array_em.RData")
