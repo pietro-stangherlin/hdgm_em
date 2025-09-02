@@ -31,6 +31,8 @@ lm.formula.week <- paste0("AQ_pm25~",
 
 lm.fit.agri.week <- lm(as.formula(lm.formula.week), data = agrim_df)
 
+coef_names <- names(coef(lm.fit.agri))
+
 rm(agrim_df)
 
 # EM ---------------------------------------------------
@@ -90,7 +92,7 @@ round(cbind(c(res_EM$par_history[,res_EM$niter],
 
 # Save Results -------------------
 
-save(res_EM, asymptotic_var, file = "data/HDGM_res_EM.RData")
+save(res_EM, asymptotic_var, coef_names, file = "data/HDGM_res_EM.RData")
 
 # Bootstrap ----------------------
 source("R/bootstrap_helper.R")

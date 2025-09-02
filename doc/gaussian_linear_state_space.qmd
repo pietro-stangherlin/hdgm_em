@@ -294,10 +294,38 @@ load("../data/HDGM_cv_res.RData")
 Numerical Hessian std
 
 ```{r}
+l = NROW(res_EM$par_history)
+p = NROW(res_EM$beta_history)
 
-round(cbind(c(res_EM$par_history[,res_EM$niter],
-        res_EM$beta_history[,res_EM$niter]),
-      sqrt(diag(asymptotic_var))),3)
+struct_ef <- round(cbind(res_EM$par_history[,res_EM$niter],
+                   sqrt(diag(asymptotic_var)[1:l])), 3)
+colnames(struct_ef) <- c("est", "std")
+rownames(struct_ef) <- c("alpha", "phi", "theta", "sigmay^2")
+
+beta_eff <- round(cbind(res_EM$beta_history[,res_EM$niter],
+      sqrt(diag(asymptotic_var)[(l+1):(p+l)])),3)
+colnames(beta_eff) <- c("est", "std")
+rownames(beta_eff) <- coef_names
+
+struct_ef
+beta_eff
+```
+
+Loso residuals: RMSE for each station
+
+```{r}
+plot(apply(cv_loso_res, 2, function(x) sqrt(mean(x^2, na.rm = T))),
+     pch = 16,
+     xlab = "station id",
+     ylab = "RMSE",
+     main = "LOSO Station RMSE")
+```
+
+LOSO residual autocorrelation
+
+```{r}
+acf(cv_loso_res[,2], na.action = na.pass,
+    main = "LOSO res ACF station 2")
 ```
 
 ### MCMC and Gibbs sampling

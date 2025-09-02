@@ -20,6 +20,40 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 /* CSS for citations */
 div.csl-bib-body { }
 div.csl-entry {
@@ -349,6 +383,91 @@ Q_{ij} = \exp (-|| s(y_{t,i}) - s(y_{t,j}) ||_2 / \theta)
 <p>The exponential correlation parameter <span class="math inline">\(\theta\)</span> is updated via numerical optimization:</p>
 <p><span class="math inline">\(\theta^j = \text{argmin}_{\theta} \quad T\log|Q| + \text{tr} \left[Q^{-1} \left(S_{11} - S_{10} \Phi^\top - \Phi S_{10}^\top + \Phi S_{00} \Phi^\top \right) \right]\)</span>.</p>
 <p>Since this is a univariate optimization problem Brent method is used, if the <span class="math inline">\(\theta\)</span> dimension increases other methods should be employed such Nelder-Mead.</p>
+<section id="results" class="level4">
+<h4 class="anchored" data-anchor-id="results">Results</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="st">"../data/HDGM_res_EM.RData"</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="st">"../data/agri_matrix_array_em.RData"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="st">"../data/HDGM_cv_res.RData"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Numerical Hessian std</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>l <span class="ot">=</span> <span class="fu">NROW</span>(res_EM<span class="sc">$</span>par_history)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>p <span class="ot">=</span> <span class="fu">NROW</span>(res_EM<span class="sc">$</span>beta_history)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>struct_ef <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">cbind</span>(res_EM<span class="sc">$</span>par_history[,res_EM<span class="sc">$</span>niter],</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">sqrt</span>(<span class="fu">diag</span>(asymptotic_var)[<span class="dv">1</span><span class="sc">:</span>l])), <span class="dv">3</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(struct_ef) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"est"</span>, <span class="st">"std"</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(struct_ef) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"alpha"</span>, <span class="st">"phi"</span>, <span class="st">"theta"</span>, <span class="st">"sigmay^2"</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>beta_eff <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">cbind</span>(res_EM<span class="sc">$</span>beta_history[,res_EM<span class="sc">$</span>niter],</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sqrt</span>(<span class="fu">diag</span>(asymptotic_var)[(l<span class="sc">+</span><span class="dv">1</span>)<span class="sc">:</span>(p<span class="sc">+</span>l)])),<span class="dv">3</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(beta_eff) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"est"</span>, <span class="st">"std"</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(beta_eff) <span class="ot">&lt;-</span> coef_names</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>struct_ef</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           est   std
+alpha    7.284 0.007
+phi      0.741 0.001
+theta    1.000 0.003
+sigmay^2 8.576 0.018</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>beta_eff</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                            est   std
+(Intercept)              36.306 0.197
+Monthfebbraio            -7.566 0.190
+Monthmarzo              -15.940 0.208
+Monthaprile             -22.248 0.218
+Monthmaggio             -28.244 0.223
+Monthgiugno             -28.212 0.233
+Monthluglio             -27.957 0.237
+Monthagosto             -29.479 0.236
+Monthsettembre          -27.630 0.227
+Monthottobre            -20.569 0.217
+Monthnovembre           -16.497 0.210
+Monthdicembre            -8.331 0.193
+Altitude                 -0.006 0.000
+WE_temp_2m                0.488 0.005
+WE_tot_precipitation    -82.992 1.164
+WE_rh_mean                0.185 0.001
+WE_wind_speed_100m_mean  -1.263 0.008
+WE_blh_layer_max         -0.002 0.000
+LI_pigs_v2                0.005 0.000
+LI_bovine_v2              0.002 0.000
+LA_hvi                   -0.422 0.018
+LA_lvi                   -4.082 0.028</code></pre>
+</div>
+</div>
+<p>Loso residuals: RMSE for each station</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">apply</span>(cv_loso_res, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="fu">sqrt</span>(<span class="fu">mean</span>(x<span class="sc">^</span><span class="dv">2</span>, <span class="at">na.rm =</span> T))),</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>     <span class="at">pch =</span> <span class="dv">16</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"station id"</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylab =</span> <span class="st">"RMSE"</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"LOSO Station RMSE"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="gaussian_linear_state_space_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>LOSO residual autocorrelation</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acf</span>(cv_loso_res[,<span class="dv">2</span>], <span class="at">na.action =</span> na.pass,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">main =</span> <span class="st">"LOSO res ACF station 2"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="gaussian_linear_state_space_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
 </section>
 <section id="mcmc-and-gibbs-sampling" class="level3">
 <h3 class="anchored" data-anchor-id="mcmc-and-gibbs-sampling">MCMC and Gibbs sampling</h3>
