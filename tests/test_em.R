@@ -411,7 +411,7 @@ StateSpaceRes <- LinGauStateSpaceSimTimeVarObsMatr(n_times = N,
 res_EM_tva <- EMHDGM_tv(y = StateSpaceRes$observations,
                            dist_matrix = DIST_MATRIX,
                            alpha0 = A ,
-                           beta0 = rep(0, p),
+                           beta0 = rep(5, p),
                            theta0 = THETA,
                            g0 = G, # assuming stationarity: this has to be in (-1,1)
                            sigma20 = SIGMAY^2,
@@ -422,9 +422,6 @@ res_EM_tva <- EMHDGM_tv(y = StateSpaceRes$observations,
                            verbose = TRUE,
                            bool_mat = TRUE,
                            is_fixed_effects = FALSE)
-
-res_EM_tva$par_history[]
-
 
 
 

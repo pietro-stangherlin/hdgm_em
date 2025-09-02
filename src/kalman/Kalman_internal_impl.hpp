@@ -182,6 +182,11 @@ KalmanFilterResultT<CovStore> SKF_core_TimeVaryingObsMatr(const KalmanFilterInpu
     Ppt = kf_inp.Phi * Pft * Phi_tr + kf_inp.Q;
     Ppt = 0.5 * (Ppt + Ppt.t()); // force symmetry
 
+    // DEBUG
+    if(Ppt.is_sympd() != true){
+      std::cout << "Warning: Ppt is NOT positive definite; " << "time: " << t << std::endl;
+    }
+
     At = kf_inp.A_cube.slice(t);
 
     yt = kf_inp.Y.col(t);
@@ -326,6 +331,10 @@ KalmanSmootherResultT<CovStore> FIS_core(const KalmanSmootherInputT<CovStore>& k
     arma::mat Pf = GetCov(ksm_inp.Pf, t, p);
     arma::mat Pp = GetCov(ksm_inp.Pp, t+1, p);
 
+
+    // DEBUG
+    // std::cout << "Pp" <<  std::endl;
+    // std::cout << Pp << std::endl;
     J_t = Pf * Phi_tr * arma::inv_sympd(Pp);
 
     arma::mat J_t_T = J_t.t();
