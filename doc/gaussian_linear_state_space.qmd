@@ -282,6 +282,24 @@ $\theta^j = \text{argmin}_{\theta} \quad T\log|Q| + \text{tr} \left[Q^{-1} \left
 
 Since this is a univariate optimization problem Brent method is used, if the $\theta$ dimension increases other methods should be employed such Nelder-Mead.
 
+#### Results
+
+```{r}
+load("../data/HDGM_res_EM.RData")
+load("../data/agri_matrix_array_em.RData")
+load("../data/HDGM_cv_res.RData")
+
+```
+
+Numerical Hessian std
+
+```{r}
+
+round(cbind(c(res_EM$par_history[,res_EM$niter],
+        res_EM$beta_history[,res_EM$niter]),
+      sqrt(diag(asymptotic_var))),3)
+```
+
 ### MCMC and Gibbs sampling
 
 Here the reference [@ShumwayStoffer] and for the specific case @SAHUBayes.

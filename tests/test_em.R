@@ -417,8 +417,8 @@ res_EM_tva <- EMHDGM_tv(y = StateSpaceRes$observations,
                            sigma20 = SIGMAY^2,
                            Xbeta_in = OBS_MATR_ARRAY,
                            x0_in = rep(0, Y_LEN + p),
-                           P0_in = diag(nrow = Y_LEN + p),
-                           max_iter = 200, # increment
+                           P0_in = 10 * diag(nrow = Y_LEN + p),
+                           max_iter = 10, # increment
                            verbose = TRUE,
                            bool_mat = TRUE,
                            is_fixed_effects = FALSE)

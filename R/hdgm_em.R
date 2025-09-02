@@ -81,16 +81,12 @@ hess.hat <- numDeriv::hessian(func = HDGM.Llik,
           method.args = list(eps=1e-2, d=0.1, zero.tol=sqrt(.Machine$double.eps/7e-7), r=4, v=2, show.details=FALSE))
 
 # asymptotic information matrix
-asymptotic_var <- solve(-hess.hat) / NCOL(y.matr)
+asymptotic_var <- solve(-hess.hat)
 
 # get an idea of dispersion
 round(cbind(c(res_EM$par_history[,res_EM$niter],
         res_EM$beta_history[,res_EM$niter]),
       sqrt(diag(asymptotic_var))),3)
-
-round(cbind(c(res_EM$par_history[,res_EM$niter],
-              res_EM$beta_history[,res_EM$niter]),
-            sqrt(diag(asymptotic_var)) * sqrt(NCOL(y.matr))),3)
 
 # Save Results -------------------
 
