@@ -328,6 +328,42 @@ acf(cv_loso_res[,2], na.action = na.pass,
     main = "LOSO res ACF station 2")
 ```
 
+Parameters convergence
+
+```{r}
+plot(res_EM$par_history[1,1:res_EM$niter],
+     pch = 16,
+     xlab = "iterations",
+     ylab = "alpha",
+     main = "EM convergence")
+
+plot(res_EM$par_history[2,1:res_EM$niter],
+     pch = 16,
+     xlab = "iterations",
+     ylab = "phi",
+     main = "EM convergence")
+
+plot(res_EM$par_history[3,1:res_EM$niter],
+     pch = 16,
+     xlab = "iterations",
+     ylab = "theta",
+     main = "EM convergence")
+
+plot(res_EM$par_history[4,1:res_EM$niter],
+     pch = 16,
+     xlab = "iterations",
+     ylab = "sigmay^2",
+     main = "EM convergence")
+
+plot(res_EM$beta_history[15,1:res_EM$niter],
+     pch = 16,
+     xlab = "iterations",
+     ylab = "WE_tot_precipitation",
+     main = "EM convergence")
+
+
+```
+
 ### MCMC and Gibbs sampling
 
 Here the reference [@ShumwayStoffer] and for the specific case @SAHUBayes.
