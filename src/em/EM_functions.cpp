@@ -183,10 +183,12 @@ double ThetaUpdate(const arma::mat &dist_matrix,
     return LogThetaNegativeToOptim(log_theta, dist_matrix, H, T);
   };
 
+  double log_inf = std::log(theta_lower);
+  double log_sup = std::log(theta_upper);
 
   double result = brent::brent_minimize(
     obj_fun,
-    theta_lower, theta_upper, // min and max search interval
+    log_inf, log_sup, // min and max search interval
     brent_max_iter); // max iter
 
   // add checks if result is on the border of its parameter space

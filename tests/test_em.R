@@ -19,7 +19,7 @@ set.seed(123)
 
 N <- 10000
 Y_LEN <- 5
-THETA <- 2
+THETA <- 0.5
 G <- 0.8
 A <- 1
 SIGMAY <- 1
