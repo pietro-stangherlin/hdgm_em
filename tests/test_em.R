@@ -313,7 +313,6 @@ res_EM_miss_dep$beta_history
 res_EM_miss_dep$llik
 
 # starting from NOT true values ----------------------
-
 res_EM_miss_dep_false <- EMHDGM(y = y.miss.with.fixed,
                            dist_matrix = DIST_MATRIX,
                            alpha0 = 3 * A,
@@ -341,6 +340,39 @@ plot(res_EM_miss_dep_false$par_history[4,1:res_EM_miss_dep_false$niter], type = 
 par(mfrow = c(1,1))
 
 res_EM_miss_dep_false$llik
+
+# UNSTRUCTURED --------------------------------------
+# Starting from true values -------------------------
+res_EM <- UnstructuredEM(y = y.matr,
+                         Phi_0 = G * diag(nrow = Y_LEN),
+                         A_0 = A * diag(nrow = Y_LEN),
+                         Q_0 = ETA_MATRIX,
+                         R_0 = SIGMAY^2 * diag(nrow = Y_LEN),
+                         x0_in = rep(0, Y_LEN),
+                         P0_in = ETA_MATRIX,
+                         max_iter = 50,
+                         bool_mat = TRUE,
+                        verbose = TRUE)
+res_EM$Phi
+res_EM$A
+res_EM$Q
+res_EM$R
+
+# Starting from not true values -------------------------
+res_EM <- UnstructuredEM(y = y.matr,
+                         Phi_0 = 4 * G * diag(nrow = Y_LEN),
+                         A_0 = A * diag(nrow = Y_LEN),
+                         Q_0 = 3 * ETA_MATRIX,
+                         R_0 = 5 * SIGMAY^2 * diag(nrow = Y_LEN),
+                         x0_in = rep(0, Y_LEN),
+                         P0_in = ETA_MATRIX,
+                         max_iter = 300,
+                         bool_mat = TRUE,
+                         verbose = TRUE)
+res_EM$Phi
+res_EM$A
+res_EM$Q
+res_EM$R
 
 # STRUCTURED state cov scale --------------------------------------
 
