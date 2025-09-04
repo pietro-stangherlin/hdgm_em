@@ -136,13 +136,13 @@ double Sigma2Update(const arma::mat& Omega_sum,
  * @brief Computes the negative expected complete-data log-likelihood
  *        (up to a constant) for the HDGM model, to be minimized over theta.
  *
- * @param log_theta: log of the exponential spatila correlation matrix
+ * @param theta: spatial correlation matrix
  * @param dist_matrix Distance matrix between spatial locations (p x p)
  * @param H = S11 + S10 * Phi_temp + Phi_temp * S10.t() + Phi_temp * S00 * Phi_temp.t();
  * @param T Number of time observations
  * @return double The value of the negative objective function at given theta
  */
-double LogThetaNegativeToOptim(const double log_theta,
+double ThetaNegativeToOptim(const double theta,
                              const arma::mat &dist_matrix,
                              const arma::mat &H,
                              const int &T){
@@ -150,7 +150,7 @@ double LogThetaNegativeToOptim(const double log_theta,
   double logdet_val = 0.0;
   double det_sign = 0.0;
 
-  arma::mat Sigma_eta = ExpCor(dist_matrix, exp(log_theta));
+  arma::mat Sigma_eta = ExpCor(dist_matrix, theta);
 
   arma::log_det(logdet_val, det_sign, Sigma_eta);
 
@@ -179,21 +179,19 @@ double ThetaUpdate(const arma::mat &dist_matrix,
                   int brent_max_iter){
 
 
-  auto obj_fun = [&](const double &log_theta) {
-    return LogThetaNegativeToOptim(log_theta, dist_matrix, H, T);
+  auto obj_fun = [&](const double &theta) {
+    return ThetaNegativeToOptim(theta, dist_matrix, H, T);
   };
 
-  double log_inf = std::log(theta_lower);
-  double log_sup = std::log(theta_upper);
 
   double result = brent::brent_minimize(
     obj_fun,
-    log_inf, log_sup, // min and max search interval
+    theta_lower, theta_upper, // min and max search interval
     brent_max_iter); // max iter
 
   // add checks if result is on the border of its parameter space
 
-  return exp(result);
+  return result;
 }
 
 

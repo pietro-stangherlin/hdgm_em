@@ -67,7 +67,7 @@ Rcpp::List EMHDGM(const arma::mat& y, // observation matrix (n x T) where T = n.
                     const Rcpp::NumericVector& Xbeta_in,
                     const double rel_llik_tol = 1.0e-5, // stopping criterion: relative incremente log likelihood
                     const double theta_lower = 1e-05, // minimum theta value
-                    const double theta_upper = 20, // maximum theta value -> this can be incremented but a warning is given
+                    const double theta_upper = 5, // maximum theta value -> this can be incremented but a warning is given
                     int max_iter = 10, // TO change + add tolerance
                     bool is_fixed_effects = false,
                     bool verbose = true) {

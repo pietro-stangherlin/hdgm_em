@@ -8,6 +8,7 @@ Rcpp::sourceCpp("src/em/EM_wrapper.cpp",
 
 # if already executed EM
 load("data/HDGM_res_EM.RData")
+load("data/HDGM_cv_res.RData")
 
 
 # Initial linear model beta estimates -------------------------------------
@@ -23,13 +24,13 @@ lm.formula <- paste0("AQ_pm25~",
 
 lm.fit.agri <- lm(as.formula(lm.formula), data = agrim_df)
 
-lm.formula.week <- paste0("AQ_pm25~",
-                     paste0("Month+WeekDay",
-                            paste0(selected_vars_names, collapse = "+"),
-                            collapse = ""),
-                     collapse = "")
-
-lm.fit.agri.week <- lm(as.formula(lm.formula.week), data = agrim_df)
+# lm.formula.week <- paste0("AQ_pm25~",
+#                      paste0("Month+WeekDay",
+#                             paste0(selected_vars_names, collapse = "+"),
+#                             collapse = ""),
+#                      collapse = "")
+#
+# lm.fit.agri.week <- lm(as.formula(lm.formula.week), data = agrim_df)
 
 coef_names <- names(coef(lm.fit.agri))
 
