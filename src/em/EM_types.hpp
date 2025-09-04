@@ -33,6 +33,26 @@ struct EMInput{
   bool verbose = true;
 };
 
+struct EMInput_statescale{
+  const arma::mat& y; // observation matrix (n x T) where T = n. obs
+  const arma::mat& dist_matrix; // state distance matrix (complete data)
+  double alpha0; // initial observation matrix scaling
+  const arma::vec beta0; // initial fixed effect
+  double theta0; // initial state covariance parameter (exponential)
+  double g0; // initial state transition matrix scaling
+  double sigma20; // initial observations variance
+  double sigma2state0; // initial state covariance scaling (i.e state variance on diagonal)
+  const arma::vec x0_in;
+  const arma::mat P0_in;
+  const arma::cube &Xbeta;
+  const double rel_llik_tol = 1.0e-5; // stopping criterion: relative increment log likelihood
+  int max_iter = 10;
+  std::array<double,2> theta_v_step {0.1, 0.1};
+  double var_terminating_lim = 0.01;
+  bool is_fixed_effect = false;
+  bool verbose = true;
+};
+
 struct EMInputNonConstCovariates{
   const arma::mat& y; // observation matrix (n x T) where T = n. obs
   const arma::mat& dist_matrix; // state distance matrix (complete data)

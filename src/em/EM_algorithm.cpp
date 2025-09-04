@@ -32,6 +32,15 @@ EMOutput EMHDGM_cpp_mat(EMInput & em_in){
   return EMHDGM_cpp_core<arma::mat>(em_in);
 };
 
+//  ------------------ Structured Case state covariance scale ------------------------ //
+EMOutput EMHDGM_state_scale_cpp(EMInput_statescale & em_in){
+  return EMHDGM_state_scale_cpp_core<arma::cube>(em_in);
+};
+
+EMOutput EMHDGM_state_scale_cpp_mat(EMInput_statescale & em_in){
+  return EMHDGM_state_scale_cpp_core<arma::mat>(em_in);
+};
+
 //  ------------------ Structured Case diag transition matrix ------------------------ //
 
 EMOutput EMHDGM_diag_cpp(EMInput & em_in){

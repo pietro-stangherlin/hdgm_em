@@ -204,33 +204,16 @@ double ThetaUpdate(const arma::mat &dist_matrix,
  * the second is sigma_z which is the state innovation covariance scaling standard
  * deviation
  * @param dist_matrix Distance matrix between spatial locations (p x p)
- * @param S00 Smoothed second moment of z_{t-1} (p x p)
- * @param S10 Smoothed cross-moment between z_t and z_{t-1} (p x p)
- * @param S11 Smoothed second moment of z_t (p x p)
- * @param g Autoregressive coefficient (scalar)
+ * @param H = S11 + S10 * Phi_temp + Phi_temp * S10.t() + Phi_temp * S00 * Phi_temp.t();
  * @param N Number of time observations (T)
  * @return double The value of the negative objective function at given theta
  */
 
 double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta_v,
                          const arma::mat &dist_matrix,
-                         const arma::mat &S00,
-                         const arma::mat &S10,
-                         const arma::mat &S11,
-                         const double & g,
+                         const arma::mat &H,
                          const int& N) {
-
-  int p;
-  p = S00.n_cols;
-
   arma::mat Sigma_eta = exp(log_theta_v[1]) * ExpCor(dist_matrix, exp(log_theta_v[0]));
-  // debug
-  // std::cout << "Sigma_eta" << Sigma_eta << std::endl;
-
-  // std::cout << "inside negative to optim: " << std::endl;
-  // std::cout << "theta_v[0]: " << theta_v[0] << std::endl;
-  // std::cout << "theta_v[1]: " << theta_v[1] << std::endl;
-  // std::cout << "dist_matrix: " << dist_matrix << std::endl;
 
   double logdet_val = 0.0;
   double sign = 0.0;
@@ -240,23 +223,9 @@ double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta
   // of Sigma_eta once and use it to compute both the log determinant and the inverse
   arma::log_det(logdet_val, sign, Sigma_eta);
 
-  // debug
-  //std::cout << "logdet_val" << logdet_val << std::endl;
-
-  arma::mat G(p, p, arma::fill::eye);
-  G = g * G;
-
   arma::mat Sigma_eta_inv = arma::inv(Sigma_eta);
-  arma::mat expr = S11 - S10 * G.t() - G * S10.t() + G * S00 * G.t();
 
-  // debug
-  //std::cout << "Sigma_eta_inv" << Sigma_eta_inv << std::endl;
-  //std::cout << "expr" << expr << std::endl;
-
-  double trace_val = arma::trace(Sigma_eta_inv * expr);
-
-  // debug
-  //std::cout << "trace_val" << trace_val << std::endl;
+  double trace_val = arma::trace(Sigma_eta_inv * H);
 
   return N * logdet_val + trace_val;
 }
@@ -269,10 +238,7 @@ double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta
  *        in the Hierarchical Dynamic Gaussian Model (HDGM).
  *
  * @param dist_matrix p x p distance matrix between spatial locations
- * @param g Autoregressive coefficient of the hidden state process
- * @param S00 Smoothed second moment of z_{t-1} over time (p x p)
- * @param S10 Smoothed cross-moment of z_t and z_{t-1} over time (p x p)
- * @param S11 Smoothed second moment of z_t over time (p x p)
+ * @param H = S11 + S10 * Phi_temp + Phi_temp * S10.t() + Phi_temp * S00 * Phi_temp.t();
  * @param theta_v0 Initial guess for theta_v
  * @param theta_v_step: step for each variable nelder-mead step
  * @param var_terminating_lim: stopping criterion for nelder-mead method: variance of values
@@ -281,29 +247,14 @@ double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta
  * @return double Optimized value of theta that minimizes the objective
  */
 std::array<double,2> ThetaVUpdate(const arma::mat& dist_matrix,
-                   double& g,
-                   int& N,
-                   const arma::mat& S00,
-                   const arma::mat& S10,
-                   const arma::mat& S11,
-                   const std::array<double,2>& theta_v0,
-                   const std::array<double,2>& theta_v_step,
-                   const double& var_terminating_lim) {
-
-  // debug
-  // std::cout << "inside ThetaVUpdate:" << std::endl;
-  arma::mat Sigma_eta = theta_v0[1] * ExpCor(dist_matrix, theta_v0[0]);
-  // std::cout << "theta_v[0]" << theta_v0[0] << std::endl;
-  // std::cout << "theta_v[1]" << theta_v0[1] << std::endl;
-  // std::cout << "dist_matrix\n" << dist_matrix << std::endl;
-  // std::cout << "Sigma_eta\n" << Sigma_eta << std::endl;
-  //
-  // std::cout << "S00\n" << S00 << std::endl;
-  // std::cout << "S10\n" << S10 << std::endl;
-  // std::cout << "S11\n" << S11 << std::endl;
+                                  const arma::mat &H,
+                                  int& N,
+                                  const std::array<double,2>& theta_v0,
+                                  const std::array<double,2>& theta_v_step,
+                                  const double& var_terminating_lim) {
 
   auto obj_fun = [&](const std::array<double,2>& log_theta_v) {
-    return theta_v_negative_to_optim_log_scale(log_theta_v, dist_matrix, S00, S10, S11, g, N);
+    return theta_v_negative_to_optim_log_scale(log_theta_v, dist_matrix, H, N);
   };
 
   // std::cout << "before nelder mead:" << std::endl;

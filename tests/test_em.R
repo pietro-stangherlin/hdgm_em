@@ -342,6 +342,62 @@ par(mfrow = c(1,1))
 
 res_EM_miss_dep_false$llik
 
+# STRUCTURED state cov scale --------------------------------------
+
+# Starting from true values -------------------------
+
+res_EM <- EMHDGM_statescale(y = y.matr,
+                 dist_matrix = DIST_MATRIX,
+                 alpha0 = A,
+                 beta0 = rep(0, 2),
+                 theta0 = THETA,
+                 g0 = G,
+                 sigma20 = SIGMAY^2,
+                 sigma2state0 = 1,
+                 Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
+                 x0_in = rep(0, Y_LEN),
+                 P0_in = diag(1, nrow = Y_LEN),
+                 max_iter = 50, # increment
+                 verbose = TRUE,
+                 var_terminating_lim = 0.1,
+                 bool_mat = FALSE,
+                 is_fixed_effects = FALSE)
+
+cbind(res_EM$par_history[,1], res_EM$par_history[,res_EM$niter])
+
+plot(res_EM$par_history[1,], type = "l")
+plot(res_EM$par_history[2,], type = "l")
+plot(res_EM$par_history[3,], type = "l")
+plot(res_EM$par_history[4,], type = "l")
+plot(res_EM$par_history[5,], type = "l")
+
+# Starting from not true values -------------------------
+
+res_EM_dist <- EMHDGM_statescale(y = y.matr,
+                            dist_matrix = DIST_MATRIX,
+                            alpha0 = 5 * A,
+                            beta0 = 3 * rep(0, 2),
+                            theta0 = 3 * THETA,
+                            g0 = 4 * G,
+                            sigma20 = 4 *  SIGMAY^2,
+                            sigma2state0 = 5 *  1,
+                            Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
+                            x0_in = rep(0, Y_LEN),
+                            P0_in = diag(1, nrow = Y_LEN),
+                            max_iter = 50, # increment
+                            verbose = TRUE,
+                            var_terminating_lim = 0.1,
+                            bool_mat = FALSE,
+                            is_fixed_effects = FALSE)
+
+cbind(res_EM$par_history[,1], res_EM_dist$par_history[,res_EM_dist$niter])
+
+plot(res_EM_dist$par_history[1,], type = "l")
+plot(res_EM_dist$par_history[2,], type = "l")
+plot(res_EM_dist$par_history[3,], type = "l")
+plot(res_EM_dist$par_history[4,], type = "l")
+plot(res_EM_dist$par_history[5,], type = "l")
+
 # STRUCTURED DIAG --------------------------------------
 
 res_EM <- EMHDGM_diag(y = y.matr,

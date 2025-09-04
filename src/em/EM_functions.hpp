@@ -68,20 +68,14 @@ double ThetaUpdate(const arma::mat &dist_matrix,
 
 double theta_v_negative_to_optim_log_scale(const std::array<double,2>& log_theta_v,
                                            const arma::mat& dist_matrix,
-                                           const arma::mat& S00,
-                                           const arma::mat& S10,
-                                           const arma::mat& S11,
-                                           const double& g,
+                                           const arma::mat& H,
                                            const int& N);
 
 // NOT Currently used
 // Nelder Mead optimization for multiparameter state non differentiable innovation covariance
 std::array<double,2> ThetaVUpdate(const arma::mat& dist_matrix,
-                                  double& g,
+                                  const arma::mat& H,
                                   int& N,
-                                  const arma::mat& S00,
-                                  const arma::mat& S10,
-                                  const arma::mat& S11,
                                   const std::array<double,2>& theta_v0,
                                   const std::array<double,2>& theta_v_step = {0.01, 0.01},
                                   const double& var_terminating_lim = 1e-5);
