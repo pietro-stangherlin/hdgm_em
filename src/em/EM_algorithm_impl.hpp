@@ -421,16 +421,19 @@ EMOutput EMHDGM_state_scale_cpp_core(EMInput_statescale &em_in) {
 
   // NOTE: parameter dimension has to be changed if the parameters space change
   // also, zero is not a perfect initialization value
-  arma::mat par_history = arma::mat(5, em_in.max_iter + 1);
+  arma::mat par_history = arma::mat(4, em_in.max_iter + 1);
   arma::mat beta_history = arma::mat(p, em_in.max_iter + 1);
 
-  par_history.col(0) = arma::vec({alpha_temp, g_temp,
+  par_history.col(0) = arma::vec({g_temp,
                   theta_temp, sigma2_temp, sigma2_state_temp});
   beta_history.col(0) = beta_temp;
 
   // Identity helper matrices
   arma::mat Iqq(q,q,arma::fill::eye);
   arma::mat Ipp(p,p,arma::fill::eye);
+
+  // update state space matrices
+
 
   arma::vec x0_smoothed = em_in.x0_in;
   arma::mat P0_smoothed = em_in.P0_in;
@@ -442,6 +445,9 @@ EMOutput EMHDGM_state_scale_cpp_core(EMInput_statescale &em_in) {
   arma::mat Phi_temp; // transition matrix
   arma::mat Q_temp; //state error covariance matrix
   arma::mat R_temp; // observation error covariance matrix
+
+  // here this is fixed
+  A_temp = alpha_temp * Iqq;
 
   Phi_temp = g_temp * Iqq;
 
@@ -545,8 +551,6 @@ EMOutput EMHDGM_state_scale_cpp_core(EMInput_statescale &em_in) {
       }
     }
 
-    // update state space matrices
-    A_temp = alpha_temp * Iqq;
     // Phi_temp already updates below
     Q_temp = sigma2_state_temp * ExpCor(em_in.dist_matrix, theta_temp);
     R_temp = sigma2_temp * Iqq;
@@ -627,10 +631,10 @@ EMOutput EMHDGM_state_scale_cpp_core(EMInput_statescale &em_in) {
 
     //std::cout << "before AlphaUpdate_core" << std::endl;
 
-    // Alpha update
-    alpha_temp = AlphaUpdate_core<CovStore>(y_res, ksm_res.x_smoothed,
-                                            Xz, ksm_res.P_smoothed,
-                                            missing_indicator);
+    //NO Alpha update: fixed
+    // alpha_temp = AlphaUpdate_core<CovStore>(y_res, ksm_res.x_smoothed,
+    //                                         Xz, ksm_res.P_smoothed,
+    //                                         missing_indicator);
 
     // Beta update
     if (em_in.is_fixed_effect == true) {
@@ -655,7 +659,7 @@ EMOutput EMHDGM_state_scale_cpp_core(EMInput_statescale &em_in) {
     sigma2_state_temp = theta_v_temp[1];
 
     // Update parameters history
-    par_history.col(iter) = arma::vec({alpha_temp, g_temp,
+    par_history.col(iter) = arma::vec({g_temp,
                     theta_temp, sigma2_temp, sigma2_state_temp});
     beta_history.col(iter) = beta_temp;
   }

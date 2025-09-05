@@ -21,8 +21,8 @@ N <- 10000
 Y_LEN <- 5
 THETA <- 0.5
 G <- 0.8
-A <- 1
-SIGMAY <- 1
+A <- 4
+SIGMAY <- 0.5
 SIGMAZ <- 1
 
 # generate x coordinate
@@ -380,12 +380,12 @@ res_EM$R
 
 res_EM <- EMHDGM_statescale(y = y.matr,
                  dist_matrix = DIST_MATRIX,
-                 alpha0 = A,
+                 alpha0 = 1,
                  beta0 = rep(0, 2),
                  theta0 = THETA,
                  g0 = G,
                  sigma20 = SIGMAY^2,
-                 sigma2state0 = 1,
+                 sigma2state0 = SIGMAZ^2,
                  Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
                  x0_in = rep(0, Y_LEN),
                  P0_in = diag(1, nrow = Y_LEN),
@@ -407,7 +407,7 @@ plot(res_EM$par_history[5,], type = "l")
 
 res_EM_dist <- EMHDGM_statescale(y = y.matr,
                             dist_matrix = DIST_MATRIX,
-                            alpha0 = 5 * A,
+                            alpha0 = 1, #fixed
                             beta0 = 3 * rep(0, 2),
                             theta0 = 3 * THETA,
                             g0 = 4 * G,
@@ -416,7 +416,7 @@ res_EM_dist <- EMHDGM_statescale(y = y.matr,
                             Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
                             x0_in = rep(0, Y_LEN),
                             P0_in = diag(1, nrow = Y_LEN),
-                            max_iter = 50, # increment
+                            max_iter = 200, # increment
                             verbose = TRUE,
                             var_terminating_lim = 0.1,
                             bool_mat = FALSE,
@@ -431,6 +431,8 @@ plot(res_EM_dist$par_history[4,], type = "l")
 plot(res_EM_dist$par_history[5,], type = "l")
 
 # STRUCTURED DIAG --------------------------------------
+
+# Starting from true values -------------------------
 
 res_EM <- EMHDGM_diag(y = y.matr,
                  dist_matrix = DIST_MATRIX,
@@ -466,7 +468,7 @@ res_EM_dist <- EMHDGM_diag(y = y.matr,
                       Xbeta_in = FIXED_EFFECTS_DESIGN_MATRIX,
                       x0_in = rep(0, Y_LEN),
                       P0_in = 5 * diag(nrow = Y_LEN),
-                      max_iter = 200, # increment
+                      max_iter = 1000, # increment
                       verbose = TRUE,
                       bool_mat = TRUE,
                       is_fixed_effects = FALSE)

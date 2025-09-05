@@ -54,16 +54,34 @@ res_EM <- EMHDGM(y = y.matr,
                  bool_mat = TRUE,
                  is_fixed_effects = TRUE)
 
+res_EM_scale <- EMHDGM_statescale(y = y.matr,
+                                  dist_matrix = dists_matr,
+                                  alpha0 = 1,
+                                  beta0 = coef(lm.fit.agri),
+                                  theta0 = 1,
+                                  g0 = 0.5,
+                                  sigma20 = 5,
+                                  sigma2state0 = 5,
+                                  Xbeta_in = X.array,
+                                  x0_in = rep(0, nrow(y.matr)),
+                                  P0_in = diag(1, nrow = nrow(y.matr)),
+                                  max_iter = 200, # increment
+                                  verbose = TRUE,
+                                  var_terminating_lim = 0.1,
+                                  bool_mat = TRUE,
+                                  is_fixed_effects = TRUE)
+
 res_EM_diag <- EMHDGM_diag(y = y.matr,
                  dist_matrix = dists_matr,
-                 alpha0 = 1,
-                 beta0 = coef(lm.fit.agri), # start with OLS estimate
+                 alpha0 = 5,
+                 beta0 = coef(lm.fit.agri), # else start with OLS estimate
                  theta0 = 1,
                  g0 = 0.5,
-                 sigma20 = 1,
+                 sigma20 = 5,
                  Xbeta_in = X.array,
                  x0_in = rep(0, nrow(y.matr)),
                  P0_in = diag(1, nrow = nrow(y.matr)),
+                 rel_llik_tol = 1e-5,
                  max_iter = 200,
                  verbose = TRUE,
                  bool_mat = TRUE,
@@ -93,7 +111,7 @@ round(cbind(c(res_EM$par_history[,res_EM$niter],
 
 # Save Results -------------------
 
-save(res_EM, asymptotic_var, coef_names, file = "data/HDGM_res_EM.RData")
+save(res_EM, res_EM_scale, asymptotic_var, coef_names, file = "data/HDGM_res_EM.RData")
 
 # Bootstrap ----------------------
 source("R/bootstrap_helper.R")

@@ -297,14 +297,19 @@ Numerical Hessian std
 l = NROW(res_EM$par_history)
 p = NROW(res_EM$beta_history)
 
-struct_ef <- round(cbind(res_EM$par_history[,res_EM$niter],
-                   sqrt(diag(asymptotic_var)[1:l])), 3)
-colnames(struct_ef) <- c("est", "std")
+temp_par <- res_EM$par_history[,res_EM$niter]
+temp_std <- sqrt(diag(asymptotic_var))[1:l]
+
+struct_ef <- round(cbind(temp_par, temp_std, temp_par / temp_std),3)
+
+colnames(struct_ef) <- c("est", "std", "tval")
 rownames(struct_ef) <- c("alpha", "phi", "theta", "sigmay^2")
 
-beta_eff <- round(cbind(res_EM$beta_history[,res_EM$niter],
-      sqrt(diag(asymptotic_var)[(l+1):(p+l)])),3)
-colnames(beta_eff) <- c("est", "std")
+temp_par <- res_EM$beta_history[,res_EM$niter]
+temp_std <- sqrt(diag(asymptotic_var)[(l+1):(p+l)])
+
+beta_eff <- round(cbind(temp_par, temp_std, temp_par / temp_std),3)
+colnames(beta_eff) <- c("est", "std", "tval")
 rownames(beta_eff) <- coef_names
 
 struct_ef

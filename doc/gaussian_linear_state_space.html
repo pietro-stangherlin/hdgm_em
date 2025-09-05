@@ -395,49 +395,54 @@ Q_{ij} = \exp (-|| s(y_{t,i}) - s(y_{t,j}) ||_2 / \theta)
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>l <span class="ot">=</span> <span class="fu">NROW</span>(res_EM<span class="sc">$</span>par_history)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>p <span class="ot">=</span> <span class="fu">NROW</span>(res_EM<span class="sc">$</span>beta_history)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>struct_ef <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">cbind</span>(res_EM<span class="sc">$</span>par_history[,res_EM<span class="sc">$</span>niter],</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">sqrt</span>(<span class="fu">diag</span>(asymptotic_var)[<span class="dv">1</span><span class="sc">:</span>l])), <span class="dv">3</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(struct_ef) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"est"</span>, <span class="st">"std"</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(struct_ef) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"alpha"</span>, <span class="st">"phi"</span>, <span class="st">"theta"</span>, <span class="st">"sigmay^2"</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>temp_par <span class="ot">&lt;-</span> res_EM<span class="sc">$</span>par_history[,res_EM<span class="sc">$</span>niter]</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>temp_std <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">diag</span>(asymptotic_var))[<span class="dv">1</span><span class="sc">:</span>l]</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>struct_ef <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">cbind</span>(temp_par, temp_std, temp_par <span class="sc">/</span> temp_std),<span class="dv">3</span>)</span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>beta_eff <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">cbind</span>(res_EM<span class="sc">$</span>beta_history[,res_EM<span class="sc">$</span>niter],</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sqrt</span>(<span class="fu">diag</span>(asymptotic_var)[(l<span class="sc">+</span><span class="dv">1</span>)<span class="sc">:</span>(p<span class="sc">+</span>l)])),<span class="dv">3</span>)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(beta_eff) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"est"</span>, <span class="st">"std"</span>)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(beta_eff) <span class="ot">&lt;-</span> coef_names</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>struct_ef</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(struct_ef) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"est"</span>, <span class="st">"std"</span>, <span class="st">"tval"</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(struct_ef) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"alpha"</span>, <span class="st">"phi"</span>, <span class="st">"theta"</span>, <span class="st">"sigmay^2"</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>temp_par <span class="ot">&lt;-</span> res_EM<span class="sc">$</span>beta_history[,res_EM<span class="sc">$</span>niter]</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>temp_std <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">diag</span>(asymptotic_var)[(l<span class="sc">+</span><span class="dv">1</span>)<span class="sc">:</span>(p<span class="sc">+</span>l)])</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>beta_eff <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">cbind</span>(temp_par, temp_std, temp_par <span class="sc">/</span> temp_std),<span class="dv">3</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(beta_eff) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"est"</span>, <span class="st">"std"</span>, <span class="st">"tval"</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(beta_eff) <span class="ot">&lt;-</span> coef_names</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>struct_ef</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>           est   std
-alpha    7.007 0.039
-phi      0.741 0.003
-theta    0.847 0.012
-sigmay^2 8.083 0.109</code></pre>
+<pre><code>           est   std    tval
+alpha    7.007 0.039 181.413
+phi      0.741 0.003 214.365
+theta    0.847 0.012  68.371
+sigmay^2 8.083 0.109  74.461</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>beta_eff</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>                            est   std
-(Intercept)              35.667 1.201
-Monthfebbraio            -7.607 1.112
-Monthmarzo              -15.963 1.218
-Monthaprile             -22.208 1.278
-Monthmaggio             -28.268 1.317
-Monthgiugno             -28.323 1.385
-Monthluglio             -28.130 1.410
-Monthagosto             -29.543 1.401
-Monthsettembre          -27.699 1.344
-Monthottobre            -20.767 1.276
-Monthnovembre           -16.509 1.230
-Monthdicembre            -8.347 1.129
-Altitude                 -0.006 0.000
-WE_temp_2m                0.505 0.032
-WE_tot_precipitation    -83.685 7.429
-WE_rh_mean                0.192 0.007
-WE_wind_speed_100m_mean  -1.258 0.049
-WE_blh_layer_max         -0.002 0.000
-LI_pigs_v2                0.005 0.001
-LI_bovine_v2              0.003 0.002
-LA_hvi                   -0.419 0.119
-LA_lvi                   -4.155 0.189</code></pre>
+<pre><code>                            est   std    tval
+(Intercept)              35.667 1.201  29.696
+Monthfebbraio            -7.607 1.112  -6.843
+Monthmarzo              -15.963 1.218 -13.111
+Monthaprile             -22.208 1.278 -17.383
+Monthmaggio             -28.268 1.317 -21.465
+Monthgiugno             -28.323 1.385 -20.453
+Monthluglio             -28.130 1.410 -19.957
+Monthagosto             -29.543 1.401 -21.082
+Monthsettembre          -27.699 1.344 -20.603
+Monthottobre            -20.767 1.276 -16.275
+Monthnovembre           -16.509 1.230 -13.423
+Monthdicembre            -8.347 1.129  -7.397
+Altitude                 -0.006 0.000 -21.285
+WE_temp_2m                0.505 0.032  15.685
+WE_tot_precipitation    -83.685 7.429 -11.265
+WE_rh_mean                0.192 0.007  25.711
+WE_wind_speed_100m_mean  -1.258 0.049 -25.934
+WE_blh_layer_max         -0.002 0.000 -13.642
+LI_pigs_v2                0.005 0.001   9.506
+LI_bovine_v2              0.003 0.002   1.355
+LA_hvi                   -0.419 0.119  -3.512
+LA_lvi                   -4.155 0.189 -22.022</code></pre>
 </div>
 </div>
 <p>Loso residuals: RMSE for each station</p>
