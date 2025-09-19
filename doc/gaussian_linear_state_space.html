@@ -472,6 +472,7 @@ LA_lvi                   -4.155 0.189 -22.022</code></pre>
 </div>
 </div>
 </div>
+<p>Which hints to an increase the autoregressive order to at least 2 and or consider covariates transformations.</p>
 <p>Parameters convergence</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(res_EM<span class="sc">$</span>par_history[<span class="dv">1</span>,<span class="dv">1</span><span class="sc">:</span>res_EM<span class="sc">$</span>niter],</span>
@@ -645,7 +646,7 @@ A^{(1)} \left( \sum^{T}_{t=1}x^{(1)}_t (x^{(1)}_t)^\top + P^T_{t, 11} \right) (A
 </section>
 <section id="go-over-the-linear-gaussian-distribution-assumption" class="level3">
 <h3 class="anchored" data-anchor-id="go-over-the-linear-gaussian-distribution-assumption">Go over the linear Gaussian distribution assumption</h3>
-<p>Use models such the extended Kalman Filter and Particle Filters<span class="citation" data-cites="DurbinKoopman">(<a href="#ref-DurbinKoopman" role="doc-biblioref">Durbin and Koopman 2012</a>)</span> or consider the quantile dynamic models.</p>
+<p>Addind and state space recursion for variance or use models such the extended Kalman Filter and Particle Filters<span class="citation" data-cites="DurbinKoopman">(<a href="#ref-DurbinKoopman" role="doc-biblioref">Durbin and Koopman 2012</a>)</span> or consider the quantile dynamic models.</p>
 <section id="hmm-models" class="level4">
 <h4 class="anchored" data-anchor-id="hmm-models">HMM models</h4>
 <p><span class="citation" data-cites="ShumwayStoffer">(<a href="#ref-ShumwayStoffer" role="doc-biblioref">Shumway and Stoffer 2005</a>)</span></p>

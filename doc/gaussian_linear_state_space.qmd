@@ -333,6 +333,8 @@ acf(cv_loso_res[,2], na.action = na.pass,
     main = "LOSO res ACF station 2")
 ```
 
+Which hints to an increase the autoregressive order to at least 2 and or consider covariates transformations.
+
 Parameters convergence
 
 ```{r}
@@ -501,7 +503,7 @@ The computations get even simpler if we assume $A^{(1)} = \alpha I$ where $\alph
 
 ### Go over the linear Gaussian distribution assumption
 
-Use models such the extended Kalman Filter and Particle Filters[@DurbinKoopman] or consider the quantile dynamic models.
+Addind and state space recursion for variance or use models such the extended Kalman Filter and Particle Filters[@DurbinKoopman] or consider the quantile dynamic models.
 
 #### HMM models
 
